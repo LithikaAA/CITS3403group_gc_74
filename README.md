@@ -1,11 +1,7 @@
----
-
 ```markdown
 # 🎵 VibeShare
 
 **VibeShare** is a web-based music data sharing platform that allows users to upload their Spotify listening history, visualise their music preferences, and selectively share insights with friends. Whether you're comparing your favourite tracks or discovering new genres through your social circle, VibeShare helps you explore music in a more connected and engaging way.
-
----
 
 ## 🚀 Features
 
@@ -151,5 +147,3 @@ This includes:
 
 This project is developed as part of the [UWA CSSE] curriculum. For academic use only.
 ```
-
----
