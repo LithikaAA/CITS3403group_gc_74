@@ -40,9 +40,10 @@
 
 ## 📂 Project Structure
 
+```plaintext
 vibeshare/
 ├── app/
-│   ├── init.py                  # Python file to initialize the app
+│   ├── __init__.py                  # Python file to initialize the app
 │   ├── models.py                    # Python file for database models
 │   ├── routes/                      # Folder for route files
 │   │   ├── auth.py                  # Routes for authentication (login/signup)
@@ -69,5 +70,4 @@ vibeshare/
 ├── run.py                           # Main Python file to start the app
 ├── requirements.txt                 # Text file for Python package dependencies
 ├── README.md                        # Markdown file with project documentation
-└── .gitignore                       # Git ignore file for excluding unnecessary files 
-
+└── .gitignore                       # Git ignore file for excluding unnecessary files
