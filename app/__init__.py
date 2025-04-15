@@ -2,14 +2,11 @@ from flask import Flask
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv()  # Loads variables from .env
 
-def create_app():
-    app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-    # Import and register blueprints later
-    # from .routes.auth import auth_bp
-    # app.register_blueprint(auth_bp)
+# You can import routes later here
+from .routes import auth  # only if you’ve made this file already
 
-    return app
