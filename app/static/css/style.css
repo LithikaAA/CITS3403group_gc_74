@@ -1,0 +1,17 @@
+:root {
+    --primary: #1db954; /* Spotify green */
+    --secondary: #191414; /* Spotify black */
+  }
+  
+  body {
+    background-color: #f8f9fa;
+  }
+  
+  .navbar {
+    background-color: var(--secondary) !important;
+  }
+  
+  .navbar-brand {
+    color: var(--primary) !important;
+    font-weight: bold;
+  }
