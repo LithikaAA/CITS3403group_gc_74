@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify  # Flask utilities for routing and rendering
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session  # Flask utilities for routing and rendering
 from ..models import db, User  # Import database and User model
 
 # Create a blueprint for authentication routes
@@ -6,10 +6,6 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    Handle user login.
-    :return: Rendered login page or redirect to dashboard on successful login
-    """
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -17,7 +13,10 @@ def login():
         # Query the database for the user
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            return redirect(url_for('dashboard'))  # Redirect to dashboard on successful login
+            # Store user information in the session
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return redirect(url_for('dashboard.dashboard'))  # Redirect to dashboard
         return jsonify({'error': 'Invalid credentials'}), 401
 
     return render_template('login.html')
@@ -46,3 +45,11 @@ def signup():
         return redirect(url_for('auth.login'))  # Redirect to login page after successful signup
 
     return render_template('signup.html')
+
+@auth_bp.route('/logout')
+def logout():
+    """
+    Log the user out by clearing the session.
+    """
+    session.clear()
+    return redirect(url_for('auth.login'))
