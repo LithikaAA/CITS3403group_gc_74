@@ -1,9 +1,8 @@
-# Import the app factory function
-from app import create_app
+from app import app
+import os
 
-# Create the Flask app instance
-app = create_app()
-
-if __name__ == "__main__":
-    # Run the Flask app in debug mode
-    app.run(debug=True)
+app.run(
+    debug=os.getenv("FLASK_DEBUG", "False").lower() == "true",
+    host=os.getenv("FLASK_RUN_HOST", "127.0.0.1"),
+    port=int(os.getenv("FLASK_RUN_PORT", 5000))
+)

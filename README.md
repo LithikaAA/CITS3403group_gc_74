@@ -43,31 +43,36 @@
 ```plaintext
 vibeshare/
 ├── app/
-│   ├── __init__.py                  # Python file to initialize the app
-│   ├── models.py                    # Python file for database models
-│   ├── routes/                      # Folder for route files
-│   │   ├── auth.py                  # Routes for authentication (login/signup)
-│   │   ├── dashboard.py             # Routes for user dashboard
-│   │   ├── upload.py                # Routes for data upload
-│   │   ├── share.py                 # Routes for data sharing
-│   ├── templates/                   # Folder for HTML template files
-│   │   ├── index.html               # Landing page
-│   │   ├── login.html               # Login page
-│   │   ├── signup.html              # Signup page
-│   │   ├── dashboard.html           # Dashboard page
-│   │   ├── upload.html              # Upload page
-│   │   ├── share.html               # Share data page
-│   ├── static/                      # Folder for static files (CSS, JS, images)
+│   ├── __init__.py                  # App factory, loads .env, sets up Flask app
+│   ├── models.py                    # SQLAlchemy models (User, Track, Playlist, etc.)
+│   ├── routes/                      # Folder for modular route handlers
+│   │   ├── auth.py                  # Login, logout, signup routes
+│   │   ├── dashboard.py             # Main user dashboard routes
+│   │   ├── upload.py                # Upload and handle CSV/audio data
+│   │   ├── share.py                 # Sharing tracks/playlists with other users
+│   ├── templates/                   # HTML files rendered with Jinja
+│   │   ├── base.html                # Base layout (nav/footer)
+│   │   ├── index.html               # Welcome / landing page
+│   │   ├── login.html               # Login form
+│   │   ├── signup.html              # Registration form
+│   │   ├── dashboard.html           # Main dashboard (top tracks, stats)
+│   │   ├── upload.html              # Upload music or CSV data
+│   │   ├── share.html               # Share music with friends
+│   ├── static/                      # Static files (CSS, JS, images)
 │   │   ├── css/
-│   │   │   └── style.css            # Custom CSS styles
+│   │   │   └── style.css            # Custom styles (if any)
 │   │   ├── js/
-│   │   │   └── app.js               # Custom JavaScript file
+│   │   │   └── app.js               # Optional JS logic or AJAX
 │   │   ├── img/
-│   │   │   └── logo.png             # Logo image
-├── tests/                           # Folder for unit tests
-│   └── test_app.py                  # Example test file
-├── deliverables/                    # Folder for project deliverables (e.g., reports)
-├── run.py                           # Main Python file to start the app
-├── requirements.txt                 # Text file for Python package dependencies
-├── README.md                        # Markdown file with project documentation
-└── .gitignore                       # Git ignore file for excluding unnecessary files
+│   │   │   └── logo.png             # App logo or album art
+├── data/                            # Local data not tracked by Git
+│   └── spotify.csv                  # ✅ Your downloaded Kaggle data (gitignored)
+├── tests/                           # Unit and Selenium tests
+│   └── test_app.py                  # Example test (login, DB, etc.)
+├── deliverables/                    # Reports, screenshots for submission
+├── run.py                           # Entry point to run the Flask app
+├── .env                             # Your local config (SECRET_KEY, etc.) [gitignored]
+├── .env.example                     # ✅ Shared template of environment variables
+├── requirements.txt                 # All necessary Python packages
+├── README.md                        # Project description and setup instructions
+└── .gitignore                       # Ignore virtual env, .env, data/, etc.
