@@ -1,6 +1,7 @@
 # Import necessary modules
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from config import Config
 from .models import db
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
@@ -16,9 +17,7 @@ def create_app():
     app = Flask(__name__)
 
     # Configure the app
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibeshare.db'  # SQLite database URI
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable modification tracking
-    app.config['SECRET_KEY'] = 'your_secret_key'  # Secret key for session management
+    app.config.from_object(Config)
 
     # Initialize extensions with the app
     db.init_app(app)
