@@ -1,9 +1,10 @@
 # Import necessary modules
-from flask_sqlalchemy import SQLAlchemy  # SQLAlchemy for database ORM
+from typing import Optional
+import sqlalchemy as sa
+import sqlalchemy.orm as so 
+from app import db
 from werkzeug.security import generate_password_hash, check_password_hash  # For password hashing and verification
-
-# Initialize the SQLAlchemy instance
-db = SQLAlchemy()
+from datetime import datetime
 
 # Define the User model
 class User(db.Model):
@@ -11,16 +12,16 @@ class User(db.Model):
     User model to represent users in the database.
     """
     # Primary key: Unique identifier for each user
-    id = db.Column(db.Integer, primary_key=True)
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
 
     # Username: Must be unique and cannot be null
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
 
     # Email: Must be unique and cannot be null
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique= True)
 
     # Password hash: Stores the hashed version of the user's password
-    password_hash = db.Column(db.String(128), nullable=False)
+    passwrod_has: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
 
     def set_password(self, password):
         """
@@ -36,3 +37,4 @@ class User(db.Model):
         :return: True if the password matches, False otherwise.
         """
         return check_password_hash(self.password_hash, password)
+
