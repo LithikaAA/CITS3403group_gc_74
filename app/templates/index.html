@@ -1,12 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VibeShare</title>
-</head>
-<body>
-    <h1>Welcome to VibeShare!</h1>
-    <p>This is the home page. Routes are working!</p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Welcome to VibeShare{% endblock %}
+
+{% block content %}
+<h2>Discover Your Music Taste</h2>
+<p>Upload your listening data to explore your music preferences and share your vibe with friends.</p>
+
+<div class="auth-links">
+    <a href="{{ url_for('auth.login') }}" class="button">Login</a>
+    <a href="{{ url_for('auth.signup') }}" class="button">Sign Up</a>
+</div>
+{% endblock %}

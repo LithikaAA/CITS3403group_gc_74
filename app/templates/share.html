@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Share Data{% endblock %}
+
+{% block content %}
+<h2>Share Your Spotify Data</h2>
+
+<form action="/share" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <br>
+    <button type="submit">Upload</button>
+</form>
+
+<h3>Uploaded Files</h3>
+<ul>
+    {% for item in shared_data %}
+    <li>
+        <a href="{{ url_for('static', filename='uploads/' + item.file_name) }}" target="_blank">
+            {{ item.file_name }}
+        </a> ({{ item.timestamp }})
+        <form action="/share/delete/{{ item.id }}" method="post" style="display:inline;">
+            <button type="submit">Delete</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
