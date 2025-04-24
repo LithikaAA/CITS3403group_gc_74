@@ -1,6 +1,22 @@
 {% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
 {% block content %}
-<h1>Your Music Dashboard</h1>
+<h1>Welcome, {{ username }}!</h1> <!-- Add this line to display the username -->
+
+<p>This is your personalized dashboard.</p>
+
+<!-- Example of existing dashboard content -->
+<div>
+    <h2>Your Recent Activity</h2>
+    <ul>
+        <li>Uploaded file: spotify_data.csv</li>
+        <li>Shared data with: friend@example.com</li>
+    </ul>
+</div>
+
+<a href="{{ url_for('auth.logout') }}" class="button">Logout</a>
 
 <div>
   <h2>🎧 Top Artists/Tracks</h2>
