@@ -1,20 +1,26 @@
 {% extends "base.html" %}
+{% block title %}Log In | VibeShare{% endblock %}
+
 {% block content %}
-<h1>Welcome to VibeShare 🎵</h1>
-<p>Upload your listening data to discover your music taste and share your vibe with friends.</p>
+<div class="login-container">
+  <h1 class="headline">Welcome to VibeShare 🎵</h1>
+  <p class="subtitle">Upload your listening data to discover your music taste and share your vibe with friends.</p>
 
-<h2>Login</h2>
-<form>
-  <input type="text" placeholder="Username">
-  <input type="password" placeholder="Password">
-  <button type="submit">Login</button>
-</form>
+  <!-- Login Form -->
+  <form method="POST" action="{{ url_for('auth.login') }}" class="form-box">
+    <h2 class="form-title">Log In</h2>
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit" class="btn">Log In</button>
+  </form>
 
-<h2>Register</h2>
-<form>
-  <input type="text" placeholder="Username">
-  <input type="email" placeholder="Email">
-  <input type="password" placeholder="Password">
-  <button type="submit">Register</button>
-</form>
+  <!-- Register Form -->
+  <form method="POST" action="{{ url_for('auth.signup') }}" class="form-box">
+    <h2 class="form-title">Register</h2>
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit" class="btn">Register</button>
+  </form>
+</div>
 {% endblock %}
