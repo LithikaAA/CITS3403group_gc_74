@@ -3,7 +3,7 @@ from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import Config
-from .models import db #??
+from app.models import db #??
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
 from .routes.upload import upload_bp
