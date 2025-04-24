@@ -1,12 +1,14 @@
 # Import necessary modules
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from config import Config
-from .models import db
+from .models import db #??
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
 from .routes.upload import upload_bp
 from .routes.share import share_bp
+
 
 def create_app():
     """
@@ -21,6 +23,9 @@ def create_app():
 
     # Initialize extensions with the app
     db.init_app(app)
+
+    # Initialise Flask Migrate
+    migrate = Migrate(app, db)
 
     # Register blueprints (e.g., authentication routes)
     app.register_blueprint(auth_bp)
