@@ -46,3 +46,11 @@ def signup():
         return redirect(url_for('auth.login'))  # Redirect to login page after successful signup
 
     return render_template('signup.html')
+
+@auth_bp.route('/logout')
+def logout():
+    """
+    Temporary Logout route
+    """
+    session.clear()  # clears the session
+    return redirect(url_for('auth.login'))

@@ -3,7 +3,7 @@ from app.models import User
 # Create a blueprint for dashboard routes
 dashboard_bp = Blueprint('dashboard', __name__)
 
-@dashboard_bp.route('/dashboard')
+@dashboard_bp.route('/')
 def dashboard():
     """
     Render the user dashboard.
@@ -11,7 +11,7 @@ def dashboard():
     """
     return render_template('dashboard.html')
 
-@dashboard_bp.route("/test-data")
+@dashboard_bp.route('/test-data')
 def test_data():
     users = User.query.all()
-    return render_template("test_data.html", users=users)
+    return render_template('test_data.html', users=users)

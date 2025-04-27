@@ -29,7 +29,7 @@ def create_app():
 
     # Register blueprints (e.g., authentication routes)
     app.register_blueprint(auth_bp)
-    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)
     app.register_blueprint(share_bp)
 
