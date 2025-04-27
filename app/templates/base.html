@@ -7,11 +7,14 @@
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Feather Icons CDN -->
+  <script src="https://unpkg.com/feather-icons"></script>
 
   <!-- Your custom stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-  <!-- Inline animations (optional, for extra effects) -->
+  <!-- Inline animations -->
   <style>
     @keyframes fade-in {
       0% { opacity: 0; transform: translateY(-20px); }
@@ -23,9 +26,36 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100">
+<body class="min-h-screen bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100">
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
   <main class="flex flex-col items-center justify-center py-12 px-4 w-full">
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Auto-hide Flash Messages -->
+  <script>
+    setTimeout(function() {
+      const flash = document.querySelector('.flash-container');
+      if(flash) {
+        flash.style.display = 'none';
+      }
+    }, 3000);
+
+    // Initialise Feather Icons AFTER page loads
+    feather.replace();
+  </script>
 </body>
 </html>

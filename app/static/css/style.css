@@ -138,6 +138,7 @@ body::before {
     width: 90%;
     text-align: center;
     margin: 2rem auto;
+    z-index: 1;
 }
 
 /* Form Headings */
@@ -200,3 +201,127 @@ body::before {
     height: auto;
 }
 
+/* terms Box */
+
+.terms-container {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    width: 90%;
+    text-align: left;
+    margin: 2rem auto;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.terms-checkbox {
+    font-size: 0.85rem;
+    margin: 0.5rem 0 1rem 0;
+    text-align: left;
+}
+
+.terms-checkbox input {
+    margin-right: 0.4rem;
+}
+
+.terms-checkbox a {
+    color: #7c3aed;  /* Soft purple or pick a color matching your theme */
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Flash Messages */
+.flash-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+}
+
+.flash-message {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    animation: fadeSlideDown 0.5s ease;
+}
+
+.flash-message.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.flash-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+General Overrides
+body {
+    background: linear-gradient(to bottom right, #eef2ff, #fce7f3);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Navbar Custom */
+.navbar {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Scrollbar for Trending */
+.trending-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+.trending-scroll::-webkit-scrollbar-thumb {
+    background: #c4b5fd;
+    border-radius: 4px;
+}
+
+/* Music Player */
+.music-player {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* Progress Bar Custom */
+input[type="range"]::-webkit-slider-thumb {
+    background: #8b5cf6;
+}
+
+/* Playlist Hover */
+.playlist-card:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* Active Tab */
+.active-tab {
+    border-bottom: 2px solid #6366f1;
+    color: #4f46e5;
+}
+
+/* Vibe Stats Box */
+.vibe-stats-box {
+    background: #f3f4f6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}

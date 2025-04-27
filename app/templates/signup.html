@@ -8,6 +8,15 @@
         <input type="text" name="username" placeholder="Username" required>
         <input type="email" name="email" placeholder="Email" required>
         <input type="password" name="password" placeholder="Password" required>
+        
+        <!-- Terms and Conditions Checkbox -->
+        <div class="terms-checkbox">
+            <input type="checkbox" id="terms" name="terms" required>
+            <label for="terms">
+                I agree with <a href="{{ url_for('auth.terms') }}" target="_blank">Terms and Conditions</a>
+            </label>
+        </div>
+        
         <button type="submit" class="btn-primary">Sign up</button>
     </form>
 

@@ -1,17 +1,33 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-# Create a blueprint for sharing routes
 share_bp = Blueprint('share', __name__)
+
+# Mock data for demonstration
+mock_playlists = [
+    {"id": 1, "name": "Chill Vibes", "song_count": 20},
+    {"id": 2, "name": "Workout Hits", "song_count": 15},
+    {"id": 3, "name": "Indie Mix", "song_count": 25},
+]
+
+mock_friends = [
+    {"username": "alice"},
+    {"username": "bob"},
+    {"username": "charlie"},
+]
 
 @share_bp.route('/share', methods=['GET', 'POST'])
 def share():
-    """
-    Handle sharing data with others.
-    :return: Rendered share page or redirect after successful sharing
-    """
     if request.method == 'POST':
-        # Handle sharing logic here
-        email = request.form['email']
-        # Share data (logic not implemented)
-        return redirect(url_for('dashboard'))
-    return render_template('share.html')
+        selected_playlists = request.form.getlist('selected_playlists')
+        friend_username = request.form.get('friend_username')
+
+        if not selected_playlists:
+            flash('Please select at least one playlist to share.', 'error')
+            return redirect(url_for('share.share'))
+
+        # Mock sharing logic
+        flash(f'Shared {len(selected_playlists)} playlist(s) with {friend_username}!', 'success')
+        return redirect(url_for('share.share'))
+
+    # On GET, render the form
+    return render_template('share.html', playlists=mock_playlists, friends=mock_friends)
