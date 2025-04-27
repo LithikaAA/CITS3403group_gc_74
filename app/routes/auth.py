@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify  # Flask utilities for routing and rendering
 from ..models import db, User  # Import database and User model
+from flask import flash
+
 
 # Create a blueprint for authentication routes
 auth_bp = Blueprint('auth', __name__)
@@ -17,7 +19,12 @@ def login():
         # Query the database for the user
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+            login_user(user)
+            flash("Login successful!")  # <- ✅ Flash this message
             return redirect(url_for('dashboard'))  # Redirect to dashboard on successful login
+        else:
+            flash("Invalid login. Please try again.")  # <- ❗ Flash an error
+        
         return jsonify({'error': 'Invalid credentials'}), 401
 
     return render_template('login.html')

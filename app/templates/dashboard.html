@@ -20,12 +20,12 @@
 
 <div>
   <h2>🎧 Top Artists/Tracks</h2>
-  <div class="chart-placeholder">[Bar Chart Placeholder]</div>
+  <canvas id="artistChart"></canvas>
 </div>
 
 <div>
   <h2>🎶 Genre Breakdown</h2>
-  <div class="chart-placeholder">[Pie Chart Placeholder]</div>
+  <canvas id="genreChart"></canvas>
 </div>
 
 <div>
@@ -37,4 +37,38 @@
   <h2>🧠 Your Audio DNA</h2>
   <div class="chart-placeholder">[Radar Chart Placeholder]</div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const genreCtx = document.getElementById('genreChart');
+    new Chart(genreCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ genres | tojson }},
+            datasets: [{
+                label: 'Genres',
+                data: {{ genre_counts | tojson }},
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+                borderWidth: 1
+            }]
+        }
+    });
+
+    const artistCtx = document.getElementById('artistChart');
+    new Chart(artistCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ artists | tojson }},
+            datasets: [{
+                label: 'Top Artists',
+                data: {{ artist_counts | tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderWidth: 1
+            }]
+        }
+    });
+});
+</script>
+
 {% endblock %}
