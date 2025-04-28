@@ -88,8 +88,6 @@ def account_setup():
     return render_template('account_setup.html')
 
 
-    return render_template('signup.html')
-
 @auth_bp.route('/logout')
 def logout():
     """

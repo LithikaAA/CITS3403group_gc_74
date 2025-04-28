@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash  # For
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
-from datetime import datetime
+
 
 # Create db object (not bound to app yet)
 db = SQLAlchemy()
@@ -19,15 +19,10 @@ class User(db.Model):
     """
     # Primary key: Unique identifier for each user
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-
-    # Username: Must be unique and cannot be null
-    username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
-
-    # Email: Must be unique and cannot be null
-    email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique= True)
-
-    # Password hash: Stores the hashed version of the user's password
-    password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True) # Username: Must be unique and cannot be null
+    email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique= True) # Email: Must be unique and cannot be null
+    password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256)) # Password hash: Stores the hashed version of the user's password
+    profile_pic: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
 
     tracks: so.Mapped[List["Track"]] = so.relationship(back_populates='user', cascade="all, delete") # when user is deleted, all their tracks are removed
 

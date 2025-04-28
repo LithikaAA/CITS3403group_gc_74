@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 from app.models import User
+
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/')
@@ -14,7 +15,6 @@ def dashboard():
     # Debugging: Print session data
     print("Session data:", session)
 
-    # return render_template('dashboard.html', username=session.get('username'))
     # Mock Data for Summary Cards
     summary = {
         "total_songs": 1245,

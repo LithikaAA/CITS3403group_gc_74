@@ -1,12 +1,11 @@
 from flask import Flask
 from flask_migrate import Migrate
 from config import Config
-from app.models import db #??  # Import db from models
+from .models import db
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
 from .routes.upload import upload_bp
 from .routes.share import share_bp
-
 from .routes.index import index_bp  # Import index blueprint
 
 def create_app():
