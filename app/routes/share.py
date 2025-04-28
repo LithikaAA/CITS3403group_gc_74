@@ -1,33 +1,59 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from ..models import db, User, Playlist, Share
 
-share_bp = Blueprint('share', __name__)
+share_bp = Blueprint('share', __name__, url_prefix='/share')
 
-# Mock data for demonstration
-mock_playlists = [
-    {"id": 1, "name": "Chill Vibes", "song_count": 20},
-    {"id": 2, "name": "Workout Hits", "song_count": 15},
-    {"id": 3, "name": "Indie Mix", "song_count": 25},
-]
-
-mock_friends = [
-    {"username": "alice"},
-    {"username": "bob"},
-    {"username": "charlie"},
-]
-
-@share_bp.route('/share', methods=['GET', 'POST'])
+# ---------- Share a Playlist with a Friend ----------
+@share_bp.route('/', methods=['GET', 'POST'])
+@login_required
 def share():
+    playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
+    friends = User.query.filter(User.id != current_user.id).all()
+
     if request.method == 'POST':
-        selected_playlists = request.form.getlist('selected_playlists')
+        selected_ids = request.form.getlist('selected_playlists')
         friend_username = request.form.get('friend_username')
 
-        if not selected_playlists:
+        if not selected_ids:
             flash('Please select at least one playlist to share.', 'error')
             return redirect(url_for('share.share'))
 
-        # Mock sharing logic
-        flash(f'Shared {len(selected_playlists)} playlist(s) with {friend_username}!', 'success')
+        friend = User.query.filter_by(username=friend_username).first()
+        if not friend:
+            flash('Friend not found.', 'error')
+            return redirect(url_for('share.share'))
+
+        for pid in selected_ids:
+            new_share = Share(
+                playlist_id=int(pid),
+                recipient_id=friend.id,
+                owner_id=current_user.id
+            )
+            db.session.add(new_share)
+        db.session.commit()
+
+        flash(f'Shared {len(selected_ids)} playlist(s) with {friend.username}!', 'success')
         return redirect(url_for('share.share'))
 
-    # On GET, render the form
-    return render_template('share.html', playlists=mock_playlists, friends=mock_friends)
+    return render_template('share.html', playlists=playlists, friends=friends)
+
+# ---------- View Shared With You ----------
+@share_bp.route('/shared')
+@login_required
+def shared_dashboard():
+    shares = Share.query.filter_by(recipient_id=current_user.id).all()
+
+    shared_items = []
+    for share in shares:
+        playlist = share.playlist
+        if playlist:
+            track_data = playlist.track_data_as_chart()  # You'll need to define this helper
+            shared_items.append({
+                'owner': share.owner,
+                'title': playlist.name,
+                'labels': track_data.get('labels', []),
+                'data': track_data.get('counts', [])
+            })
+
+    return render_template('shared_dashboard.html', shared_items=shared_items)
