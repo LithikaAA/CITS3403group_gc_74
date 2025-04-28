@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Sign Up | VibeShare{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h2>Sign Up</h2>
+    <form method="POST" action="{{ url_for('auth.signup') }}">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        
+        <!-- Terms and Conditions Checkbox -->
+        <div class="terms-checkbox">
+            <input type="checkbox" id="terms" name="terms" required>
+            <label for="terms">
+                I agree with <a href="{{ url_for('auth.terms') }}" target="_blank">Terms and Conditions</a>
+            </label>
+        </div>
+        
+        <button type="submit" class="btn-primary">Sign up</button>
+    </form>
+
+    <!-- Centered Logo -->
+    <div class="logo-wrapper">
+        <img src="{{ url_for('static', filename='img/side_logo.png') }}" alt="VibeShare Logo" class="auth-logo">
+    </div>
+</div>
+{% endblock %}

@@ -1,48 +1,94 @@
+
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session  # Flask utilities for routing and rendering
 from ..models import db, User  # Import database and User model
 
-# Create a blueprint for authentication routes
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from werkzeug.utils import secure_filename
+from ..models import db, User
+
 auth_bp = Blueprint('auth', __name__)
 
+# ---------- LOGIN ----------
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-        # Query the database for the user
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+
             # Store user information in the session
             session['user_id'] = user.id
             session['username'] = user.username
             return redirect(url_for('dashboard.dashboard'))  # Redirect to dashboard
         return jsonify({'error': 'Invalid credentials'}), 401
 
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('dashboard.dashboard'))   
+        flash('Invalid email or password.', 'error')
+
     return render_template('login.html')
 
+
+# ---------- SIGNUP ----------
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
-    """
-    Handle user registration.
-    :return: Rendered signup page or redirect to login on successful registration
-    """
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        profile_pic = request.files.get('profile_pic')
 
-        # Check if the user already exists
+        # Check if username or email already exists
         if User.query.filter((User.username == username) | (User.email == email)).first():
-            return jsonify({'error': 'User already exists'}), 400
+            flash('Username or email already exists.', 'error')
+            return render_template('signup.html')
 
-        # Create a new user
-        new_user = User(username=username, email=email)
+        # Handle profile picture upload
+        pic_filename = None
+        if profile_pic and profile_pic.filename != '':
+            filename = secure_filename(profile_pic.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            profile_pic.save(os.path.join(upload_folder, filename))
+            pic_filename = filename
+
+        # Create new user
+        new_user = User(username=username, email=email, profile_pic=pic_filename)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('auth.login'))  # Redirect to login page after successful signup
+        flash('Account created successfully! Please log in.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('signup.html')
+
+
+# ---------- TERMS ----------
+@auth_bp.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+# ---------- ACCOUNT SETUP ----------
+@auth_bp.route('/account-setup', methods=['GET', 'POST'])
+def account_setup():
+    if request.method == 'POST':
+        # Here you would normally process form data, e.g.:
+        name = request.form.get('name')
+        gender = request.form.get('gender')
+        dob = request.form.get('dob')
+        email = request.form.get('email')
+        mobile = request.form.get('mobile')
+
+        # For now, just flash success and redirect
+        flash(f'Account setup completed for {name}!', 'success')
+        return redirect(url_for('dashboard.dashboard'))
+
+    return render_template('account_setup.html')
+
 
     return render_template('signup.html')
 

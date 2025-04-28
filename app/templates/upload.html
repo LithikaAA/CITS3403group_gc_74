@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Upload Data | VibeShare{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10 px-6">
+    <!-- Navbar -->
+    <div class="flex justify-between items-center mb-16">
+        <!-- Logo -->
+        <img src="{{ url_for('static', filename='img/side_logo.png') }}" alt="VibeShare Logo" class="w-48 md:w-56 lg:w-64">
+
+        <!-- Account Button -->
+        <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">
+            Account ▼
+        </button>
+    </div>
+
+    <!-- Main Heading -->
+    <div class="text-center mb-14">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Upload Data</h1>
+        <p class="text-gray-500">Create a new playlist or upload an existing CSV file.</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-center space-x-10 mb-16">
+        <!-- Create New Playlist -->
+        <a href="{{ url_for('upload.create_playlist') }}" 
+           class="flex items-center space-x-4 bg-white px-10 py-6 rounded-2xl shadow hover:shadow-lg transition">
+            <div class="bg-indigo-100 p-3 rounded-full">
+                <i data-feather="music" class="text-indigo-500 w-6 h-6"></i>
+            </div>
+            <div class="text-left">
+                <p class="font-semibold text-lg text-gray-800">Create New Playlist</p>
+                <p class="text-sm text-gray-400">Add songs manually</p>
+            </div>
+        </a>
+
+        <!-- Upload CSV -->
+        <form action="{{ url_for('upload.upload_csv') }}" method="POST" enctype="multipart/form-data"
+              class="flex items-center space-x-4 bg-white px-10 py-6 rounded-2xl shadow hover:shadow-lg transition cursor-pointer">
+            <label for="csv-upload" class="flex items-center space-x-4 cursor-pointer">
+                <div class="bg-indigo-100 p-3 rounded-full">
+                    <i data-feather="file-text" class="text-indigo-500 w-6 h-6"></i>
+                </div>
+                <div class="text-left">
+                    <p class="font-semibold text-lg text-gray-800">Upload Playlist CSV</p>
+                    <p class="text-sm text-gray-400">Import playlist from file</p>
+                </div>
+            </label>
+            <input id="csv-upload" type="file" name="playlist_csv" class="hidden" onchange="this.form.submit()">
+        </form>
+    </div>
+
+    <!-- Recent Uploads -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Recent Uploads</h2>
+    <div class="flex justify-center">
+        <div class="flex items-center space-x-4 bg-white px-8 py-5 rounded-2xl shadow">
+            <div class="bg-indigo-100 p-3 rounded-full">
+                <i data-feather="list" class="text-indigo-500 w-6 h-6"></i>
+            </div>
+            <div class="text-left">
+                <p class="font-semibold text-lg text-gray-800">{{ username }}'s Favourites</p>
+                <p class="text-sm text-gray-400">{{ song_count }} songs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    feather.replace();
+</script>
+{% endblock %}

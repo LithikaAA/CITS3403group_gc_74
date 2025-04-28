@@ -1,11 +1,10 @@
-# Import necessary modules
-from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
-from .models import db
+from flask import Flask
+from .models import db  # Import db from models
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
 from .routes.upload import upload_bp
 from .routes.share import share_bp
+from .routes.index import index_bp  # Import index blueprint
 
 def create_app():
     """
@@ -16,26 +15,18 @@ def create_app():
     app = Flask(__name__)
 
     # Configure the app
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibeshare.db'  # SQLite database URI
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable modification tracking
-    app.config['SECRET_KEY'] = 'your_secret_key'  # Secret key for session management
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibeshare.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SECRET_KEY'] = 'your_secret_key'
 
     # Initialize extensions with the app
     db.init_app(app)
 
-    # Register blueprints (e.g., authentication routes)
+    # Register all blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)
     app.register_blueprint(share_bp)
-
-    # Define the home route
-    @app.route("/")
-    def index():
-        """
-        Render the intro page.
-        :return: Rendered HTML for the intro page
-        """
-        return render_template("index.html")
+    app.register_blueprint(index_bp)  # Register index blueprint
 
     return app
