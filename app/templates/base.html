@@ -1,30 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}VibeShare{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <title>{% block title %}VibeShare{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Feather Icons CDN -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- Your custom stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- Inline animations -->
+  <style>
+    @keyframes fade-in {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.8s ease-out forwards;
+    }
+  </style>
 </head>
-<body>
-    <header>
-        <h1>VibeShare 🎵</h1>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="/upload">Upload</a>
-            <a href="/share">Share</a>
-            <a href="/login">Login</a>
-            <a href="/signup">Sign Up</a>
-        </nav>
-    </header>
+<body class="min-h-screen bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100">
 
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-    <footer>
-        <p>&copy; 2025 VibeShare</p>
-    </footer>
+  <main class="flex flex-col items-center justify-center py-12 px-4 w-full">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Auto-hide Flash Messages -->
+  <script>
+    setTimeout(function() {
+      const flash = document.querySelector('.flash-container');
+      if(flash) {
+        flash.style.display = 'none';
+      }
+    }, 3000);
+
+    // Initialise Feather Icons AFTER page loads
+    feather.replace();
+  </script>
 </body>
 </html>

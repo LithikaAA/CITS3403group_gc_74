@@ -1,40 +1,128 @@
 {% extends "base.html" %}
-
-{% block title %}Dashboard{% endblock %}
+{% block title %}Vibe Stats Dashboard | VibeShare{% endblock %}
 
 {% block content %}
-<h1>Welcome, {{ username }}!</h1> <!-- Add this line to display the username -->
+<div class="max-w-7xl mx-auto p-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center space-x-4">
+            <img src="{{ url_for('static', filename='img/side_logo.png') }}" alt="VibeShare Logo" class="w-48 md:w-56 lg:w-64">
+            <h1 class="text-3xl font-bold text-indigo-700">Vibe Stats Dashboard</h1>
+        </div>
+        <button class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition">Account</button>
+    </div>
 
-<p>This is your personalized dashboard.</p>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-4 gap-6 mb-12">
+        <div class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6 rounded-xl shadow-md">
+            <p class="text-sm">Total Songs Played</p>
+            <h2 class="text-3xl font-bold mt-2">{{ summary.total_songs }}</h2>
+        </div>
+        <div class="bg-gradient-to-r from-green-400 to-emerald-500 text-white p-6 rounded-xl shadow-md">
+            <p class="text-sm">Total Hours Listened</p>
+            <h2 class="text-3xl font-bold mt-2">{{ summary.total_hours }} hrs</h2>
+        </div>
+        <div class="bg-gradient-to-r from-pink-400 to-rose-500 text-white p-6 rounded-xl shadow-md">
+            <p class="text-sm">Unique Artists</p>
+            <h2 class="text-3xl font-bold mt-2">{{ summary.unique_artists }}</h2>
+        </div>
+        <div class="bg-gradient-to-r from-yellow-400 to-amber-500 text-white p-6 rounded-xl shadow-md">
+            <p class="text-sm">Top Genre</p>
+            <h2 class="text-3xl font-bold mt-2">{{ summary.top_genre }}</h2>
+        </div>
+    </div>
 
-<!-- Example of existing dashboard content -->
-<div>
-    <h2>Your Recent Activity</h2>
-    <ul>
-        <li>Uploaded file: spotify_data.csv</li>
-        <li>Shared data with: friend@example.com</li>
-    </ul>
+    <!-- Charts Section -->
+    <div class="grid grid-cols-3 gap-8 mb-12">
+        <!-- Bar Chart -->
+        <div class="col-span-2 bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Songs Played by Month</h3>
+            <canvas id="songsByMonth"></canvas>
+        </div>
+
+        <!-- Pie Chart -->
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Genre Distribution</h3>
+            <canvas id="genreChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Lists -->
+    <div class="grid grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Top 5 Artists</h3>
+            <ul class="space-y-2 text-gray-700">
+                {% for artist in top_artists %}
+                <li>{{ loop.index }}. {{ artist }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Top 5 Songs</h3>
+            <ul class="space-y-2 text-gray-700">
+                {% for song in top_songs %}
+                <li>{{ loop.index }}. {{ song }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 </div>
 
-<a href="{{ url_for('auth.logout') }}" class="button">Logout</a>
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div>
-  <h2>🎧 Top Artists/Tracks</h2>
-  <div class="chart-placeholder">[Bar Chart Placeholder]</div>
-</div>
+<script>
+    // ------- Songs Played by Month (Bar Chart) -------
+    const barCtx = document.getElementById('songsByMonth').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ songs_by_month.labels | tojson }},
+            datasets: [{
+                label: 'Songs Played',
+                data: {{ songs_by_month.data | tojson }},
+                backgroundColor: '#6366F1',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#6B7280' }
+                },
+                x: {
+                    ticks: { color: '#6B7280' }
+                }
+            },
+            plugins: { 
+                legend: { display: false }
+            }
+        }
+    });
 
-<div>
-  <h2>🎶 Genre Breakdown</h2>
-  <div class="chart-placeholder">[Pie Chart Placeholder]</div>
-</div>
-
-<div>
-  <h2>📈 Mood Over Time</h2>
-  <div class="chart-placeholder">[Line Chart Placeholder]</div>
-</div>
-
-<div>
-  <h2>🧠 Your Audio DNA</h2>
-  <div class="chart-placeholder">[Radar Chart Placeholder]</div>
-</div>
+    // ------- Genre Distribution (Pie Chart) -------
+    const pieCtx = document.getElementById('genreChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ genre_distribution.labels | tojson }},
+            datasets: [{
+                data: {{ genre_distribution.data | tojson }},
+                backgroundColor: ['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#9CA3AF'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#374151' }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

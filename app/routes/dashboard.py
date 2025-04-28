@@ -1,12 +1,40 @@
 from flask import Blueprint, render_template
 
-# Create a blueprint for dashboard routes
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/dashboard')
 def dashboard():
-    """
-    Render the user dashboard.
-    :return: Rendered dashboard page
-    """
-    return render_template('dashboard.html')
+    # Mock Data for Summary Cards
+    summary = {
+        "total_songs": 1245,
+        "total_hours": 312,
+        "unique_artists": 98,
+        "top_genre": "Pop"
+    }
+
+    # Mock Data for Bar Chart (Songs Played by Month)
+    songs_by_month = {
+        "labels": ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        "data": [45, 60, 50, 70, 90, 65, 80, 75, 60, 85]
+    }
+
+    # Mock Data for Pie Chart (Genre Distribution)
+    genre_distribution = {
+        "labels": ['Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Other'],
+        "data": [40, 25, 20, 10, 5]
+    }
+
+    # Top 5 Artists List
+    top_artists = ["The Weeknd", "Dua Lipa", "Ed Sheeran", "Taylor Swift", "Drake"]
+
+    # Top 5 Songs List
+    top_songs = ["Blinding Lights", "Levitating", "Shape of You", "Anti-Hero", "God's Plan"]
+
+    return render_template(
+        'dashboard.html',
+        summary=summary,
+        songs_by_month=songs_by_month,
+        genre_distribution=genre_distribution,
+        top_artists=top_artists,
+        top_songs=top_songs
+    )
