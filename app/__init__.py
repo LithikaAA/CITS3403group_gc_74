@@ -24,7 +24,7 @@ def create_app():
 
     # Register all blueprints
     app.register_blueprint(auth_bp)
-    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)
     app.register_blueprint(share_bp)
     app.register_blueprint(index_bp)  # Register index blueprint

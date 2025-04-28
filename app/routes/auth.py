@@ -1,3 +1,7 @@
+
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session  # Flask utilities for routing and rendering
+from ..models import db, User  # Import database and User model
+
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
@@ -14,9 +18,17 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+
+            # Store user information in the session
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return redirect(url_for('dashboard.dashboard'))  # Redirect to dashboard
+        return jsonify({'error': 'Invalid credentials'}), 401
+
             flash('Logged in successfully!', 'success')
             return redirect(url_for('dashboard.dashboard'))   
         flash('Invalid email or password.', 'error')
+
     return render_template('login.html')
 
 
@@ -78,4 +90,12 @@ def account_setup():
     return render_template('account_setup.html')
 
 
+    return render_template('signup.html')
 
+@auth_bp.route('/logout')
+def logout():
+    """
+    Log the user out by clearing the session.
+    """
+    session.clear()
+    return redirect(url_for('auth.login'))
