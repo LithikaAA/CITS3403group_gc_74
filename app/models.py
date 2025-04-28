@@ -5,6 +5,8 @@ import sqlalchemy.orm as so
 from werkzeug.security import generate_password_hash, check_password_hash  # For password hashing and verification
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import os
+from datetime import datetime
 
 # Create db object (not bound to app yet)
 db = SQLAlchemy()
@@ -38,6 +40,11 @@ class User(db.Model):
     shares_received: so.Mapped[List["SharedVisualisation"]] = so.relationship(
         back_populates="recipient",
         foreign_keys="SharedVisualisation.shared_with_id",
+        cascade="all, delete"
+    )
+
+    shared_data: so.Mapped[List["SharedData"]] = so.relationship(
+        back_populates="user",
         cascade="all, delete"
     )
 
@@ -85,3 +92,23 @@ class SharedVisualisation(db.Model):
 
     sharer: so.Mapped["User"] = so.relationship(foreign_keys=[shared_by_id], back_populates="shares_sent") # Relationship to the sharer (user who shared the visualisation) - allows access via: shared_visualisation.sharer
     recipient: so.Mapped["User"] = so.relationship(foreign_keys=[shared_with_id], back_populates="shares_received") # Relationship to the recipient (user with whom the visualisation was shared) - Allows access via: shared_visualisation.recipient
+
+class SharedData(db.Model):
+    __tablename__ = "shared_data"  # Name of the table in the database
+
+    # Primary key: Unique identifier for each shared data record
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+
+    # Foreign key linking to User
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False, index=True)
+
+    # File details
+    file_path: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Path to uploaded file
+    file_name: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Original file name
+    file_type: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)   # File type (e.g., CSV, JSON)
+
+    # Timestamp of upload
+    timestamp: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
+
+    # Relationship to the User model
+    user: so.Mapped['User'] = so.relationship(back_populates="shared_data")  # Link back to User model

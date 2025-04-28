@@ -1,13 +1,35 @@
 {% extends "base.html" %}
-
-{% block title %}Welcome to VibeShare{% endblock %}
+{% block title %}Welcome | VibeShare{% endblock %}
 
 {% block content %}
-<h2>Discover Your Music Taste</h2>
-<p>Upload your listening data to explore your music preferences and share your vibe with friends.</p>
+<div class="flex flex-col items-center justify-center space-y-6 animate-fade-in">
+  <!-- Logo that flies in -->
+  <img src="{{ url_for('static', filename='img/logo.png') }}" 
+       alt="VibeShare Logo" 
+       class="w-48 md:w-64 lg:w-72 animate-logo" />
 
-<div class="auth-links">
-    <a href="{{ url_for('auth.login') }}" class="button">Login</a>
-    <a href="{{ url_for('auth.signup') }}" class="button">Sign Up</a>
+  <!-- Tagline -->
+  <p class="slogan">Discover. Share. Vibe.</p>
+
+  <!-- Buttons -->
+  <div class="flex flex-col space-y-4 w-full max-w-xs sm:flex-row sm:space-y-0 sm:space-x-4 animate-buttons">
+    <a href="{{ url_for('auth.login') }}" class="w-full">
+      <button class="w-full py-3 bg-pink-400 hover:bg-pink-500 text-white font-semibold rounded-full shadow transition">
+        Log In
+      </button>
+    </a>
+    <a href="{{ url_for('auth.signup') }}" class="w-full">
+      <button class="w-full py-3 border-2 border-pink-400 text-pink-400 hover:bg-pink-400 hover:text-white font-semibold rounded-full shadow transition">
+        Sign Up
+      </button>
+    </a>
+  </div>
+
+  <!-- Footer Links -->
+  <div class="mt-6 text-sm text-gray-500 space-x-4">
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+    <a href="#">Privacy Policy</a>
+  </div>
 </div>
 {% endblock %}

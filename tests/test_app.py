@@ -42,9 +42,16 @@ class FlaskAppTestCase(unittest.TestCase):
         """
         Test the dashboard page.
         """
-        response = self.client.get('/dashboard')
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Dashboard', response.data)  # Replace 'Dashboard' with actual content in dashboard.html
+        with self.app.test_client() as client:
+            # Simulate a logged-in user by setting the session
+            with client.session_transaction() as session:
+                session['user_id'] = 1  # Mock user ID
+                session['username'] = 'testuser'
+
+            # Access the dashboard
+            response = client.get('/dashboard/')  # Ensure the URL matches the registered route
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b'Dashboard', response.data)  # Replace 'Dashboard' with actual content in dashboard.html
 
     def test_upload_page(self):
         """
