@@ -1,12 +1,13 @@
 from flask import Flask
+from flask_migrate import Migrate
 from flask_login import LoginManager
-from .models import db  # Import db from models
+from config import Config
+from .models import db, User
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
 from .routes.upload import upload_bp
 from .routes.share import share_bp
 from .routes.index import index_bp  # Import index blueprint
-from .models import User
 
 login_manager = LoginManager()
 
@@ -19,40 +20,26 @@ def create_app():
     app = Flask(__name__)
 
     # Configure the app
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibeshare.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = 'your_secret_key'
+    app.config.from_object(Config)
 
     # Initialize extensions with the app
     db.init_app(app)
-    
+    migrate = Migrate(app, db)
+
     # Setup LoginManager
-    login_manager = LoginManager()
-    login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
-    
-    # Make current_user available in Jinja templates!
+    login_manager.login_view = 'auth.login'
+
+    # Make current_user available in Jinja templates
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-
-    # Import and register blueprints
-    from .routes.auth import auth_bp
-    from .routes.dashboard import dashboard_bp
-    from .routes.upload import upload_bp
-    from .routes.share import share_bp
-    from .routes.index import index_bp
-
 
     # Register all blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)
     app.register_blueprint(share_bp)
-    app.register_blueprint(index_bp)  # Register index blueprint
+    app.register_blueprint(index_bp)
 
     return app
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))

@@ -104,7 +104,7 @@ def delete_shared_data(data_id):
     flash('File deleted successfully!')
     return redirect(url_for('share.upload_shared_data'))
 
-# ---------- View Shared With You ----------
+# ---------- View Shared Playlists Shared With You ----------
 @share_bp.route('/shared')
 @login_required
 def shared_dashboard():

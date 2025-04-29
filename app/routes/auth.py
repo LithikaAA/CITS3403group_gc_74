@@ -1,9 +1,9 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
-from flask_login import login_user, logout_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user
 from ..models import db, User
-import os
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -14,14 +14,14 @@ def login():
         identifier = request.form.get('identifier')  # username OR email
         password = request.form.get('password')
 
-        # Try matching by username or email
+        # Match by either username or email
         user = User.query.filter(
             (User.username == identifier) | (User.email == identifier)
         ).first()
 
         if user and user.check_password(password):
-            login_user(user)  # Login with Flask-Login
-            session['user_id'] = user.id  # Also store manually if you need elsewhere
+            login_user(user)  # Flask-Login session
+            session['user_id'] = user.id
             session['username'] = user.username
             flash('Logged in successfully!', 'success')
             return redirect(url_for('dashboard.dashboard'))
@@ -30,6 +30,7 @@ def login():
         return redirect(url_for('auth.login'))
 
     return render_template('login.html')
+
 
 # ---------- SIGNUP ----------
 @auth_bp.route('/signup', methods=['GET', 'POST'])
@@ -40,7 +41,7 @@ def signup():
         password = request.form.get('password')
         profile_pic = request.files.get('profile_pic')
 
-        # Check if username or email already exists
+        # Check for existing user
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash('Username or email already exists.', 'error')
             return render_template('signup.html')
@@ -54,7 +55,7 @@ def signup():
             profile_pic.save(os.path.join(upload_folder, filename))
             pic_filename = filename
 
-        # Create new user
+        # Create user
         new_user = User(username=username, email=email, profile_pic=pic_filename)
         new_user.set_password(password)
         db.session.add(new_user)
@@ -65,21 +66,24 @@ def signup():
 
     return render_template('signup.html')
 
+
 # ---------- LOGOUT ----------
 @auth_bp.route('/logout')
 def logout():
     """
-    Log the user out by clearing the session and Flask-Login session.
+    Log the user out by clearing both Flask-Login and manual session data.
     """
     logout_user()
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
 
+
 # ---------- TERMS ----------
 @auth_bp.route('/terms')
 def terms():
     return render_template('terms.html')
+
 
 # ---------- ACCOUNT SETUP ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
