@@ -1,11 +1,9 @@
-
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session  # Flask utilities for routing and rendering
-from ..models import db, User  # Import database and User model
-
-import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
+from flask_login import login_user, logout_user
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from ..models import db, User
+import os
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -13,24 +11,25 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
+        identifier = request.form.get('identifier')  # username OR email
         password = request.form.get('password')
 
-        user = User.query.filter_by(email=email).first()
+        # Try matching by username or email
+        user = User.query.filter(
+            (User.username == identifier) | (User.email == identifier)
+        ).first()
+
         if user and user.check_password(password):
-
-            # Store user information in the session
-            session['user_id'] = user.id
+            login_user(user)  # Login with Flask-Login
+            session['user_id'] = user.id  # Also store manually if you need elsewhere
             session['username'] = user.username
-            return redirect(url_for('dashboard.dashboard'))  # Redirect to dashboard
-        return jsonify({'error': 'Invalid credentials'}), 401
-
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('dashboard.dashboard'))   
-        flash('Invalid email or password.', 'error')
+            return redirect(url_for('dashboard.dashboard'))
+
+        flash('Invalid username/email or password.', 'error')
+        return redirect(url_for('auth.login'))
 
     return render_template('login.html')
-
 
 # ---------- SIGNUP ----------
 @auth_bp.route('/signup', methods=['GET', 'POST'])
@@ -66,6 +65,16 @@ def signup():
 
     return render_template('signup.html')
 
+# ---------- LOGOUT ----------
+@auth_bp.route('/logout')
+def logout():
+    """
+    Log the user out by clearing the session and Flask-Login session.
+    """
+    logout_user()
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('auth.login'))
 
 # ---------- TERMS ----------
 @auth_bp.route('/terms')
@@ -76,26 +85,13 @@ def terms():
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
 def account_setup():
     if request.method == 'POST':
-        # Here you would normally process form data, e.g.:
         name = request.form.get('name')
         gender = request.form.get('gender')
         dob = request.form.get('dob')
         email = request.form.get('email')
         mobile = request.form.get('mobile')
 
-        # For now, just flash success and redirect
         flash(f'Account setup completed for {name}!', 'success')
         return redirect(url_for('dashboard.dashboard'))
 
     return render_template('account_setup.html')
-
-
-    return render_template('signup.html')
-
-@auth_bp.route('/logout')
-def logout():
-    """
-    Log the user out by clearing the session.
-    """
-    session.clear()
-    return redirect(url_for('auth.login'))
