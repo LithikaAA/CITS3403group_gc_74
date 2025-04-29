@@ -1,8 +1,12 @@
-from app import app
-import os
+from app import create_app, db
 
-app.run(
-    debug=os.getenv("FLASK_DEBUG", "False").lower() == "true",
-    host=os.getenv("FLASK_RUN_HOST", "127.0.0.1"),
-    port=int(os.getenv("FLASK_RUN_PORT", 5000))
-)
+# Create the app using the factory
+app = create_app()
+
+# Create tables inside app context
+with app.app_context():
+    db.create_all()
+
+# Run the app
+if __name__ == '__main__':
+    app.run(debug=True)

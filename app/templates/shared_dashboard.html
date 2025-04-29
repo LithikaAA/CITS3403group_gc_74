@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Shared With You | VibeShare{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>📤 Charts Shared With You</h2>
+
+    {% if shared_items %}
+        {% for item in shared_items %}
+            <div class="chart-card">
+                <h3>{{ item.title }} (shared by {{ item.owner.username }})</h3>
+                <canvas id="sharedChart{{ loop.index }}"></canvas>
+                <script type="module">
+                    import { renderBar } from "{{ url_for('static', filename='js/charts.js') }}";
+                    renderBar(
+                        "sharedChart{{ loop.index }}",
+                        {{ item.labels | tojson }},
+                        {{ item.data | tojson }},
+                        { datasetLabel: "Playlist Data" }
+                    );
+                </script>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No shared playlists yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
