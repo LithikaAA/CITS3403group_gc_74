@@ -1,8 +1,23 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
+from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
-from ..models import db, User, Playlist, Share
+from ..models import db, User, Playlist, Share, SharedData
+import os
 
 share_bp = Blueprint('share', __name__, url_prefix='/share')
+
+# Directory to store uploaded files
+UPLOAD_FOLDER = 'app/static/uploads'
+ALLOWED_EXTENSIONS = {'csv', 'json'}
+
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    """
+    Check if the uploaded file has an allowed extension.
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ---------- Share a Playlist with a Friend ----------
 @share_bp.route('/', methods=['GET', 'POST'])
@@ -38,6 +53,57 @@ def share():
 
     return render_template('share.html', playlists=playlists, friends=friends)
 
+# ---------- Handle Uploads of Shared Spotify Data ----------
+@share_bp.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload_shared_data():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            file_path = os.path.join(upload_folder, filename)
+            file.save(file_path)
+
+            new_shared_data = SharedData(
+                user_id=current_user.id,
+                file_path=file_path,
+                file_name=filename,
+                file_type=filename.rsplit('.', 1)[1].lower()
+            )
+            db.session.add(new_shared_data)
+            db.session.commit()
+            flash('File uploaded successfully!')
+            return redirect(url_for('share.upload_shared_data'))
+
+    shared_data = SharedData.query.filter_by(user_id=current_user.id).all()
+    return render_template('share_upload.html', shared_data=shared_data)
+
+# ---------- Delete Uploaded Shared Data ----------
+@share_bp.route('/upload/delete/<int:data_id>', methods=['POST'])
+@login_required
+def delete_shared_data(data_id):
+    shared_data = SharedData.query.get_or_404(data_id)
+    if shared_data.user_id != current_user.id:
+        return "Unauthorized", 403
+
+    if os.path.exists(shared_data.file_path):
+        os.remove(shared_data.file_path)
+
+    db.session.delete(shared_data)
+    db.session.commit()
+    flash('File deleted successfully!')
+    return redirect(url_for('share.upload_shared_data'))
+
 # ---------- View Shared With You ----------
 @share_bp.route('/shared')
 @login_required
@@ -48,7 +114,7 @@ def shared_dashboard():
     for share in shares:
         playlist = share.playlist
         if playlist:
-            track_data = playlist.track_data_as_chart()  # You'll need to define this helper
+            track_data = playlist.track_data_as_chart()
             shared_items.append({
                 'owner': share.owner,
                 'title': playlist.name,
