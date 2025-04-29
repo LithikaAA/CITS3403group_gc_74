@@ -14,7 +14,6 @@ def dashboard():
     # Debugging: Print session data
     print("Session data:", session)
 
-    return render_template('dashboard.html', username=session.get('username'))
     # Mock Data for Summary Cards
     summary = {
         "total_songs": 1245,
@@ -43,6 +42,7 @@ def dashboard():
 
     return render_template(
         'dashboard.html',
+        username=session.get('username'),
         summary=summary,
         songs_by_month=songs_by_month,
         genre_distribution=genre_distribution,
