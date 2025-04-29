@@ -130,11 +130,21 @@ class SharedVisualisation(db.Model):
 
 # ------------------ SharedData Model ------------------
 class SharedData(db.Model):
-    __tablename__ = "shared_data"
-
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False, index=True)
-    file_path: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)
-    file_name: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)
-    file_type: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)
-    timestamp: so.Mapped[datetime] = so.mapped_column(default=datetime_
+     __tablename__ = "shared_data"  # Name of the table in the database
+ 
+     # Primary key: Unique identifier for each shared data record
+     id: so.Mapped[int] = so.mapped_column(primary_key=True)
+ 
+     # Foreign key linking to User
+     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False, index=True)
+ 
+     # File details
+     file_path: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Path to uploaded file
+     file_name: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Original file name
+     file_type: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)   # File type (e.g., CSV, JSON)
+ 
+     # Timestamp of upload
+     timestamp: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
+ 
+     # Relationship to the User model
+     user: so.Mapped['User'] = so.relationship(back_populates="shared_data")  # Link back to User model
