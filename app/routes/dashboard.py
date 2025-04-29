@@ -56,6 +56,9 @@ def dashboard():
         "total_minutes": 1200,
         "avg_tempo": 120
     }
+    
+    # Mock Data for User Top Artists
+    top_artists = ["Justin Bieber", "Ed Sheeran", "Artist 3", "Artist 4", "Artist 5"]
 
     return render_template(
         'dashboard.html',
@@ -65,8 +68,9 @@ def dashboard():
         danceability_energy=danceability_energy,
         mood_profile=mood_profile,
         mode=mode,
-        top_tracks=top_tracks
-    )
+        top_tracks=top_tracks,
+        top_artists=top_artists  
+)
 
 
 @dashboard_bp.route('/test-data')
