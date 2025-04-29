@@ -2,193 +2,112 @@
 {% block title %}Vibe Stats Dashboard | VibeShare{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-b from-blue-100 via-indigo-100 to-pink-100 py-8">
-  <div class="max-w-screen-2xl mx-auto px-4">
-    <!-- Header -->
-    <!-- <div class="flex items-center space-x-4 mb-8">
-      <img src="{{ url_for('static', filename='img/side_logo.png') }}" alt="VibeShare Logo" class="w-40 md:w-56">
-    </div> -->
-    <!-- Dashboard Grid: 2 main charts on top, rest below -->
+<div class="min-h-screen w-full overflow-x-hidden py-8 px-4">
+  <div class="max-w-screen-2xl mx-auto space-y-12">
+
+    <!-- Charts Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- Row 1: Two big charts -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col w-full h-full">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Total Minutes Played by Track</h2>
-        <p class="text-xs text-gray-400 mb-4">See which tracks you've dedicated the most listening time to.</p>
-        <canvas id="minutesByTrack" class="w-full h-96"></canvas>
+      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Total Minutes Played by Track</h2>
+        <p class="text-sm text-gray-500 mb-6">See which tracks you've dedicated the most listening time to.</p>
+        <div class="w-full overflow-x-auto">
+          <canvas id="minutesByTrack" class="w-full h-auto max-w-full"></canvas>
+        </div>
       </div>
-      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col w-full h-full">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Danceability vs Energy</h2>
-        <p class="text-xs text-gray-400 mb-4">Bubble size = minutes played. This chart shows whether you spend more time on chill tracks or energetic, danceable ones. Visualise your listening tendencies in terms of mood and energy. Larger bubbles mean you spent more time on those tracks.</p>
-        <canvas id="danceabilityEnergy" class="w-full h-96"></canvas>
+
+      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Danceability vs Energy</h2>
+        <p class="text-sm text-gray-500 mb-6">Bubble size = minutes played. Shows whether you spend more time on chill tracks or energetic ones. Larger bubbles mean more listening time.</p>
+        <div class="w-full overflow-x-auto">
+          <canvas id="danceabilityEnergy" class="w-full h-auto max-w-full"></canvas>
+        </div>
       </div>
-      <!-- Row 2: Nested grid for the rest -->
-      <div class="md:col-span-2">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-8">
-          <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col justify-between w-full h-full">
-            <h2 class="text-lg font-semibold text-gray-700 mb-1">Summary Card</h2>
-            <p class="text-xs text-gray-400 mb-4">See your listening habits in a nutshell.</p>
-            <div class="space-y-7">
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <!-- Music Note SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13"/>
-                    <circle cx="6" cy="18" r="3" fill="currentColor"/>
-                    <circle cx="18" cy="16" r="3" fill="currentColor"/>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">Most Played Track</p>
-                  <p class="text-base font-bold text-indigo-600">{{ top_tracks.most_played }}</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <!-- Clock SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 6v6l4 2"/>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">Total Minutes Played</p>
-                  <p class="text-base font-bold text-indigo-600">{{ top_tracks.total_minutes }}</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <!-- Metronome SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0 0l-6-6m6 6l6-6"/>
-                    <circle cx="12" cy="17" r="1.5" fill="currentColor"/>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">Average Tempo</p>
-                  <p class="text-base font-semibold text-pink-500">{{ top_tracks.avg_tempo }} BPM</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-green-400 to-blue-400 p-3 rounded-full flex items-center justify-center">
-                  <!-- Mood SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10h.01M15 10h.01M8 15c1.333-1 4.667-1 6 0" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">Top Mood</p>
-                  <p class="text-lg font-bold text-green-500">Happy</p>
-                </div>
-              </div>
+    </div>
+
+    <!-- Grid Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+
+      <!-- Summary Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col space-y-6 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-lg font-semibold text-gray-700">Summary</h2>
+        <div class="space-y-6">
+          <div class="flex items-center space-x-4">
+            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Most Played Track</p>
+              <p class="text-lg font-bold text-indigo-600">{{ top_tracks.most_played }}</p>
             </div>
           </div>
-          <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col w-full h-full">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">Mood Profile</h2>
-            <p class="text-xs text-gray-400 mb-4">Visualise your overall music mood based on what you play most.</p>
-            <canvas id="moodProfile" class="w-full h-80"></canvas>
-          </div>
-          <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col w-full h-full">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">Listening Time by Mode</h2>
-            <p class="text-xs text-gray-400 mb-4">Find out if you prefer happy major tones or emotional minor vibes.</p>
-            <div class="w-full flex flex-col items-center">
-              <canvas id="modeChart" class="w-full max-w-xl h-80"></canvas>
+          <div class="flex items-center space-x-4">
+            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 6v6l4 2"/></svg>
             </div>
-            <div class="flex flex-col space-y-2 mt-4">
-              <div class="flex items-center space-x-2">
-                <span class="inline-block w-4 h-4 rounded bg-[#a5b4fc]"></span>
-                <span class="text-xs text-gray-600 font-bold">Major</span>
-                <span class="text-xs text-gray-400">(Major Key: Happy and uplifting music.)</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <span class="inline-block w-4 h-4 rounded bg-[#f472b6]"></span>
-                <span class="text-xs text-gray-600 font-bold">Minor</span>
-                <span class="text-xs text-gray-400">(Minor Key: Emotional or somber songs.)</span>
-              </div>
+            <div>
+              <p class="text-xs text-gray-400">Total Minutes Played</p>
+              <p class="text-lg font-bold text-indigo-600">{{ top_tracks.total_minutes }}</p>
             </div>
           </div>
-          <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col w-full h-full">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">Top Artists</h2>
-            <p class="text-xs text-gray-400 mb-4">Your most listened artists</p>
-            <div class="space-y-4">
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-yellow-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <!-- Crown SVG for top artist -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M5 17l-3-9 7 6 3-8 3 8 7-6-3 9z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">#1 Artist</p>
-                  <p class="text-base font-bold text-yellow-600">Justin Bieber</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <!-- User SVG -->
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">#2 Artist</p>
-                  <p class="text-base font-bold text-indigo-700">Ed Sheeran</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">#3 Artist</p>
-                  <p class="text-base font-bold text-indigo-700">Artist 3</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">#4 Artist</p>
-                  <p class="text-base font-bold text-indigo-700">Artist 4</p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">#5 Artist</p>
-                  <p class="text-base font-bold text-indigo-700">Artist 5</p>
-                </div>
-              </div>
+          <div class="flex items-center space-x-4">
+            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0 0l-6-6m6 6l6-6"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400">Average Tempo</p>
+              <p class="text-lg font-semibold text-pink-500">{{ top_tracks.avg_tempo }} BPM</p>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Mood Profile Radar Chart -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Mood Profile</h2>
+        <p class="text-xs text-gray-400 mb-4">Visualize your music mood distribution.</p>
+        <div class="w-full overflow-x-auto">
+          <canvas id="moodProfile" class="w-full h-auto max-w-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Mode Analysis -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Listening Time by Mode</h2>
+        <p class="text-xs text-gray-400 mb-4">Happy (Major) vs Emotional (Minor) moods.</p>
+        <div class="w-full overflow-x-auto">
+          <canvas id="modeChart" class="w-full h-auto max-w-full"></canvas>
+        </div>
+        <div class="text-xs text-gray-500 mt-4">
+          <p><span class="font-bold">Major:</span> Happy and uplifting tones.</p>
+          <p><span class="font-bold">Minor:</span> Emotional or somber tones.</p>
+        </div>
+      </div>
+
+      <!-- Top Artists -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Top Artists</h2>
+        <p class="text-xs text-gray-400 mb-4">Your most listened artists.</p>
+        <div class="space-y-4 w-full">
+          {% for artist in top_artists %}
+          <div class="flex items-center space-x-4 {% if loop.index == 1 %}text-xl{% else %}text-base{% endif %} transform hover:scale-110 transition duration-300">
+            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <p class="font-bold text-indigo-700">#{{ loop.index }} {{ artist }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
     </div>
+
   </div>
 </div>
 
-<!-- Chart.js CDN -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // To use gradients in Chart.js, see the comments below for each chart.
-    // Example: const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    // gradient.addColorStop(0, '#a5b4fc'); gradient.addColorStop(1, '#f472b6');
-    // Then set backgroundColor: gradient
-
     // Total Minutes by Track (Bar Chart)
     const minutesByTrackCtx = document.getElementById('minutesByTrack').getContext('2d');
     new Chart(minutesByTrackCtx, {
@@ -254,7 +173,7 @@
             datasets: [{
                 label: 'Your Mood Profile',
                 data: {{ mood_profile.data | tojson | safe }},
-                backgroundColor: 'rgba(165, 180, 252, 0.2)',
+                backgroundColor: 'rgba(169, 176, 207, 0.2)',
                 borderColor: '#a5b4fc',
                 pointBackgroundColor: '#6366F1'
             }]
@@ -295,4 +214,3 @@
     });
 </script>
 {% endblock %}
-
