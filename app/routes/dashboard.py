@@ -23,32 +23,49 @@ def dashboard():
         "top_genre": "Pop"
     }
 
-    # Mock Data for Bar Chart (Songs Played by Month)
-    songs_by_month = {
-        "labels": ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-        "data": [45, 60, 50, 70, 90, 65, 80, 75, 60, 85]
+    # Mock Data for Bar Chart (Minutes Played by Track)
+    minutes_by_track = {
+        "labels": ["Blinding Lights", "Levitating", "Shape of You", "Anti-Hero", "God's Plan"],
+        "data": [120, 95, 85, 75, 60]
     }
 
-    # Mock Data for Pie Chart (Genre Distribution)
-    genre_distribution = {
-        "labels": ['Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Other'],
-        "data": [40, 25, 20, 10, 5]
+    # Mock Data for Bubble Chart (Danceability vs Energy)
+    danceability_energy = {
+        "data": [
+            {"x": 0.8, "y": 0.9, "r": 15},  # Example: Blinding Lights
+            {"x": 0.7, "y": 0.8, "r": 12},  # Example: Levitating
+            {"x": 0.6, "y": 0.7, "r": 10},  # Example: Shape of You
+            {"x": 0.5, "y": 0.6, "r": 8},   # Example: Anti-Hero
+            {"x": 0.4, "y": 0.5, "r": 6}    # Example: God's Plan
+        ]
     }
 
-    # Top 5 Artists List
-    top_artists = ["The Weeknd", "Dua Lipa", "Ed Sheeran", "Taylor Swift", "Drake"]
+    # Mock Data for Radar Chart (Mood Profile)
+    mood_profile = {
+        "data": [0.8, 0.7, 0.6, 0.5, 0.4]  # Example: Danceability, Energy, Valence, Acousticness, Liveness
+    }
 
-    # Top 5 Songs List
-    top_songs = ["Blinding Lights", "Levitating", "Shape of You", "Anti-Hero", "God's Plan"]
+    # Mock Data for Stacked Bar Chart (Mode Analysis)
+    mode = {
+        "data": [300, 200]  # Example: Major, Minor
+    }
+
+    # Mock Data for Top Tracks
+    top_tracks = {
+        "most_played": "Blinding Lights",
+        "total_minutes": 1200,
+        "avg_tempo": 120
+    }
 
     return render_template(
         'dashboard.html',
         username=session.get('username'),
         summary=summary,
-        songs_by_month=songs_by_month,
-        genre_distribution=genre_distribution,
-        top_artists=top_artists,
-        top_songs=top_songs
+        minutes_by_track=minutes_by_track,
+        danceability_energy=danceability_energy,
+        mood_profile=mood_profile,
+        mode=mode,
+        top_tracks=top_tracks
     )
 
 
