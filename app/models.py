@@ -10,6 +10,13 @@ from datetime import datetime
 # Create db object (not bound to app yet)
 db = SQLAlchemy()
 
+# Association table (outside of any class)
+track_artist = db.Table(
+    'track_artist',
+    db.Column('track_id', db.Integer, db.ForeignKey('tracks.id'), primary_key=True),
+    db.Column('artist_id', db.Integer, db.ForeignKey('artists.id'), primary_key=True)
+)
+
 # ------------------ User Model ------------------
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -87,20 +94,47 @@ class Track(db.Model):
     __tablename__ = "tracks"
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    title: so.Mapped[str] = so.mapped_column(sa.String(100))
-    artist: so.Mapped[str] = so.mapped_column(sa.String(100))
-    genre: so.Mapped[str] = so.mapped_column(sa.String(50))
-    tempo: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
-    valence: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
-    energy: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
-    mode: so.Mapped[int] = so.mapped_column(sa.Integer, default=1)  # 1=major, 0=minor
+    track_id: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), nullable=True)
+    track_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), nullable=True)
+    album_name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), nullable=True)
+    title: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100), nullable=True)
+    popularity: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
+    duration_ms: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
+    explicit: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10), nullable=True)
+    danceability: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    energy: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    key: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
+    loudness: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    mode: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, default=1, nullable=True)  # 1=major, 0=minor
+    speechiness: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    acousticness: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    instrumentalness: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    liveness: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    valence: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    tempo: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    time_signature: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer, nullable=True)
+    genre: so.Mapped[Optional[str]] = so.mapped_column(sa.String(50), nullable=True)
     date_played: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
 
-    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), index=True)
+    user_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("users.id"), index=True, nullable=True)
     playlist_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("playlists.id"), nullable=True)
 
-    user: so.Mapped["User"] = so.relationship(back_populates="tracks")
+    user: so.Mapped[Optional["User"]] = so.relationship(back_populates="tracks")
     playlist: so.Mapped[Optional["Playlist"]] = so.relationship(back_populates="tracks")
+
+    # Many-to-many relationship with Artist
+    artists: so.Mapped[List["Artist"]] = so.relationship(
+        "Artist",
+        secondary=track_artist,
+        backref="tracks"
+    )
+
+
+# ------------------ Artist Model ------------------
+class Artist(db.Model):
+    __tablename__ = "artists"
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(100), unique=True, nullable=False)
 
 
 # ------------------ Share Model ------------------

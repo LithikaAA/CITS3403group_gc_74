@@ -2,13 +2,13 @@
 {% block title %}Vibe Stats Dashboard | VibeShare{% endblock %}
 
 {% block content %}
-<div class="min-h-screen w-full overflow-x-hidden py-8 px-4">
-  <div class="max-w-screen-2xl mx-auto space-y-12">
+<div class="w-full max-w-screen-2xl mx-auto px-4 py-8 pt-8">
+  <div class="space-y-12">
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
-        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Total Minutes Played by Track</h2>
+        <h2 class="text-2xl font-bold text-grey-700 mb-2">Total Minutes Played by Track</h2>
         <p class="text-sm text-gray-500 mb-6">See which tracks you've dedicated the most listening time to.</p>
         <div class="w-full overflow-x-auto">
           <canvas id="minutesByTrack" class="w-full h-auto max-w-full"></canvas>
@@ -16,7 +16,7 @@
       </div>
 
       <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
-        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Danceability vs Energy</h2>
+        <h2 class="text-2xl font-bold text-grey-700 mb-2">Danceability vs Energy</h2>
         <p class="text-sm text-gray-500 mb-6">Bubble size = minutes played. Shows whether you spend more time on chill tracks or energetic ones. Larger bubbles mean more listening time.</p>
         <div class="w-full overflow-x-auto">
           <canvas id="danceabilityEnergy" class="w-full h-auto max-w-full"></canvas>

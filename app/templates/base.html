@@ -71,9 +71,11 @@
     {% endif %}
   {% endwith %}
 
-  <main class="flex flex-col items-center justify-center py-12 px-4 w-full">
-    {% block content %}{% endblock %}
-  </main>
+  <div class="... pb-20 ...">
+    <main class="flex flex-col items-center justify-center py-12 px-4 w-full">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
 
   <!-- Auto-hide Flash Messages -->
   <script>
@@ -88,5 +90,25 @@
     feather.replace();
   </script>
   </sc>
+
+    <!-- Mobile Bottom Navbar -->
+    <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow flex justify-around items-center h-20 md:hidden">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 flex-1">
+        <i data-feather="home" class="w-7 h-7 mt-1"></i>
+      </a>
+      <a href="{{ url_for('upload.upload') }}" class="flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 flex-1">
+        <i data-feather="plus-square" class="w-7 h-7 mt-1"></i>
+      </a>
+      <a href="/share/shared" class="flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 flex-1">
+        <i data-feather="eye" class="w-7 h-7 mt-1"></i>
+      </a>
+      <a href="{{ url_for('share.share') }}" class="flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 flex-1">
+        <i data-feather="share-2" class="w-7 h-7 mt-1"></i>
+      </a>
+      <a href="/auth/account-setup" class="flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 flex-1">
+        <i data-feather="user" class="w-7 h-7 mt-1"></i>
+      </a>
+    </nav>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Create New Playlist{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto bg-white rounded-xl shadow p-8 mt-10">
+  <h2 class="text-2xl font-bold mb-6 text-center">Create New Playlist</h2>
+  <form method="POST">
+    <div class="mb-4">
+      <label class="block mb-2 font-semibold">Select Artist</label>
+      <select name="artist" id="artist-select" class="w-full border rounded px-3 py-2" required>
+        <option value="">-- Choose an artist --</option>
+        {% for artist in artists %}
+          <option value="{{ artist.id }}">{{ artist.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="block mb-2 font-semibold">Select Song</label>
+      <select name="song" id="song-select" class="w-full border rounded px-3 py-2" required>
+        <option value="">-- Choose a song --</option>
+      </select>
+    </div>
+    <button type="submit" class="w-full py-3 bg-gradient-to-r from-indigo-400 to-pink-500 hover:from-indigo-500 hover:to-pink-600 text-white font-semibold rounded-lg transition">
+      Create Playlist
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const artistSelect = document.getElementById('artist-select');
+  const songSelect = document.getElementById('song-select');
+
+  artistSelect.addEventListener('change', function () {
+    const artistId = this.value;
+    songSelect.innerHTML = '<option value=\"\">-- Choose a song --</option>';
+    songSelect.disabled = true;
+    if (artistId) {
+      fetch(`/api/songs_by_artist/${artistId}`)
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(song => {
+            const option = document.createElement('option');
+            option.value = song.id;
+            option.textContent = song.track_name;
+            songSelect.appendChild(option);
+          });
+          songSelect.disabled = false;
+        });
+    }
+  });
+});
+</script>
+{% endblock %}

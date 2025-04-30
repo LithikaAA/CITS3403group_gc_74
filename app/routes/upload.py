@@ -1,5 +1,6 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
+from app.models import Artist, Track, Playlist, db
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -54,3 +55,32 @@ def upload_csv():
 
     flash(f' Successfully uploaded "{file.filename}"!', 'success')
     return redirect(url_for('upload.upload'))
+
+
+@upload_bp.route('/upload/new-playlist', methods=['GET', 'POST'])
+def new_playlist():
+    artists = Artist.query.order_by(Artist.name).all()
+    selected_artist_id = request.form.get('artist')
+    songs = []
+    if selected_artist_id:
+        songs = Track.query.join(Track.artists).filter(Artist.id == selected_artist_id).all()
+    if request.method == 'POST' and request.form.get('song'):
+        # Create the playlist
+        playlist_name = request.form.get('playlist_name')
+        song_id = request.form.get('song')
+        user_id = session.get('user_id')
+        playlist = Playlist(name=playlist_name, owner_id=user_id)
+        db.session.add(playlist)
+        db.session.commit()
+        # Optionally add the song to the playlist here
+        flash('Playlist created!', 'success')
+        return redirect(url_for('upload.upload'))
+    return render_template('new_playlist.html', artists=artists, songs=songs, selected_artist_id=selected_artist_id)
+
+
+@upload_bp.route('/api/songs_by_artist/<int:artist_id>')
+def songs_by_artist(artist_id):
+    songs = Track.query.join(Track.artists).filter(Artist.id == artist_id).all()
+    return jsonify([{'id': s.id, 'track_name': s.track_name} for s in songs])
+
+
