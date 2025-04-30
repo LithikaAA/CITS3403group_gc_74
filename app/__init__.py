@@ -36,7 +36,7 @@ def create_app():
         return User.query.get(int(user_id))
 
     # Register all blueprints
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)
     app.register_blueprint(share_bp)

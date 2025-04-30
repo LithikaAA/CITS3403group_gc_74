@@ -15,9 +15,14 @@ document.addEventListener('DOMContentLoaded', function () {
           <a href="/share" class="nav-item" data-path="/share">
             <i data-feather="share-2"></i><span>Share</span>
           </a>
-          <a href="/logout" class="nav-item hover:text-red-500 mt-10" data-path="/logout">
-            <i data-feather="log-out"></i><span>Log Out</span>
-          </a>
+  
+        <!-- Account Section -->
+        <div class="mt-10 border-t pt-4 border-gray-300">
+            <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Account</p>
+            <a href="/auth/account-setup" class="nav-item" data-path="/auth/account-setup">
+                <i data-feather="user"></i><span>Account Settings</span>
+            </a>
+        </div>
         </nav>
       </aside>
       <div class="pt-20 md:ml-52"></div>
@@ -30,12 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
   
       // Highlight current path
       const path = window.location.pathname;
-      const links = navbarContainer.querySelectorAll('.nav-item');
-  
-      links.forEach(link => {
+      navbarContainer.querySelectorAll('.nav-item').forEach(link => {
         const match = link.getAttribute('data-path');
         link.classList.add("flex", "items-center", "space-x-3", "text-gray-700", "hover:text-indigo-600", "hover:bg-gradient-to-r", "hover:from-indigo-400", "hover:to-pink-400", "hover:text-white", "px-4", "py-2", "rounded-full", "transition", "duration-200");
-  
         if (path.startsWith(match)) {
           link.classList.add("nav-active");
         }

@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 
 auth_bp = Blueprint('auth', __name__)
@@ -84,9 +84,9 @@ def logout():
 def terms():
     return render_template('terms.html')
 
-
-# ---------- ACCOUNT SETUP ----------
+# ---------- Accounts ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
+@login_required
 def account_setup():
     if request.method == 'POST':
         name = request.form.get('name')
@@ -94,8 +94,25 @@ def account_setup():
         dob = request.form.get('dob')
         email = request.form.get('email')
         mobile = request.form.get('mobile')
+        profile_pic = request.files.get('profile_pic')
 
-        flash(f'Account setup completed for {name}!', 'success')
+        # Update user info
+        current_user.name = name
+        current_user.gender = gender
+        current_user.dob = dob
+        current_user.email = email
+        current_user.mobile = mobile
+
+        # Optional: handle new profile picture upload
+        if profile_pic and profile_pic.filename != '':
+            filename = secure_filename(profile_pic.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            profile_pic.save(os.path.join(upload_folder, filename))
+            current_user.profile_pic = filename
+
+        db.session.commit()
+        flash('Account updated successfully!', 'success')
         return redirect(url_for('dashboard.dashboard'))
 
     return render_template('account_setup.html')
