@@ -60,6 +60,24 @@ def dashboard():
     # Mock Data for User Top Artists
     top_artists = ["Justin Bieber", "Ed Sheeran", "Artist 3", "Artist 4", "Artist 5"]
 
+    # # Count major and minor tracks for the user
+    # major_count = sum(1 for track in user_tracks if getattr(track, 'mode', 1) == 1)
+    # minor_count = sum(1 for track in user_tracks if getattr(track, 'mode', 1) == 0)
+
+    # if major_count > minor_count:
+    #     top_mood = "Happy"
+    # elif minor_count > major_count:
+    #     top_mood = "Emotional"
+    # else:
+    #     top_mood = "Balanced"
+
+    # top_tracks = {
+    #     "most_played": top_5_tracks[0][0] if top_5_tracks else "No tracks",
+    #     "total_minutes": sum(minutes_by_track["data"]),
+    #     "avg_tempo": sum(track.tempo for track in user_tracks) / len(user_tracks),
+    #     "top_mood": top_mood
+    # }
+
     return render_template(
         'dashboard.html',
         username=session.get('username'),

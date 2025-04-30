@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const navHTML = `
       <aside id="sidebar" class="fixed top-0 left-0 h-full w-52 bg-white shadow-md z-50 flex-col py-8 px-4 space-y-6 hidden md:flex animate-fade-in">
-        <a href="/" class="text-2xl font-bold text-indigo-600 mb-6">VibeShare</a>
+        <a href="/dashboard" class="flex items-center mb-6">
+          <img src="/static/img/side_logo.png" alt="VibeShare Logo" class="w-40 md:w-56" />
+        </a>
         <nav class="flex flex-col gap-4 text-sm">
           <a href="/dashboard" class="nav-item" data-path="/dashboard">
             <i data-feather="home"></i><span>Dashboard</span>

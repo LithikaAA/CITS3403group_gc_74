@@ -90,6 +90,7 @@ class Track(db.Model):
     tempo: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     valence: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     energy: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
+    mode: so.Mapped[int] = so.mapped_column(sa.Integer, default=1)  # 1=major, 0=minor
     date_played: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
 
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), index=True)
