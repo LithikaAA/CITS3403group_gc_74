@@ -1,20 +1,45 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const navHTML = `
-        <nav class="fixed top-0 left-0 right-0 bg-white shadow-md py-4 px-6 flex justify-between items-center z-50">
-            <a href="/" class="text-xl font-bold text-indigo-600">VibeShare</a>
-            <div class="space-x-4">
-                <a href="/dashboard" class="text-gray-700 hover:text-indigo-600">Dashboard</a>
-                <a href="/upload" class="text-gray-700 hover:text-indigo-600">Upload</a>
-                <a href="/share" class="text-gray-700 hover:text-indigo-600">Share</a>
-                <a href="/shared" class="text-gray-700 hover:text-indigo-600">Shared With You</a>
-                <a href="/logout" class="text-gray-700 hover:text-red-500">Log out</a>
-            </div>
+      <aside id="sidebar" class="fixed top-0 left-0 h-full w-52 bg-white shadow-md z-50 flex-col py-8 px-4 space-y-6 hidden md:flex animate-fade-in">
+        <a href="/" class="text-2xl font-bold text-indigo-600 mb-6">VibeShare</a>
+        <nav class="flex flex-col gap-4 text-sm">
+          <a href="/dashboard" class="nav-item" data-path="/dashboard">
+            <i data-feather="home"></i><span>Dashboard</span>
+          </a>
+          <a href="/upload" class="nav-item" data-path="/upload">
+            <i data-feather="plus-square"></i><span>Add Data</span>
+          </a>
+          <a href="/share/shared" class="nav-item" data-path="/share/shared">
+            <i data-feather="eye"></i><span>View Data</span>
+          </a>
+          <a href="/share" class="nav-item" data-path="/share">
+            <i data-feather="share-2"></i><span>Share</span>
+          </a>
+          <a href="/logout" class="nav-item hover:text-red-500 mt-10" data-path="/logout">
+            <i data-feather="log-out"></i><span>Log Out</span>
+          </a>
         </nav>
-        <div class="h-20"></div> <!-- Spacer to prevent content hiding under navbar -->
+      </aside>
+      <div class="pt-20 md:ml-52"></div>
     `;
-    
+  
     const navbarContainer = document.getElementById('navbar-container');
     if (navbarContainer) {
-        navbarContainer.innerHTML = navHTML;
+      navbarContainer.innerHTML = navHTML;
+      feather.replace();
+  
+      // Highlight current path
+      const path = window.location.pathname;
+      const links = navbarContainer.querySelectorAll('.nav-item');
+  
+      links.forEach(link => {
+        const match = link.getAttribute('data-path');
+        link.classList.add("flex", "items-center", "space-x-3", "text-gray-700", "hover:text-indigo-600", "hover:bg-gradient-to-r", "hover:from-indigo-400", "hover:to-pink-400", "hover:text-white", "px-4", "py-2", "rounded-full", "transition", "duration-200");
+  
+        if (path.startsWith(match)) {
+          link.classList.add("nav-active");
+        }
+      });
     }
-});
+  });
+  

@@ -30,12 +30,32 @@
  
  
   <!-- Navigation Bar -->
-  {% if current_user.is_authenticated %}
-    <div id="navbar-container"></div>  <!-- JS will fill this automatically -->
+  {% if current_user.is_authenticated and request.endpoint not in ['auth.login', 'auth.signup', 'index.home'] %}
+    <div id="navbar-container"></div>
   {% endif %}
 
-  <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
 
+  <script src="{{ url_for('static', filename='components/navbar.js') }}"></script>
+  <style>
+    @keyframes slide-in-highlight {
+      0% {
+        transform: translateX(-10px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  
+    .nav-active {
+      background-image: linear-gradient(to right, #818cf8, #ec4899);
+      color: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      animation: slide-in-highlight 0.3s ease-out forwards;
+      margin-left: 0.5rem;
+    }
+  </style>
 
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -58,13 +78,14 @@
   <script>
     setTimeout(function() {
       const flash = document.querySelector('.flash-container');
-      if(flash) {
+      if (flash) {
         flash.style.display = 'none';
       }
     }, 3000);
-
+  
     // Initialise Feather Icons AFTER page loads
     feather.replace();
   </script>
+  </sc>
 </body>
 </html>
