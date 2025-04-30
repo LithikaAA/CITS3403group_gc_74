@@ -33,15 +33,26 @@ document.addEventListener('DOMContentLoaded', function () {
       navbarContainer.innerHTML = navHTML;
       feather.replace();
   
-      // Highlight current path
-      const path = window.location.pathname;
+      // Apply base classes to all nav items
       navbarContainer.querySelectorAll('.nav-item').forEach(link => {
-        const match = link.getAttribute('data-path');
-        link.classList.add("flex", "items-center", "space-x-3", "text-gray-700", "hover:text-indigo-600", "hover:bg-gradient-to-r", "hover:from-indigo-400", "hover:to-pink-400", "hover:text-white", "px-4", "py-2", "rounded-full", "transition", "duration-200");
-        if (path.startsWith(match)) {
-          link.classList.add("nav-active");
-        }
+        link.classList.add(
+          "flex", "items-center", "space-x-3", "text-gray-700",
+          "hover:text-indigo-600", "hover:bg-gradient-to-r",
+          "hover:from-indigo-400", "hover:to-pink-400",
+          "hover:text-white", "px-4", "py-2",
+          "rounded-full", "transition", "duration-200"
+        );
       });
+  
+      // Highlight current path: longest-prefix match wins
+      const path = window.location.pathname;
+      const items = Array.from(navbarContainer.querySelectorAll('.nav-item'));
+      items.sort((a, b) => b.getAttribute('data-path').length - a.getAttribute('data-path').length);
+      for (const link of items) {
+        if (path.startsWith(link.getAttribute('data-path'))) {
+          link.classList.add('nav-active');
+          break;
+        }
+      }
     }
   });
-  
