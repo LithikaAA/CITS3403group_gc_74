@@ -4,6 +4,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user
 from ..models import db, User
+from app.utils.spotify_auth import get_spotify_auth_manager
+import spotipy
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -99,3 +101,26 @@ def account_setup():
         return redirect(url_for('dashboard.dashboard'))
 
     return render_template('account_setup.html')
+
+# ---------- SPOTIFY LOGIN ----------
+@auth_bp.route('/login/spotify')
+def login_spotify():
+    sp_oauth = get_spotify_auth_manager()
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
+
+@auth_bp.route('/callback/spotify')
+def callback_spotify():
+    sp_oauth = get_spotify_auth_manager()
+    code = request.args.get('code')
+    token_info = sp_oauth.get_access_token(code)
+
+    if not token_info:
+        flash("Spotify authentication failed.", "error")
+        return redirect(url_for('dashboard.dashboard'))
+
+    # Store token info in session or link it to the current user
+    session['spotify_token'] = token_info
+    flash("Spotify account connected!", "success")
+
+    return redirect(url_for('dashboard.dashboard'))
