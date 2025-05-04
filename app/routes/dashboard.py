@@ -1,5 +1,8 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 from app.models import User
+from flask import jsonify
+import spotipy
+import json
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -56,6 +59,9 @@ def dashboard():
         "total_minutes": 1200,
         "avg_tempo": 120
     }
+    
+    # Mock Data for User Top Artists
+    top_artists = ["Justin Bieber", "Ed Sheeran", "Artist 3", "Artist 4", "Artist 5"]
 
     return render_template(
         'dashboard.html',
@@ -65,11 +71,42 @@ def dashboard():
         danceability_energy=danceability_energy,
         mood_profile=mood_profile,
         mode=mode,
-        top_tracks=top_tracks
-    )
+        top_tracks=top_tracks,
+        top_artists=top_artists  
+)
 
 
 @dashboard_bp.route('/test-data')
 def test_data():
     users = User.query.all()
     return render_template('test_data.html', users=users)
+
+
+@dashboard_bp.route('/spotify-json')
+def spotify_json():
+    token_info = session.get('spotify_token')
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    top_tracks = sp.current_user_top_tracks(limit=10)
+    return jsonify(top_tracks)
+
+@dashboard_bp.route('/spotify-json-simplified')
+def spotify_json_simplified():
+    token_info = session.get('spotify_token')
+    if not token_info:
+        return redirect(url_for('auth.login_spotify'))
+
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    results = sp.current_user_top_tracks(limit=10)
+
+    # Extract artist and track name
+    simplified = [
+        {
+            "track": item["name"],
+            "artist": ", ".join([artist["name"] for artist in item["artists"]])
+        }
+        for item in results["items"]
+    ]
+
+    # Pass JSON as a string to the template
+    json_string = json.dumps(simplified, indent=2)
+    return jsonify(json_string)

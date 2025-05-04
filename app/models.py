@@ -13,15 +13,18 @@ db = SQLAlchemy()
 # ------------------ User Model ------------------
 class User(UserMixin, db.Model):
     __tablename__ = "users"
-    """
-    User model to represent users in the database.
-    """
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique=True)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
     profile_pic: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255), default='default_profile.jpg')
+
+    # Add these for account setup
+    name: so.Mapped[Optional[str]] = so.mapped_column(sa.String(100))
+    gender: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
+    dob: so.Mapped[Optional[datetime.date]] = so.mapped_column(sa.Date)
+    mobile: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
 
     # Relationships
     tracks: so.Mapped[List["Track"]] = so.relationship(back_populates='user', cascade="all, delete")

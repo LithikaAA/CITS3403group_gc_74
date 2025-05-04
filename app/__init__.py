@@ -1,9 +1,9 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
-from dotenv import load_dotenv
 import os   
 from config import Config
+from dotenv import load_dotenv
 from .models import db, User
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
@@ -12,6 +12,7 @@ from .routes.share import share_bp
 from .routes.index import index_bp  # Import index blueprint
 
 login_manager = LoginManager()
+load_dotenv()
 
 def create_app():
     """
@@ -42,7 +43,7 @@ def create_app():
         return User.query.get(int(user_id))
 
     # Register all blueprints
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)
     app.register_blueprint(share_bp)

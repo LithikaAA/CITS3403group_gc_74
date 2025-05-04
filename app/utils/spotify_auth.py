@@ -6,5 +6,5 @@ def get_spotify_auth_manager():
         client_id=os.getenv("SPOTIPY_CLIENT_ID"),
         client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
         redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-        scope="user-read-recently-played"
+        scope="user-read-email user-read-private user-top-read"
     )

@@ -2,10 +2,11 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from app.utils.spotify_auth import get_spotify_auth_manager
 import spotipy
+
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -86,9 +87,9 @@ def logout():
 def terms():
     return render_template('terms.html')
 
-
-# ---------- ACCOUNT SETUP ----------
+# ---------- Accounts ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
+@login_required
 def account_setup():
     if request.method == 'POST':
         name = request.form.get('name')
@@ -96,8 +97,25 @@ def account_setup():
         dob = request.form.get('dob')
         email = request.form.get('email')
         mobile = request.form.get('mobile')
+        profile_pic = request.files.get('profile_pic')
 
-        flash(f'Account setup completed for {name}!', 'success')
+        # Update user info
+        current_user.name = name
+        current_user.gender = gender
+        current_user.dob = dob
+        current_user.email = email
+        current_user.mobile = mobile
+
+        # Optional: handle new profile picture upload
+        if profile_pic and profile_pic.filename != '':
+            filename = secure_filename(profile_pic.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            profile_pic.save(os.path.join(upload_folder, filename))
+            current_user.profile_pic = filename
+
+        db.session.commit()
+        flash('Account updated successfully!', 'success')
         return redirect(url_for('dashboard.dashboard'))
 
     return render_template('account_setup.html')
@@ -113,14 +131,17 @@ def login_spotify():
 def callback_spotify():
     sp_oauth = get_spotify_auth_manager()
     code = request.args.get('code')
+
     token_info = sp_oauth.get_access_token(code)
 
-    if not token_info:
-        flash("Spotify authentication failed.", "error")
-        return redirect(url_for('dashboard.dashboard'))
-
-    # Store token info in session or link it to the current user
+    # Store token
     session['spotify_token'] = token_info
-    flash("Spotify account connected!", "success")
 
-    return redirect(url_for('dashboard.dashboard'))
+    # Fetch profile (optional)
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    profile = sp.current_user()
+    session['username'] = profile['display_name']
+
+    return redirect(url_for('dashboard.spotify_json'))  # or your dashboard
+
+
