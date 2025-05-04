@@ -5,6 +5,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from datetime import datetime
+from app.utils.spotify_auth import get_spotify_auth_manager
+import spotipy
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,7 +23,7 @@ def login():
         ).first()
 
         if user and user.check_password(password):
-            login_user(user)  # Flask-Login session
+            login_user(user)
             session['user_id'] = user.id
             session['username'] = user.username
             flash('Logged in successfully!', 'success')
@@ -32,7 +34,6 @@ def login():
 
     return render_template('login.html')
 
-
 # ---------- SIGNUP ----------
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -42,12 +43,10 @@ def signup():
         password = request.form.get('password')
         profile_pic = request.files.get('profile_pic')
 
-        # Check for existing user
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash('Username or email already exists.', 'error')
             return render_template('signup.html')
 
-        # Handle profile picture upload
         pic_filename = None
         if profile_pic and profile_pic.filename != '':
             filename = secure_filename(profile_pic.filename)
@@ -56,7 +55,6 @@ def signup():
             profile_pic.save(os.path.join(upload_folder, filename))
             pic_filename = filename
 
-        # Create user
         new_user = User(username=username, email=email, profile_pic=pic_filename)
         new_user.set_password(password)
         db.session.add(new_user)
@@ -75,17 +73,14 @@ def change_password():
     new_pw     = request.form.get('new_password')
     confirm_pw = request.form.get('confirm_password')
 
-    # 1. Check current password
     if not current_user.check_password(current_pw):
         flash('Current password is incorrect.', 'error')
         return redirect(url_for('auth.account_setup'))
 
-    # 2. Confirm new == confirm
     if new_pw != confirm_pw:
         flash("New passwords don't match.", 'error')
         return redirect(url_for('auth.account_setup'))
 
-    # 3. Update and commit
     current_user.set_password(new_pw)
     db.session.commit()
     flash('Password updated successfully!', 'success')
@@ -94,26 +89,21 @@ def change_password():
 # ---------- LOGOUT ----------
 @auth_bp.route('/logout')
 def logout():
-    """
-    Log the user out by clearing both Flask-Login and manual session data.
-    """
     logout_user()
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
-
 
 # ---------- TERMS ----------
 @auth_bp.route('/terms')
 def terms():
     return render_template('terms.html')
 
-# ---------- Accounts ----------
+# ---------- ACCOUNTS ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
 @login_required
 def account_setup():
     if request.method == 'POST':
-        # 1) Pull every field out of the form
         new_username = request.form.get('username')
         name         = request.form.get('name')
         gender       = request.form.get('gender')
@@ -122,13 +112,11 @@ def account_setup():
         mobile       = request.form.get('mobile')
         profile_pic  = request.files.get('profile_pic')
 
-        # 2) Username uniqueness check
         if (new_username != current_user.username and
             User.query.filter_by(username=new_username).first()):
             flash('That username is already taken.', 'error')
             return render_template('account_setup.html')
 
-        # 3) Assign all the new values
         current_user.username = new_username
         current_user.name     = name
         current_user.gender   = gender
@@ -143,18 +131,36 @@ def account_setup():
         current_user.email  = email
         current_user.mobile = mobile
 
-        # 4) Handle profile picture (optional)
         if profile_pic and profile_pic.filename:
-            filename      = secure_filename(profile_pic.filename)
+            filename = secure_filename(profile_pic.filename)
             upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
             os.makedirs(upload_folder, exist_ok=True)
             profile_pic.save(os.path.join(upload_folder, filename))
             current_user.profile_pic = filename
 
-        # 5) Commit and stay on the same page
         db.session.commit()
         flash('Account updated successfully!', 'success')
         return redirect(url_for('auth.account_setup'))
 
-    # GET or after POST → render the form
     return render_template('account_setup.html')
+
+# ---------- SPOTIFY LOGIN ----------
+@auth_bp.route('/login/spotify')
+def login_spotify():
+    sp_oauth = get_spotify_auth_manager()
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
+
+@auth_bp.route('/callback/spotify')
+def callback_spotify():
+    sp_oauth = get_spotify_auth_manager()
+    code = request.args.get('code')
+    token_info = sp_oauth.get_access_token(code)
+
+    if not token_info:
+        flash("Spotify authentication failed.", "error")
+        return redirect(url_for('dashboard.dashboard'))
+
+    session['spotify_token'] = token_info
+    flash("Spotify account connected!", "success")
+    return redirect(url_for('dashboard.dashboard'))
