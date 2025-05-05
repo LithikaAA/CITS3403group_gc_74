@@ -8,6 +8,7 @@ from app.utils.spotify_auth import get_spotify_auth_manager
 
 auth_bp = Blueprint('auth', __name__)
 
+
 # ---------- LOGIN ----------
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():

@@ -18,11 +18,11 @@
     <!-- Upload Form -->
     <form id="picForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="mb-6 flex flex-col items-center">
       <input type="hidden" name="username" value="{{ current_user.username or '' }}" />
+      <input type="hidden" name="name" value="{{ current_user.name or '' }}" />
       <input type="hidden" name="gender" value="{{ current_user.gender or '' }}" />
       <input type="hidden" name="dob" value="{{ current_user.dob|default('', true) }}" />
       <input type="hidden" name="email" value="{{ current_user.email or '' }}" />
       <input type="hidden" name="mobile" value="{{ current_user.mobile or '' }}" />
-
       <div class="relative inline-block">
         <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
           <i data-feather="image" class="w-4 h-4 mr-2"></i>
@@ -54,6 +54,12 @@
       <div>
         <label class="block text-gray-600">Username</label>
         <input type="text" name="username" value="{{ current_user.username or '' }}" class="w-full border px-4 py-2 rounded-lg" required />
+      </div>
+
+      <!-- Name -->
+      <div>
+        <label class="block text-gray-600">Name</label>
+        <input type="text" name="name" value="{{ current_user.name or '' }}" class="w-full border px-4 py-2 rounded-lg" />
       </div>
 
       <!-- Gender -->
