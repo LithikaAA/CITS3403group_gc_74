@@ -108,18 +108,33 @@ def delete_shared_data(data_id):
 @share_bp.route('/shared')
 @login_required
 def shared_dashboard():
+    # 1. Fetch all shares for this user
     shares = Share.query.filter_by(recipient_id=current_user.id).all()
 
+    # 2. Flash if nothing’s been shared, but don’t redirect
+    if not shares:
+        flash('No playlists have been shared with you yet.', 'info')
+        owner = None
+    else:
+        # 3. Use the owner of the first shared item for the header
+        owner = shares[0].owner
+
+    # 4. Build the list of shared_items
     shared_items = []
     for share in shares:
         playlist = share.playlist
         if playlist:
             track_data = playlist.track_data_as_chart()
             shared_items.append({
-                'owner': share.owner,
-                'title': playlist.name,
-                'labels': track_data.get('labels', []),
-                'data': track_data.get('counts', [])
+                'playlist_id': playlist.id,
+                'title':       playlist.name,
+                'labels':      track_data.get('labels', []),
+                'values':      track_data.get('counts', [])
             })
 
-    return render_template('shared_dashboard.html', shared_items=shared_items)
+    # 5. Always render the template
+    return render_template(
+        'shared_dashboard.html',
+        shared_items=shared_items,
+        owner=owner
+    )

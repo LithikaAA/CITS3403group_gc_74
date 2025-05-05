@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
+from datetime import datetime
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -91,7 +92,7 @@ def account_setup():
     if request.method == 'POST':
         name = request.form.get('name')
         gender = request.form.get('gender')
-        dob = request.form.get('dob')
+        dob_str    = request.form.get('dob')
         email = request.form.get('email')
         mobile = request.form.get('mobile')
         profile_pic = request.files.get('profile_pic')
@@ -99,7 +100,8 @@ def account_setup():
         # Update user info
         current_user.name = name
         current_user.gender = gender
-        current_user.dob = dob
+        if dob_str:
+            current_user.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
         current_user.email = email
         current_user.mobile = mobile
 
@@ -113,6 +115,7 @@ def account_setup():
 
         db.session.commit()
         flash('Account updated successfully!', 'success')
-        return redirect(url_for('dashboard.dashboard'))
+        # render the same template so we stay on /account-setup
+        return render_template('account_setup.html')
 
     return render_template('account_setup.html')

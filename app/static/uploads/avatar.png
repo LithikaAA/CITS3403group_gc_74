@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Account Setup | VibeShare</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Feather Icons CDN -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- Your custom stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <!-- Inline animations -->
+  <style>
+    @keyframes fade-in {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.8s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100">
+ 
+ 
+  <!-- Navigation Bar -->
+  
+    <div id="navbar-container"></div>
+  
+
+
+
+  <script src="/static/components/navbar.js"></script>
+  <style>
+    @keyframes slide-in-highlight {
+      0% {
+        transform: translateX(-10px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  
+    .nav-active {
+      background-image: linear-gradient(to right, #818cf8, #ec4899);
+      color: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      animation: slide-in-highlight 0.3s ease-out forwards;
+      margin-left: 0.5rem;
+    }
+  </style>
+
+  <!-- Flash Messages -->
+  
+    
+  
+
+  <main class="flex flex-col items-center justify-center py-12 px-4 w-full">
+    
+<link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet" />
+<div class="flex max-w-4xl mx-auto bg-white shadow-lg rounded-2xl mt-10 overflow-hidden relative">
+
+  <!-- Left Panel: Profile Picture & Cropping -->
+  <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 p-10 flex flex-col items-center justify-center text-white">
+    <!-- Crop Preview Container -->
+    <div class="previewContainer bg-white rounded-full mb-4" style="width:120px;height:120px; overflow:hidden;"></div>
+    <!-- Hidden source for cropper -->
+    <img id="avatarSource" src="/static/uploads/Screenshot_2024-09-13_161926.png" class="hidden" alt="Source Image">
+
+    <!-- Welcome Text -->
+    <p class="mt-2 text-sm text-white/80 text-center">Welcome lithika, update your details here!</p>
+
+    <!-- File Input and Controls -->
+    <input type="file" id="fileInput" accept="image/*" class="hidden">
+    <button id="chooseImage" type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 mb-4 inline-flex items-center">
+      <i data-feather="image" class="w-4 h-4 mr-2"></i>Choose Image
+    </button>
+    <div id="cropControls" class="hidden space-x-2 mb-6">
+      <button id="applyCrop" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100">Apply</button>
+      <button id="cancelCrop" class="bg-white text-gray-500 font-semibold px-4 py-2 rounded-lg hover:bg-gray-200">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Right Panel: Account Details -->
+  <div class="w-1/2 p-10 relative">
+    <a href="/auth/logout" class="absolute top-4 right-4 inline-flex items-center text-sm text-red-500 transition p-1 rounded-full hover:bg-red-100 hover:text-red-600">
+      <i data-feather="log-out" class="w-4 h-4 mr-1"></i>Log Out
+    </a>
+
+    <h1 class="text-3xl font-bold mb-8">Account Setup</h1>
+    <form id="mainForm" method="POST" action="/auth/account-setup" enctype="multipart/form-data" class="space-y-5">
+      <!-- Profile picture data -->
+      <input type="hidden" name="profile_pic" id="croppedData">
+      <!-- Preserve other fields -->
+      <input type="hidden" name="gender" value="Female">
+      <input type="hidden" name="dob" value="2004-09-03">
+      <input type="hidden" name="email" value="lithika04@gmail.com">
+      <input type="hidden" name="mobile" value="0424440270">
+
+      <!-- Name -->
+      <div>
+        <label class="block text-gray-600">Name</label>
+        <input type="text" name="name" value="gfh" class="w-full border px-4 py-2 rounded-lg" required>
+      </div>
+      <!-- Gender (view-only) -->
+      <div>
+        <label class="block text-gray-600">Gender</label>
+        <div class="flex space-x-6 mt-1">
+          
+            <label class="inline-flex items-center">
+              <input type="radio" name="_gender" value="Male"  disabled class="mr-2">
+              <span>Male</span>
+            </label>
+          
+            <label class="inline-flex items-center">
+              <input type="radio" name="_gender" value="Female" checked disabled class="mr-2">
+              <span>Female</span>
+            </label>
+          
+            <label class="inline-flex items-center">
+              <input type="radio" name="_gender" value="Other"  disabled class="mr-2">
+              <span>Other</span>
+            </label>
+          
+        </div>
+      </div>
+      <!-- Other fields view-only -->
+      <div><label class="block text-gray-600">Date of Birth</label><input type="date" value="2004-09-03" class="w-full border px-4 py-2 rounded-lg" disabled></div>
+      <div><label class="block text-gray-600">Email</label><input type="email" value="lithika04@gmail.com" class="w-full border px-4 py-2 rounded-lg" disabled></div>
+      <div><label class="block text-gray-600">Mobile</label><input type="text" value="0424440270" class="w-full border px-4 py-2 rounded-lg" disabled></div>
+
+      <div class="flex justify-end mt-6">
+        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://unpkg.com/cropperjs"></script>
+<script>
+  feather.replace();
+  const fileInput = document.getElementById('fileInput');
+  const chooseBtn = document.getElementById('chooseImage');
+  const sourceImage = document.getElementById('avatarSource');
+  const previewContainer = document.querySelector('.previewContainer');
+  const cropControls = document.getElementById('cropControls');
+  const applyBtn = document.getElementById('applyCrop');
+  const cancelBtn = document.getElementById('cancelCrop');
+  const mainForm = document.getElementById('mainForm');
+  const croppedData = document.getElementById('croppedData');
+  let cropper;
+
+  chooseBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const url = URL.createObjectURL(file);
+    sourceImage.src = url;
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(sourceImage, { aspectRatio:1, viewMode:1, preview:'.previewContainer' });
+    cropControls.classList.remove('hidden');
+  });
+  cancelBtn.addEventListener('click', () => {
+    if (cropper) cropper.destroy();
+    previewContainer.style.backgroundImage = '';
+    fileInput.value = '';
+    cropControls.classList.add('hidden');
+  });
+  applyBtn.addEventListener('click', () => {
+    cropper.getCroppedCanvas({ width:200, height:200 }).toBlob(blob => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        croppedData.value = reader.result;
+        previewContainer.style.backgroundImage = `url(${reader.result})`;
+        cropper.destroy(); cropControls.classList.add('hidden');
+      };
+      reader.readAsDataURL(blob);
+    });
+  });
+  mainForm.addEventListener('submit', e => {
+    e.preventDefault();
+    fetch(croppedData.value).then(res => res.blob()).then(blob => {
+      const dt = new DataTransfer(); dt.items.add(new File([blob],'avatar.png',{type:blob.type}));
+      const input = document.createElement('input'); input.type='file'; input.name='profile_pic'; input.files = dt.files;
+      mainForm.appendChild(input); mainForm.submit();
+    });
+  });
+</script>
+
+  </main>
+
+  <!-- Auto-hide Flash Messages -->
+  <script>
+    setTimeout(function() {
+      const flash = document.querySelector('.flash-container');
+      if (flash) {
+        flash.style.display = 'none';
+      }
+    }, 3000);
+  
+    // Initialise Feather Icons AFTER page loads
+    feather.replace();
+  </script>
+  </sc>
+</body>
+</html>
