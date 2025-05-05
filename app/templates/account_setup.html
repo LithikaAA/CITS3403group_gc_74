@@ -16,33 +16,34 @@
     </div>
 
     <!-- Upload Profile Picture Form -->
-<form id="picForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="mb-6 flex flex-col items-center">
+    <form id="picForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="mb-6 flex flex-col items-center">
       <!-- preserve existing fields so partial post won't clear them -->
+      <input type="hidden" name="username" value="{{ current_user.username or '' }}" />
       <input type="hidden" name="name" value="{{ current_user.name or '' }}" />
       <input type="hidden" name="gender" value="{{ current_user.gender or '' }}" />
       <input type="hidden" name="dob" value="{{ current_user.dob|default('', true) }}" />
       <input type="hidden" name="email" value="{{ current_user.email or '' }}" />
       <input type="hidden" name="mobile" value="{{ current_user.mobile or '' }}" />
-  <div class="relative inline-block">
-    <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
-      <i data-feather="image" class="w-4 h-4 mr-2"></i>
-      Upload Profile Picture
-      <input
-        type="file"
-        name="profile_pic"
-        accept="image/*"
-        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        onchange="document.getElementById('picForm').submit()"
-      />
-    </button>
+      <div class="relative inline-block">
+        <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
+          <i data-feather="image" class="w-4 h-4 mr-2"></i>
+          Upload Profile Picture
+          <input
+            type="file"
+            name="profile_pic"
+            accept="image/*"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onchange="document.getElementById('picForm').submit()"
+          />
+        </button>
+      </div>
+    </form>
   </div>
-</form>
-  </div> <!-- end left panel -->
 
   <!-- Right Panel: Account Details -->
   <div class="w-1/2 p-10 relative">
     <!-- Logout link with hover bubble and icon -->
-    <a 
+    <a
       href="{{ url_for('auth.logout') }}"
       class="absolute top-4 right-4 inline-flex items-center text-sm text-red-500 transition p-1 rounded-full hover:bg-red-100 hover:text-red-600"
     >
@@ -53,17 +54,20 @@
     <h1 class="text-3xl font-bold mb-8">Account Setup</h1>
 
     <form method="POST" action="{{ url_for('auth.account_setup') }}" class="space-y-5">
-      <!-- Name -->
+      <!-- Username -->
       <div>
         <label class="block text-gray-600">Username</label>
         <input
           type="text"
-          name="name"
-          value="{{ current_user.name or '' }}"
+          name="username"
+          value="{{ current_user.username }}"
           class="w-full border px-4 py-2 rounded-lg"
           required
         />
       </div>
+
+      <!-- Name -->
+
 
       <!-- Gender -->
       <div>

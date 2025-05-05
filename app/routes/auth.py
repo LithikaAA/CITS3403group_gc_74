@@ -90,32 +90,48 @@ def terms():
 @login_required
 def account_setup():
     if request.method == 'POST':
-        name = request.form.get('name')
-        gender = request.form.get('gender')
-        dob_str    = request.form.get('dob')
-        email = request.form.get('email')
-        mobile = request.form.get('mobile')
-        profile_pic = request.files.get('profile_pic')
+        # 1) Pull every field out of the form
+        new_username = request.form.get('username')
+        name         = request.form.get('name')
+        gender       = request.form.get('gender')
+        dob_str      = request.form.get('dob')
+        email        = request.form.get('email')
+        mobile       = request.form.get('mobile')
+        profile_pic  = request.files.get('profile_pic')
 
-        # Update user info
-        current_user.name = name
-        current_user.gender = gender
+        # 2) Username uniqueness check
+        if (new_username != current_user.username and
+            User.query.filter_by(username=new_username).first()):
+            flash('That username is already taken.', 'error')
+            return render_template('account_setup.html')
+
+        # 3) Assign all the new values
+        current_user.username = new_username
+        current_user.name     = name
+        current_user.gender   = gender
+
         if dob_str:
-            current_user.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
-        current_user.email = email
+            try:
+                current_user.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid date format for Date of Birth.', 'error')
+                return render_template('account_setup.html')
+
+        current_user.email  = email
         current_user.mobile = mobile
 
-        # Optional: handle new profile picture upload
-        if profile_pic and profile_pic.filename != '':
-            filename = secure_filename(profile_pic.filename)
+        # 4) Handle profile picture (optional)
+        if profile_pic and profile_pic.filename:
+            filename      = secure_filename(profile_pic.filename)
             upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
             os.makedirs(upload_folder, exist_ok=True)
             profile_pic.save(os.path.join(upload_folder, filename))
             current_user.profile_pic = filename
 
+        # 5) Commit and stay on the same page
         db.session.commit()
         flash('Account updated successfully!', 'success')
-        # render the same template so we stay on /account-setup
-        return render_template('account_setup.html')
+        return redirect(url_for('auth.account_setup'))
 
+    # GET or after POST → render the form
     return render_template('account_setup.html')
