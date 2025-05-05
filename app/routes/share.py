@@ -1,8 +1,8 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from ..models import db, User, Playlist, Share, SharedData
-import os
 
 share_bp = Blueprint('share', __name__, url_prefix='/share')
 
@@ -10,12 +10,15 @@ share_bp = Blueprint('share', __name__, url_prefix='/share')
 UPLOAD_FOLDER = 'app/static/uploads'
 ALLOWED_EXTENSIONS = {'csv', 'json'}
 
-# Ensure the upload folder exists
+# Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+# ---------- Share Playlist with Friend ----------
 @share_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def share():
@@ -49,6 +52,8 @@ def share():
 
     return render_template('share.html', playlists=playlists, friends=friends)
 
+
+# ---------- Upload Shared Data File ----------
 @share_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_shared_data():
@@ -83,6 +88,8 @@ def upload_shared_data():
     shared_data = SharedData.query.filter_by(user_id=current_user.id).all()
     return render_template('share_upload.html', shared_data=shared_data)
 
+
+# ---------- Delete Uploaded Shared File ----------
 @share_bp.route('/upload/delete/<int:data_id>', methods=['POST'])
 @login_required
 def delete_shared_data(data_id):
@@ -98,21 +105,19 @@ def delete_shared_data(data_id):
     flash('File deleted successfully!')
     return redirect(url_for('share.upload_shared_data'))
 
+
+# ---------- View Shared Dashboard ----------
 @share_bp.route('/shared')
 @login_required
 def shared_dashboard():
-    # 1. Fetch all shares for this user
     shares = Share.query.filter_by(recipient_id=current_user.id).all()
 
-    # 2. Flash if nothing’s been shared, but don’t redirect
     if not shares:
         flash('No playlists have been shared with you yet.', 'info')
         owner = None
     else:
-        # 3. Use the owner of the first shared item for the header
         owner = shares[0].owner
 
-    # 4. Build the list of shared_items
     shared_items = []
     for share in shares:
         playlist = share.playlist
@@ -120,12 +125,12 @@ def shared_dashboard():
             track_data = playlist.track_data_as_chart()
             shared_items.append({
                 'playlist_id': playlist.id,
-                'title':       playlist.name,
-                'labels':      track_data.get('labels', []),
-                'values':      track_data.get('counts', [])
+                'title': playlist.name,
+                'labels': track_data.get('labels', []),
+                'values': track_data.get('counts', [])
             })
 
-    # 5. Hardcoded comparison mock data
+    # MOCK DATA – Replace with actual comparisons later
     comparison_minutes = {
         'labels': ['Song A', 'Song B', 'Song C'],
         'your_data': [120, 95, 80],
@@ -160,7 +165,6 @@ def shared_dashboard():
     top_artists_user = ['Artist 1', 'Artist 2', 'Artist 3', 'Artist 4', 'Artist 5']
     top_artists_friend = ['Artist A', 'Artist B', 'Artist C', 'Artist D', 'Artist E']
 
-    # 6. Render with all data
     return render_template(
         'shared_dashboard.html',
         shared_items=shared_items,

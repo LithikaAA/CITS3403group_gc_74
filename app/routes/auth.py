@@ -5,7 +5,6 @@ from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from datetime import datetime
 from app.utils.spotify_auth import get_spotify_auth_manager
-import spotipy
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -32,6 +31,7 @@ def login():
 
     return render_template('login.html')
 
+
 # ---------- SIGNUP ----------
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -46,7 +46,7 @@ def signup():
             return render_template('signup.html')
 
         pic_filename = None
-        if profile_pic and profile_pic.filename != '':
+        if profile_pic and profile_pic.filename:
             filename = secure_filename(profile_pic.filename)
             upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
             os.makedirs(upload_folder, exist_ok=True)
@@ -63,12 +63,13 @@ def signup():
 
     return render_template('signup.html')
 
-# ---------- FORGOT PASSWORD ----------
+
+# ---------- CHANGE PASSWORD ----------
 @auth_bp.route('/change-password', methods=['POST'])
 @login_required
 def change_password():
     current_pw = request.form.get('current_password')
-    new_pw     = request.form.get('new_password')
+    new_pw = request.form.get('new_password')
     confirm_pw = request.form.get('confirm_password')
 
     if not current_user.check_password(current_pw):
@@ -84,6 +85,7 @@ def change_password():
     flash('Password updated successfully!', 'success')
     return redirect(url_for('auth.account_setup'))
 
+
 # ---------- LOGOUT ----------
 @auth_bp.route('/logout')
 def logout():
@@ -92,32 +94,35 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
 
+
 # ---------- TERMS ----------
 @auth_bp.route('/terms')
 def terms():
     return render_template('terms.html')
 
-# ---------- ACCOUNTS ----------
+
+# ---------- ACCOUNT SETUP ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
 @login_required
 def account_setup():
     if request.method == 'POST':
         new_username = request.form.get('username')
-        name         = request.form.get('name')
-        gender       = request.form.get('gender')
-        dob_str      = request.form.get('dob')
-        email        = request.form.get('email')
-        mobile       = request.form.get('mobile')
-        profile_pic  = request.files.get('profile_pic')
+        name = request.form.get('name')
+        gender = request.form.get('gender')
+        dob_str = request.form.get('dob')
+        email = request.form.get('email')
+        mobile = request.form.get('mobile')
+        profile_pic = request.files.get('profile_pic')
 
-        if (new_username != current_user.username and
-            User.query.filter_by(username=new_username).first()):
+        if new_username != current_user.username and User.query.filter_by(username=new_username).first():
             flash('That username is already taken.', 'error')
             return render_template('account_setup.html')
 
         current_user.username = new_username
-        current_user.name     = name
-        current_user.gender   = gender
+        current_user.name = name
+        current_user.gender = gender
+        current_user.email = email
+        current_user.mobile = mobile
 
         if dob_str:
             try:
@@ -125,9 +130,6 @@ def account_setup():
             except ValueError:
                 flash('Invalid date format for Date of Birth.', 'error')
                 return render_template('account_setup.html')
-
-        current_user.email  = email
-        current_user.mobile = mobile
 
         if profile_pic and profile_pic.filename:
             filename = secure_filename(profile_pic.filename)
@@ -142,12 +144,14 @@ def account_setup():
 
     return render_template('account_setup.html')
 
+
 # ---------- SPOTIFY LOGIN ----------
 @auth_bp.route('/login/spotify')
 def login_spotify():
     sp_oauth = get_spotify_auth_manager()
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
+
 
 @auth_bp.route('/callback/spotify')
 def callback_spotify():
