@@ -243,7 +243,9 @@ body::before {
     max-width: 400px;
 }
 
-.flash-message {
+.flash-message,
+.flash-message.success,
+.flash-message.error {
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 8px;
@@ -251,18 +253,9 @@ body::before {
     font-weight: 600;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     animation: fadeSlideDown 0.5s ease;
-}
-
-.flash-message.success {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #10b981;
-}
-
-.flash-message.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #ef4444;
+    background: linear-gradient(to right, #818cf8, #f472b6) !important;
+    color: #fff; /* white text for contrast */
+    border: none;
 }
 
 @keyframes fadeSlideDown {

@@ -2,10 +2,8 @@ export function renderBreadcrumbs(containerSelector, homeLabel = "Home", homeUrl
   const container = document.querySelector(containerSelector);
   if (!container) return;
 
-  // Get the current path and split it
   const pathParts = window.location.pathname.split('/').filter(Boolean);
 
-  // Build breadcrumb HTML
   let html = `<ol class="list-none p-0 inline-flex">`;
   html += `<li class="flex items-center text-blue-500">
     <a href="${homeUrl}" class="text-gray-700">${homeLabel}</a>

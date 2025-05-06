@@ -157,6 +157,10 @@ def dashboard():
     # Extract just the artist names
     top_artists = [artist for artist, _ in top_artists_query]
 
+    # Step 4: Get Top Mood
+    major = mode_counts[1]
+    minor = mode_counts[0]
+
     return render_template(
         'dashboard.html',
         username=session.get('username'),
@@ -166,7 +170,9 @@ def dashboard():
         mood_profile=mood_profile,
         mode=mode,
         top_tracks=top_tracks,
-        top_artists=top_artists  
+        top_artists=top_artists ,
+        major=major,
+        minor=minor
 )
 
 

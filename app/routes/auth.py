@@ -99,7 +99,7 @@ def logout():
 def terms():
     return render_template('terms.html')
 
-# ---------- ACCOUNTS ----------
+# ---------- Accounts ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
 @login_required
 def account_setup():
