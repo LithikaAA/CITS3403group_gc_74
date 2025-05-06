@@ -1,7 +1,9 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
+import os   
 from config import Config
+from dotenv import load_dotenv
 from .models import db, User
 from .routes.auth import auth_bp
 from .routes.dashboard import dashboard_bp
@@ -10,6 +12,7 @@ from .routes.share import share_bp
 from .routes.index import index_bp  # Import index blueprint
 
 login_manager = LoginManager()
+load_dotenv()
 
 def create_app():
     """
@@ -21,6 +24,10 @@ def create_app():
 
     # Configure the app
     app.config.from_object(Config)
+
+    app.config['SPOTIPY_CLIENT_ID'] = os.getenv("SPOTIPY_CLIENT_ID")
+    app.config['SPOTIPY_CLIENT_SECRET'] = os.getenv("SPOTIPY_CLIENT_SECRET")
+    app.config['SPOTIPY_REDIRECT_URI'] = os.getenv("SPOTIPY_REDIRECT_URI")
 
     # Initialize extensions with the app
     db.init_app(app)

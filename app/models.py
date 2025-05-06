@@ -27,7 +27,7 @@ class User(UserMixin, db.Model):
     mobile: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
 
     # Relationships
-    tracks: so.Mapped[List["Track"]] = so.relationship(back_populates='user', cascade="all, delete")
+    #tracks: so.Mapped[List["Track"]] = so.relationship(back_populates='user', cascade="all, delete")
     playlists: so.Mapped[List["Playlist"]] = so.relationship(back_populates='owner', cascade="all, delete")
     shares_sent: so.Mapped[List["Share"]] = so.relationship(
         back_populates="owner",
@@ -54,6 +54,10 @@ class User(UserMixin, db.Model):
         cascade="all, delete"
     )
 
+    user_tracks: so.Mapped[List["UserTrack"]] = so.relationship(
+        back_populates="user", cascade="all, delete"
+    )
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -70,7 +74,7 @@ class Playlist(db.Model):
     owner_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
 
     owner: so.Mapped["User"] = so.relationship(back_populates="playlists")
-    tracks: so.Mapped[List["Track"]] = so.relationship(back_populates="playlist", cascade="all, delete")
+    #tracks: so.Mapped[List["Track"]] = so.relationship(back_populates="playlist", cascade="all, delete")
     shares: so.Mapped[List["Share"]] = so.relationship(back_populates="playlist", cascade="all, delete")
 
     def track_data_as_chart(self):
@@ -94,13 +98,46 @@ class Track(db.Model):
     valence: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     energy: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     date_played: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
+    acousticness: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
+    liveness: so.Mapped[float] = so.mapped_column(sa.Float, default = 0)
+    danceability: so.Mapped[float] = so.mapped_column(sa.Float, default = 0)
+    mode: so.Mapped[int] = so.mapped_column(sa.Integer, default=1)
 
-    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), index=True)
-    playlist_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("playlists.id"), nullable=True)
+    #user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), index=True)
+    #playlist_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("playlists.id"), nullable=True)
 
-    user: so.Mapped["User"] = so.relationship(back_populates="tracks")
-    playlist: so.Mapped[Optional["Playlist"]] = so.relationship(back_populates="tracks")
+    # user: so.Mapped["User"] = so.relationship(
+    #     back_populates="tracks"
+    # )
 
+    # playlist: so.Mapped[Optional["Playlist"]] = so.relationship(
+    #     back_populates="tracks"
+    # )
+
+    user_tracks: so.Mapped[List["UserTrack"]] = so.relationship(
+        back_populates="track", cascade="all, delete"
+    )
+
+
+# ------------------ UserTrack Model ------------------
+class UserTrack(db.Model):
+    __tablename__ = "user_tracks"
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
+    track_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("tracks.id"), nullable=False)
+
+    # Redundant metadata (helps with fast access & visualization)
+    song: so.Mapped[str] = so.mapped_column(sa.String(100))
+    artist: so.Mapped[str] = so.mapped_column(sa.String(100))
+    song_duration: so.Mapped[int] = so.mapped_column(sa.Integer)  # in ms
+    times_played: so.Mapped[int] = so.mapped_column(sa.Integer, default=0)
+    total_ms_listened: so.Mapped[int] = so.mapped_column(sa.Integer, default=0)
+
+    # Relationships
+    user: so.Mapped["User"] = so.relationship(back_populates="user_tracks")
+    track: so.Mapped["Track"] = so.relationship(back_populates="user_tracks")
 
 # ------------------ Share Model ------------------
 class Share(db.Model):
@@ -133,21 +170,21 @@ class SharedVisualisation(db.Model):
 
 # ------------------ SharedData Model ------------------
 class SharedData(db.Model):
-     __tablename__ = "shared_data"  # Name of the table in the database
- 
-     # Primary key: Unique identifier for each shared data record
-     id: so.Mapped[int] = so.mapped_column(primary_key=True)
- 
-     # Foreign key linking to User
-     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False, index=True)
- 
-     # File details
-     file_path: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Path to uploaded file
-     file_name: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Original file name
-     file_type: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)   # File type (e.g., CSV, JSON)
- 
-     # Timestamp of upload
-     timestamp: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
- 
-     # Relationship to the User model
-     user: so.Mapped['User'] = so.relationship(back_populates="shared_data")  # Link back to User model
+    __tablename__ = "shared_data"  # Name of the table in the database
+
+    # Primary key: Unique identifier for each shared data record
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+
+    # Foreign key linking to User
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False, index=True)
+
+    # File details
+    file_path: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Path to uploaded file
+    file_name: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)  # Original file name
+    file_type: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)   # File type (e.g., CSV, JSON)
+
+    # Timestamp of upload
+    timestamp: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
+
+    # Relationship to the User model
+    user: so.Mapped['User'] = so.relationship(back_populates="shared_data")  # Link back to User model

@@ -4,6 +4,18 @@
 {% block content %}
 <div class="min-h-screen w-full overflow-x-hidden py-8 px-4">
   <div class="max-w-screen-2xl mx-auto space-y-12">
+    <!-- Spotify Connect Button -->
+    <div class="relative z-50 flex justify-end mb-6">
+      {% if session.get('spotify_token') %}
+        <span class="text-green-600 font-semibold">✅ Spotify Connected</span>
+      {% else %}
+        <form action="{{ url_for('auth.login_spotify') }}" method="get">
+          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition">
+            Connect Spotify
+          </button>
+        </form>
+      {% endif %}
+    </div>
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">

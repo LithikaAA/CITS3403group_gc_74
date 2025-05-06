@@ -1,5 +1,10 @@
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
+import json
+from flask_login import current_user
+from app.models import db, Track, UserTrack
+from datetime import datetime
+
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -33,24 +38,70 @@ def create_playlist():
 
 
 # ---------- Handle CSV Upload ----------
-@upload_bp.route('/upload/upload-csv', methods=['POST'])
-def upload_csv():
-    """
-    Handle CSV playlist uploads.
-    """
-    file = request.files.get('playlist_csv')
+# ---------- Handle JSON Upload ----------
+from datetime import datetime  # Make sure this is imported
 
-    if not file or file.filename == '':
-        flash(' No file selected. Please choose a CSV file.', 'error')
+@upload_bp.route('/upload/upload-json', methods=['POST'])
+def upload_json():
+    """
+    Handle JSON uploads for user listening data.
+    """
+    file = request.files.get('user_json')
+
+    if not file or file.filename == '' or not file.filename.endswith('.json'):
+        flash('No valid JSON file selected. Please choose a .json file.', 'error')
         return redirect(url_for('upload.upload'))
 
-    # Define upload path
-    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
-    os.makedirs(upload_folder, exist_ok=True)
+    try:
+        data = json.load(file)
+        added_or_updated_count = 0
 
-    # Save the file safely
-    file_path = os.path.join(upload_folder, file.filename)
-    file.save(file_path)
+        for entry in data:
+            title = entry.get('trackName')
+            artist = entry.get('artistName')
+            ms_played = entry.get('msPlayed')
 
-    flash(f' Successfully uploaded "{file.filename}"!', 'success')
+            if not title or not artist:
+                continue
+
+            # Get or create Track
+            track = Track.query.filter_by(title=title, artist=artist).first()
+            if not track:
+                track = Track(
+                    title=title,
+                    artist=artist,
+                    genre="Unknown",
+                    date_played=datetime.utcnow()
+                )
+                db.session.add(track)
+                db.session.flush()  # Gets track.id before commit
+
+            # Check if this user already has this track
+            user_track = UserTrack.query.filter_by(user_id=current_user.id, track_id=track.id).first()
+
+            if user_track:
+                # Update existing entry
+                user_track.times_played += 1
+                user_track.total_ms_listened = user_track.times_played * user_track.song_duration
+            else:
+                # Create new entry
+                user_track = UserTrack(
+                    user_id=current_user.id,
+                    track_id=track.id,
+                    song=title,
+                    artist=artist,
+                    song_duration=ms_played,
+                    times_played=1,
+                    total_ms_listened=ms_played
+                )
+                db.session.add(user_track)
+
+            added_or_updated_count += 1
+
+        db.session.commit()
+        flash(f"Processed {added_or_updated_count} user song records (inserted/updated).", "success")
+
+    except Exception as e:
+        flash(f"Error processing JSON: {str(e)}", "error")
+
     return redirect(url_for('upload.upload'))
