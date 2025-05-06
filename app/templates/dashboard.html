@@ -2,15 +2,44 @@
 {% block title %}Vibe Stats Dashboard | VibeShare{% endblock %}
 
 {% block content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="flash-message-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
+      {% for category, message in messages %}
+        <div class="bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100 text-blue-900 px-6 py-3 rounded-lg shadow-lg font-semibold mb-2 flex items-center space-x-2 animate-fade-in">
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.style.display='none'" class="ml-4 text-lg font-bold">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+    <script>
+      setTimeout(function() {
+        var flash = document.getElementById('flash-message-container');
+        if (flash) { flash.style.display = 'none'; }
+      }, 3000);
+    </script>
+    <style>
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(-10px);}
+        to { opacity: 1; transform: translateY(0);}
+      }
+      .animate-fade-in {
+        animation: fade-in 0.5s;
+      }
+    </style>
+  {% endif %}
+{% endwith %}
+
 <div class="min-h-screen w-full overflow-x-hidden py-8 px-4">
   <div class="max-w-screen-2xl mx-auto space-y-12">
     <!-- Spotify Connect Button -->
     <div class="relative z-50 flex justify-end mb-6">
       {% if session.get('spotify_token') %}
-        <span class="text-green-600 font-semibold">✅ Spotify Connected</span>
+        <span class="text-green-600 font-semibold">Spotify Connected</span>
       {% else %}
         <form action="{{ url_for('auth.login_spotify') }}" method="get">
-          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition">
+          <button type="submit"class="bg-gradient-to-r from-indigo-400 to-pink-400 text-white font-semibold px-4 py-2 rounded-full shadow-md hover:opacity-90 transition duration-200">
             Connect Spotify
           </button>
         </form>
@@ -39,39 +68,75 @@
     <!-- Grid Section -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
 
-      <!-- Summary Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col space-y-6 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
-        <h2 class="text-lg font-semibold text-gray-700">Summary</h2>
-        <div class="space-y-6">
-          <div class="flex items-center space-x-4">
-            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>
-            </div>
-            <div>
-              <p class="text-xs text-gray-400">Most Played Track</p>
-              <p class="text-lg font-bold text-indigo-600">{{ top_tracks.most_played }}</p>
-            </div>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 6v6l4 2"/></svg>
-            </div>
-            <div>
-              <p class="text-xs text-gray-400">Total Minutes Played</p>
-              <p class="text-lg font-bold text-indigo-600">{{ top_tracks.total_minutes }}</p>
-            </div>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0 0l-6-6m6 6l6-6"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>
-            </div>
-            <div>
-              <p class="text-xs text-gray-400">Average Tempo</p>
-              <p class="text-lg font-semibold text-pink-500">{{ top_tracks.avg_tempo }} BPM</p>
-            </div>
-          </div>
+          <!-- Summary Card -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col space-y-6 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+      <h2 class="text-xl font-semibold text-gray-700">Summary Card</h2>
+      <p class="text-sm text-gray-400 -mt-1">See your listening habits in a nutshell.</p>
+
+      <!-- Most Played Track -->
+      <div class="flex items-center space-x-4">
+        <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13"/>
+            <circle cx="6" cy="18" r="3" fill="currentColor"/>
+            <circle cx="18" cy="16" r="3" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400">Most Played Track</p>
+          <p class="text-lg font-bold text-indigo-700">{{ top_tracks.most_played }}</p>
         </div>
       </div>
+
+      <!-- Total Minutes Played -->
+      <div class="flex items-center space-x-4">
+        <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400">Total Minutes Played</p>
+          <p class="text-lg font-bold text-indigo-700">{{ top_tracks.total_minutes }}</p>
+        </div>
+      </div>
+
+      <!-- Average Tempo -->
+      <div class="flex items-center space-x-4">
+        <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m0 0l-6-6m6 6l6-6"/>
+            <circle cx="12" cy="17" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400">Average Tempo</p>
+          <p class="text-lg font-bold text-pink-600">{{ top_tracks.avg_tempo }} BPM</p>
+        </div>
+      </div>
+
+      <!-- Top Mood -->
+      <div class="flex items-center space-x-4">
+        <div class="bg-gradient-to-br from-green-400 to-teal-400 p-3 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14h.01M9 10h.01M15 10h.01M9.172 16.172a4 4 0 005.656 0"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs text-gray-400">Top Mood</p>
+          <p class="text-lg font-bold text-green-600">
+            {% if major > minor %}
+              Happy
+            {% elif major < minor %}
+              Emotional
+            {% else %}
+              Balance
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
 
       <!-- Mood Profile Radar Chart -->
       <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
