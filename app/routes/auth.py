@@ -67,6 +67,29 @@ def signup():
 
     return render_template('signup.html')
 
+# ---------- FORGOT PASSWORD ----------
+@auth_bp.route('/change-password', methods=['POST'])
+@login_required
+def change_password():
+    current_pw = request.form.get('current_password')
+    new_pw     = request.form.get('new_password')
+    confirm_pw = request.form.get('confirm_password')
+
+    # 1. Check current password
+    if not current_user.check_password(current_pw):
+        flash('Current password is incorrect.', 'error')
+        return redirect(url_for('auth.account_setup'))
+
+    # 2. Confirm new == confirm
+    if new_pw != confirm_pw:
+        flash("New passwords don't match.", 'error')
+        return redirect(url_for('auth.account_setup'))
+
+    # 3. Update and commit
+    current_user.set_password(new_pw)
+    db.session.commit()
+    flash('Password updated successfully!', 'success')
+    return redirect(url_for('auth.account_setup'))
 
 # ---------- LOGOUT ----------
 @auth_bp.route('/logout')
