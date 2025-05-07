@@ -1,7 +1,6 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from datetime import datetime
@@ -17,7 +16,6 @@ def login():
         identifier = request.form.get('identifier')  # username OR email
         password = request.form.get('password')
 
-        # Match by either username or email
         user = User.query.filter(
             (User.username == identifier) | (User.email == identifier)
         ).first()
@@ -99,7 +97,7 @@ def logout():
 def terms():
     return render_template('terms.html')
 
-# ---------- Accounts ----------
+# ---------- ACCOUNTS ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
 @login_required
 def account_setup():

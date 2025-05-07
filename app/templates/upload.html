@@ -3,115 +3,100 @@
 
 {% block content %}
 <div class="w-full max-w-7xl mx-auto px-8 py-8">
-
-  <!-- Greeting and Action -->
+  <!-- Greeting -->
   <div class="lg:flex justify-between items-center mb-6 mt-10">
     <h1 class="text-5xl font-extrabold text-black drop-shadow-sm tracking-tight">
       Welcome back, {{ username }}!
     </h1>
   </div>
-  <!-- Banner Image
-  <div class="rounded-xl overflow-hidden mb-10">
-    <img src="{{ url_for('static', filename='img/banner.jpg') }}" alt="Banner" class="w-full h-72 object-cover shadow-lg">
-  </div> -->
 
+  <!-- Banner -->
   <div class="relative rounded-xl overflow-hidden mb-10 h-72 bg-gradient-to-r from-purple-500 via-pink-400 to-blue-400 flex items-center justify-center">
     <div class="text-white text-center">
       <h1 class="typewriter text-4xl sm:text-5xl font-extrabold tracking-wide"></h1>
     </div>
   </div>
 
-  <!-- Stats Cards with Gradient Icons -->
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-  <div class="bg-white rounded-lg shadow flex items-center p-6">
-    <div class="w-14 h-14 mr-4 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
-      <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="4" y="6" width="16" height="2" rx="1"/>
-        <rect x="4" y="10" width="16" height="2" rx="1"/>
-        <rect x="4" y="14" width="10" height="2" rx="1"/>
-      </svg>
-    </div>
-    <div>
-      <p class="font-bold text-4xl">{{ user_playlists|length }}</p>
-      <p class="text-gray-600">Playlists Created</p>
-    </div>
-  </div>
+  <!-- Song Search Panel -->
+  <div class="bg-white rounded-xl shadow p-8 mb-10 relative">
+    <h2 class="text-2xl font-bold mb-6 text-center">Search for Songs</h2>
 
-  <div class="bg-white rounded-lg shadow flex items-center p-6">
-    <div class="w-14 h-14 mr-4 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
-      <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V5l12-2v12"/>
-        <circle cx="6" cy="18" r="3"/>
-      </svg>
+    <div class="relative mb-6">
+      <input id="search-query" type="text" placeholder="Type a song or artist..."
+        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-400 focus:outline-none">
+      <div id="searchResults" class="absolute bg-white shadow-lg rounded-lg z-50 w-full mt-1"
+        style="display: none;">
+        <ul id="resultsContainer" class="divide-y divide-gray-200"></ul>
+      </div>
     </div>
-    <div>
-      <p class="font-bold text-4xl">{{ recent_songs|length }}</p>
-      <p class="text-gray-600">Songs Uploaded</p>
-    </div>
-  </div>
 
-  <div class="bg-white rounded-lg shadow flex items-center p-6">
-    <div class="w-14 h-14 mr-4 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
-      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <rect x="9" y="2" width="6" height="12" rx="3"/>
-        <path d="M12 14v7m-4 0h8"/>
-      </svg>
+    <!-- Autofill Fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <input id="title" type="text" placeholder="Title" class="px-4 py-3 rounded-lg border border-gray-300">
+      <input id="artist" type="text" placeholder="Artist" class="px-4 py-3 rounded-lg border border-gray-300">
+      <input id="album" type="text" placeholder="Album" class="px-4 py-3 rounded-lg border border-gray-300">
+      <input id="genre" type="text" placeholder="Genre" class="px-4 py-3 rounded-lg border border-gray-300">
     </div>
-    <div>
-      <p class="font-bold text-4xl">{{ artists|length }}</p>
-      <p class="text-gray-600">Artists Added</p>
-    </div>
-  </div>
 
-  <div class="bg-white rounded-lg shadow flex items-center p-6">
-    <div class="w-14 h-14 mr-4 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
-      <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polygon points="6,4 20,12 6,20 6,4" />
-      </svg>
+    <!-- Song Features (Read-only) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <input id="danceability" placeholder="Danceability" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="energy" placeholder="Energy" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="liveness" placeholder="Liveness" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="acousticness" placeholder="Acousticness" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="valence" placeholder="Valence" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="mode" placeholder="Mode (Major/Minor)" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="tempo" placeholder="Tempo (BPM)" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
+      <input id="duration_ms" placeholder="Duration (ms)" class="px-4 py-3 rounded-lg border border-gray-300 bg-gray-100" readonly>
     </div>
-    <div>
-      <p class="font-bold text-4xl">{{ total_playcount }}</p>
-      <p class="text-gray-600">Total Playcount</p>
-    </div>
-  </div>
-</div>
 
-  <!-- Upload JSON Panel -->
-  <div class="bg-white rounded-xl shadow p-8 mb-10">
-    <h2 class="text-2xl font-bold mb-6 text-center">Upload Playlist (JSON)</h2>
-    <form method="POST" action="{{ url_for('upload.upload') }}" enctype="multipart/form-data" id="upload-form" class="flex flex-col items-center justify-center space-y-6">
-      <label for="jsonFile" class="cursor-pointer w-20 h-20 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center relative z-10">
-        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M12 5v14m7-7H5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <input type="file" id="jsonFile" name="jsonFile" accept=".json" required class="hidden">
-        <p id="file-name" class="text-sm text-gray-500 mt-2"></p>
-      </label>
-      <button type="submit" id="upload-btn" class="w-full max-w-xs py-3 bg-gradient-to-r from-purple-400 to-pink-500 hover:brightness-110 text-white font-semibold rounded-full transition relative overflow-hidden">
-        <span id="upload-text">Upload</span>
-        <svg id="spinner" class="hidden absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
+    <!-- Audio preview -->
+    <div class="mb-6">
+      <audio id="preview-player" controls class="w-full rounded-lg shadow-lg bg-white border border-gray-300 p-2 custom-audio"></audio>
+    </div>
+
+    <!-- Playlist -->
+    <div class="mt-6">
+      <input type="text" id="playlist-name" placeholder="Playlist name (optional)"
+        class="w-full px-4 py-3 rounded-lg border border-gray-300 mb-4">
+      <button onclick="createPlaylist()"
+        class="w-full py-3 bg-gradient-to-r from-purple-400 to-pink-500 text-white font-semibold rounded-lg hover:brightness-110">
+        Create Playlist
       </button>
-    </form>
+    </div>
   </div>
 </div>
 
-<!-- Typewriter CSS -->
 <style>
   @keyframes typing {
-    0% { width: 0 }
-    40% { width: 100% }
-    60% { width: 100% }
-    100% { width: 0 }
+    0% {
+      width: 0
+    }
+
+    40% {
+      width: 100%
+    }
+
+    60% {
+      width: 100%
+    }
+
+    100% {
+      width: 0
+    }
   }
-  
+
   @keyframes blink {
-    0%, 100% { border-color: transparent }
-    50% { border-color: white }
+    0%,
+    100% {
+      border-color: transparent
+    }
+
+    50% {
+      border-color: white
+    }
   }
-  
+
   .typewriter {
     display: inline-block;
     overflow: hidden;
@@ -121,85 +106,245 @@
     animation: typing 6s steps(30, end) infinite, blink 0.8s step-end infinite;
     width: 0;
   }
-  
+
   .typewriter::before {
     content: "DISCOVER. VIBE. SHARE.";
   }
-  </style>
+
+  #searchResults {
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    width: 100%;
+    z-index: 50;
+    margin-top: 4px;
+  }
+
+  .result-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .result-item:hover, .result-item.selected {
+    background-color: #f8f9fa;
+  }
+
+  .result-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .result-item .track-info {
+    flex: 1;
+  }
+
+  .result-item .track-name {
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .result-item .track-artist {
+    font-size: 0.875rem;
+    color: #666;
+  }
+
+  .custom-audio {
+    background: linear-gradient(90deg, #f3e7e9 0%, #e3eeff 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(100, 100, 200, 0.08);
+    padding: 8px 0;
+    outline: none;
+  }
+  audio::-webkit-media-controls-panel {
+    background: transparent;
+    border-radius: 12px;
+  }
+  audio::-webkit-media-controls-play-button,
+  audio::-webkit-media-controls-volume-slider {
+    filter: hue-rotate(30deg) brightness(1.1);
+  }
+</style>
 {% endblock %}
-  
 
 {% block scripts %}
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Panel close logic
-    const closeBtn = document.getElementById('close-upload-panel');
-    const panel = document.getElementById('upload-panel');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function () {
-        panel.classList.add('hidden');
-      });
+document.addEventListener("DOMContentLoaded", function () {
+  const queryInput = document.getElementById("search-query");
+  const resultsBox = document.getElementById("searchResults");
+  const resultsContainer = document.getElementById("resultsContainer");
+  let selectedTracks = [];
+  let debounceTimer;
+  let selectedIndex = -1;
+
+  queryInput.addEventListener("input", function () {
+    console.log("Input event fired!");
+    const query = this.value.trim();
+    clearTimeout(debounceTimer);
+    selectedIndex = -1;
+
+    if (query.length < 2) {
+      resultsBox.style.display = "none";
+      return;
     }
 
-    // Upload interaction
-    const fileInput = document.getElementById('jsonFile');
-    const uploadForm = fileInput.closest('form');
-    const uploadButton = uploadForm.querySelector('button[type="submit"]');
+    debounceTimer = setTimeout(() => {
+      fetch(`/api/search-tracks?query=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("Fetched data:", data);
+          resultsContainer.innerHTML = "";
 
-    // Show selected file name inside the + button
-    fileInput.addEventListener('change', function () {
-      const label = fileInput.previousElementSibling;
-      if (fileInput.files.length > 0) {
-        const fileName = fileInput.files[0].name;
-        label.innerHTML = `<span class="text-white font-semibold text-sm truncate">${fileName}</span>`;
-      } else {
-        label.innerHTML = `
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M12 5v14m7-7H5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>`;
-      }
-    });
+          if (!data.length) {
+            resultsContainer.innerHTML = '<li class="result-item text-center text-gray-500">No results found</li>';
+            resultsBox.style.display = "block";
+            return;
+          }
 
-    // Prevent submit without file
-    uploadForm.addEventListener('submit', function (e) {
-      if (!fileInput.files.length) {
+          data.forEach((track, index) => {
+            const li = document.createElement("li");
+            li.className = "result-item";
+            li.innerHTML = `
+              <img src="${track.image}" alt="${track.name}" onerror="this.src='/static/images/default-album.png'">
+              <div class="track-info">
+                <p class="track-name">${track.name}</p>
+                <p class="track-artist">${track.artist}</p>
+              </div>`;
+            li.addEventListener("click", () => selectTrack(track));
+            resultsContainer.appendChild(li);
+          });
+
+          resultsBox.style.display = "block";
+        });
+    }, 300);
+  });
+
+  function selectTrack(track) {
+    console.log("[DEBUG] Selected track ID:", track.id);
+    queryInput.value = track.name;
+    fillFormFields(track);
+    selectedTracks = [track];
+    resultsBox.style.display = "none";
+
+    // Autofill preview audio
+    const preview = document.getElementById("preview-player");
+    if (track.preview_url) {
+      preview.src = track.preview_url;
+      preview.classList.remove("hidden");
+    } else {
+      preview.classList.add("hidden");
+    }
+
+    // Fetch audio features
+    fetch("/api/audio-features", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ track_ids: [track.id] })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data[0]) {
+          const f = data[0];
+          if (!f) return;
+
+          document.getElementById("danceability").value = f.danceability?.toFixed(3) || "";
+          document.getElementById("energy").value = f.energy?.toFixed(3) || "";
+          document.getElementById("liveness").value = f.liveness?.toFixed(3) || "";
+          document.getElementById("acousticness").value = f.acousticness?.toFixed(3) || "";
+          document.getElementById("valence").value = f.valence?.toFixed(3) || "";
+          document.getElementById("mode").value = f.mode === 1 ? "Major" : "Minor";
+          document.getElementById("tempo").value = f.tempo?.toFixed(2) || "";
+
+          if (f.duration_ms) {
+            const minutes = Math.floor(f.duration_ms / 60000);
+            const seconds = Math.floor((f.duration_ms % 60000) / 1000);
+            document.getElementById("duration_ms").value = `${minutes}:${seconds.toString().padStart(2, '0')} min`;
+          } else {
+            document.getElementById("duration_ms").value = "";
+          }
+        } else {
+          console.warn("No audio features found for the selected track.");
+        }
+      })
+  }
+  
+  queryInput.addEventListener("keydown", function (e) {
+    const items = resultsContainer.getElementsByClassName("result-item");
+
+    switch (e.key) {
+      case "ArrowDown":
         e.preventDefault();
-        showFlash("No file added!", "error");
-        return;
-      }
-
-      // Show loading spinner
-      uploadButton.disabled = true;
-      uploadButton.innerHTML = `
-        <svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-        </svg>
-      `;
-    });
-
-    // Allow Enter to submit if file selected
-    fileInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && fileInput.files.length) {
-        uploadForm.requestSubmit();
-      }
-    });
-
-    // Flash message display
-    function showFlash(message, category = "info") {
-      const container = document.createElement('div');
-      container.className = `
-        fixed top-6 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow text-white font-semibold
-        ${category === "error" ? "bg-red-500" : "bg-blue-500"}
-      `;
-      container.textContent = message;
-      document.body.appendChild(container);
-
-      setTimeout(() => {
-        container.classList.add("opacity-0");
-        setTimeout(() => container.remove(), 300);
-      }, 3000);
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        updateSelection(items);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        updateSelection(items);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && items[selectedIndex]) {
+          items[selectedIndex].click();
+        }
+        break;
+      case "Escape":
+        resultsBox.style.display = "none";
+        break;
     }
   });
+
+  function updateSelection(items) {
+    Array.from(items).forEach((item, index) => {
+      item.classList.toggle("selected", index === selectedIndex);
+      if (index === selectedIndex) {
+        item.scrollIntoView({ block: "nearest" });
+      }
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!resultsBox.contains(e.target) && e.target !== queryInput) {
+      resultsBox.style.display = "none";
+    }
+  });
+
+  function fillFormFields(track) {
+    document.getElementById("title").value = track.name || "";
+    document.getElementById("artist").value = track.artist || "";
+    document.getElementById("album").value = track.album || "";
+    document.getElementById("genre").value = track.genre || "";
+    document.getElementById("danceability").value = track.danceability || "";
+    document.getElementById("energy").value = track.energy || "";
+    document.getElementById("liveness").value = track.liveness || "";
+    document.getElementById("acousticness").value = track.acousticness || "";
+    document.getElementById("valence").value = track.valence || "";
+    document.getElementById("mode").value = track.mode || "";
+    document.getElementById("tempo").value = track.tempo || "";
+    document.getElementById("duration_ms").value = track.duration_ms || "";
+  }
+
+  function createPlaylist() {
+    const name = document.getElementById("playlist-name").value;
+    fetch("/upload/create-playlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playlist_name: name, tracks: selectedTracks })
+    })
+      .then(res => res.json())
+      .then(response => alert(response.message))
+      .catch(err => alert("Error creating playlist"));
+  }
+});
 </script>
 {% endblock %}
+
