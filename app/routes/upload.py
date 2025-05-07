@@ -1,66 +1,58 @@
 import os
 from flask import (
-    Blueprint, render_template, request, redirect,
-    url_for, flash, current_app, session, jsonify
+    Blueprint, render_template, request, session, jsonify
 )
 from flask_login import current_user
 from app.models import db, Track, UserTrack
-from app.utils.spotify_auth import search_tracks, get_audio_features
+from app.utils.spotify_auth import search_tracks
+from app.utils.track_feature_loader import get_track_features_by_id
 
 upload_bp = Blueprint('upload', __name__)
 
 # ---------- Main Upload Page ----------
 @upload_bp.route('/upload', methods=['GET'])
 def upload():
-    """
-    Display the upload page with dynamic username and song count.
-    """
     username = session.get('username', 'User')
-    # Replace with actual DB logic later
     song_count = UserTrack.query.filter_by(user_id=current_user.id).count() if current_user.is_authenticated else 0
     return render_template('upload.html', username=username, song_count=song_count)
 
 
-# ---------- Search Songs (Spotify API) ----------
+# ---------- Search Songs (Spotify API + CSV metadata) ----------
 @upload_bp.route("/api/search-tracks")
 def api_search_tracks():
     query = request.args.get("query")
     if not query:
         return jsonify([])
-    return jsonify(search_tracks(query))
+
+    results = search_tracks(query)
+    enriched_results = []
+
+    for track in results:
+        track_id = track.get("id")
+        enriched = get_track_features_by_id(track_id)
+
+        if enriched:
+            # Merge Spotify API and CSV metadata
+            track.update({
+                "genre": enriched.get("genre"),
+                "duration_ms": enriched.get("duration_ms"),
+                "danceability": enriched.get("danceability"),
+                "energy": enriched.get("energy"),
+                "liveness": enriched.get("liveness"),
+                "acousticness": enriched.get("acousticness"),
+                "valence": enriched.get("valence"),
+                "tempo": enriched.get("tempo"),
+                "mode": enriched.get("mode")
+            })
+
+        enriched_results.append(track)
+
+    return jsonify(enriched_results)
 
 
-# ---------- Fetch Audio Features ----------
-@upload_bp.route("/api/audio-features", methods=["POST"])
-def api_audio_features():
-    try:
-        data = request.get_json()
-        print(f"[DEBUG] Incoming payload: {data}")
-
-        track_ids = data.get("track_ids", [])
-        if not isinstance(track_ids, list) or not track_ids:
-            return jsonify({'error': 'No valid track_ids provided'}), 400
-
-        features = get_audio_features(track_ids)
-        print(f"[DEBUG] Spotify returned: {features}")
-
-        if not features or all(f is None for f in features):
-            return jsonify([]), 200
-
-        filtered = [f for f in features if f is not None]
-        return jsonify(filtered)
-    except Exception as e:
-        print(f"[ERROR] get_audio_features failed: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-
-# ---------- Playlist Creation Endpoint (POST from frontend later) ----------
+# ---------- Playlist Creation Endpoint ----------
 @upload_bp.route("/upload/create-playlist", methods=["POST"])
 def create_playlist():
-    """
-    Accepts selected song IDs from the frontend to group into a playlist.
-    """
     data = request.get_json()
     tracks = data.get("tracks", [])
     playlist_name = data.get("playlist_name", "Untitled Playlist")
@@ -81,7 +73,7 @@ def create_playlist():
             track = Track(
                 title=title,
                 artist=artist,
-                genre="Unknown",
+                genre=song.get("genre", "Unknown"),
                 date_played=None
             )
             db.session.add(track)
