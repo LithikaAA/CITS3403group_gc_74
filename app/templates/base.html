@@ -28,7 +28,6 @@
 </head>
 <body class="min-h-screen bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100">
  
- 
   <!-- Navigation Bar -->
   {% if current_user.is_authenticated and request.endpoint not in ['auth.login', 'auth.signup', 'index.home'] %}
     <div id="navbar-container"></div>
@@ -81,10 +80,13 @@
         flash.style.display = 'none';
       }
     }, 3000);
-  
+
     // Initialise Feather Icons AFTER page loads
     feather.replace();
   </script>
-  </sc>
+
+  <!-- FIXED: Add this block for page-specific scripts -->
+  {% block scripts %}{% endblock %}
+
 </body>
 </html>
