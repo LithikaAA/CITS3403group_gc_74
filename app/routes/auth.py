@@ -81,12 +81,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
 
-
-# ---------- TERMS ----------
-@auth_bp.route('/terms')
-def terms():
-    return render_template('terms.html')
-
 # ---------- Accounts ----------
 @auth_bp.route('/account-setup', methods=['GET', 'POST'])
 @login_required
