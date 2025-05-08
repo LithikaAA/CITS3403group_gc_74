@@ -62,5 +62,6 @@ docs/_build/
 
 /data/
 
-# in .gitignore
-/app/static/uploads/*.png
+.cache
+
+/data/
