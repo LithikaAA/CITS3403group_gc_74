@@ -74,8 +74,8 @@ class Playlist(db.Model):
     owner_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
 
     owner: so.Mapped["User"] = so.relationship(back_populates="playlists")
-    #tracks: so.Mapped[List["Track"]] = so.relationship(back_populates="playlist", cascade="all, delete")
     shares: so.Mapped[List["Share"]] = so.relationship(back_populates="playlist", cascade="all, delete")
+    playlist_tracks: so.Mapped[List["PlaylistTrack"]] = so.relationship(back_populates="playlist", cascade="all, delete")
 
     def track_data_as_chart(self):
         genres = [track.genre for track in self.tracks if track.genre]
@@ -84,6 +84,17 @@ class Playlist(db.Model):
             "labels": list(counts.keys()),
             "counts": list(counts.values())
         }
+
+
+# ------------------ PlaylistTrack Join Table ------------------
+class PlaylistTrack(db.Model):
+    __tablename__ = "playlist_tracks"
+
+    playlist_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("playlists.id"), primary_key=True)
+    track_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("tracks.id"), primary_key=True)
+
+    playlist: so.Mapped["Playlist"] = so.relationship(back_populates="playlist_tracks")
+    track: so.Mapped["Track"] = so.relationship()
 
 
 # ------------------ Track Model ------------------
@@ -102,17 +113,6 @@ class Track(db.Model):
     liveness: so.Mapped[float] = so.mapped_column(sa.Float, default = 0)
     danceability: so.Mapped[float] = so.mapped_column(sa.Float, default = 0)
     mode: so.Mapped[int] = so.mapped_column(sa.Integer, default=1)
-
-    #user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), index=True)
-    #playlist_id: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("playlists.id"), nullable=True)
-
-    # user: so.Mapped["User"] = so.relationship(
-    #     back_populates="tracks"
-    # )
-
-    # playlist: so.Mapped[Optional["Playlist"]] = so.relationship(
-    #     back_populates="tracks"
-    # )
 
     user_tracks: so.Mapped[List["UserTrack"]] = so.relationship(
         back_populates="track", cascade="all, delete"

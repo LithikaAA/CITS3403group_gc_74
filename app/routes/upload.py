@@ -49,53 +49,6 @@ def api_search_tracks():
 
     return jsonify(enriched_results)
 
-
-# # ---------- Playlist Creation Endpoint ----------
-# @upload_bp.route("/upload/create-playlist", methods=["POST"])
-# def create_playlist():
-#     data = request.get_json()
-#     tracks = data.get("tracks", [])
-#     playlist_name = data.get("playlist_name", "Untitled Playlist")
-
-#     if not tracks:
-#         return jsonify({"status": "error", "message": "No tracks provided."}), 400
-
-#     for song in tracks:
-#         title = song.get("name")
-#         artist = song.get("artist")
-#         duration = int(song.get("duration_ms", 0))  # make sure this is cast to int
-
-#         if not title or not artist:
-#             continue
-
-#         # Create or fetch the track in DB
-#         track = Track.query.filter_by(title=title, artist=artist).first()
-#         if not track:
-#             track = Track(
-#                 title=title,
-#                 artist=artist,
-#                 genre=song.get("genre", "Unknown"),
-#                 date_played=None
-#             )
-#             db.session.add(track)
-#             db.session.flush()
-
-#         user_track = UserTrack.query.filter_by(user_id=current_user.id, track_id=track.id).first()
-#         if not user_track:
-#             user_track = UserTrack(
-#                 user_id=current_user.id,
-#                 track_id=track.id,
-#                 song=title,
-#                 artist=artist,
-#                 song_duration=duration,
-#                 times_played=1,
-#                 total_ms_listened=duration
-#             )
-#             db.session.add(user_track)
-
-#     db.session.commit()
-#     return jsonify({"status": "success", "message": f"Playlist '{playlist_name}' created."})
-
 @upload_bp.route("/upload/create-playlist", methods=["POST"])
 def create_playlist():
     data = request.get_json()

@@ -61,5 +61,6 @@ docs/_build/
 *.env
 
 .cache
+migrations/versions/*.py
 
 /data/
