@@ -1,78 +1,101 @@
-# 🎵 VibeShare
+# VibeShare
 
-**VibeShare** is a web-based music data sharing platform that allows users to upload their Spotify listening history, visualise their music preferences, and selectively share insights with friends. Whether you're comparing your favourite tracks or discovering new genres through your social circle, VibeShare helps you explore music in a more connected and engaging way.
+**VibeShare** is a music insight platform that lets users search for songs via the Spotify API, create playlists, and visualise their listening patterns. This project was developed as part of the CITS3403 Web Application Development unit.
 
----
+## Features
 
-## 🚀 Features
+### Song Search
+- Integrated with Spotify API to search for tracks
+- Enriched metadata from local CSV for robustness
 
-- **🔐 User Authentication**  
-  Secure sign-up and log-in functionality using Flask-Login.
+### Playlist Creation
+- Users can search and select multiple songs
+- Create a named playlist stored in the database
+- Backend persists tracks via a many-to-many `PlaylistTrack` join table
+- Supports collapsible playlist containers that display included songs after creation
 
-- **📁 Data Upload**  
-  Upload your Spotify listening history via exported data from Spotify or publicly available Kaggle datasets.
+### Visualisation Dashboard
+- Explore mood, tempo, and energy via interactive charts (Chart.js)
+- Filter by playlist using a dropdown menu populated via `/upload/my-playlists`
+- On selection, data is fetched from `/upload/playlist/<playlist_id>/tracks` and visualised
+- Charts include:
+  - Mood radar
+  - Tempo distribution
+  - Danceability vs Energy
+  - Mode (Major/Minor) comparison
+  - Valence vs Acousticness Quadrant Plot 
+  - Top Artists and Summary Stats
 
-- **📊 Data Visualisation**  
-  Explore your top artists, tracks, genres, and listening trends through dynamic and interactive charts.
+### Data Sharing (Secure)
+- Dashboard supports "You vs Friend" comparisons
+- Only includes data from friends who have shared access
+- Dropdown populated with friend playlist data for comparison
 
-- **🤝 Data Sharing**  
-  Share your data with specific users and explore data that others have shared with you.
+## Tech Stack
 
-- **📈 Personal Dashboard**  
-  Track listening durations, genre preferences, time-of-day habits, and more in a personalised view.
+| Layer         | Technology                             |
+|--------------|-----------------------------------------|
+| Frontend     | HTML, CSS, Bootstrap, JavaScript        |
+| Backend      | Python (Flask)                          |
+| Database     | SQLite with SQLAlchemy ORM              |
+| Authentication | Flask-Login                           |
+| Visualisation | Chart.js / JavaScript-based libraries  |
 
-- **🌐 Friendship Network**  
-  Connect with other users to exchange music tastes and discover what your friends are listening to.
+## Project Structure
 
----
+```bash
+app/
+├── models.py             # SQLAlchemy models (User, Track, Playlist, PlaylistTrack, Share, etc.)
+├── upload.py             # Track search, enrichment, playlist creation endpoints
+├── dashboard.py          # Visualisation routes for authenticated users
+├── share.py              # Handles sharing logic
+├── templates/            # Jinja2 templates for HTML rendering
+│   ├── upload.html       # Song search and playlist creation
+│   ├── dashboard.html    # Dashboard visualisation interface
+│   ├── shared_dashboard.html  # View friend’s shared data
+│   └── ...
+├── static/               # TailwindCSS, JavaScript, assets
+│   ├── components/       # JS modules for navbar, breadcrumbs
+│   ├── css/              # Global styling
+│   └── img/              # Image assets
+├── utils/                # Spotify API wrappers and feature loading
+├── routes/               # Modular blueprint routes (auth, index, upload, share)
+├── app.db                # SQLite database file
+├── migrations/           # Alembic migration files
+├── requirements.txt      # Python dependencies
+├── .env / .env.example   # Environment config files
+├── run.py                # Flask entry point
+└── config.py             # App configuration
+```
 
-## 🧱 Tech Stack
+## Setup Instructions
 
-| Layer        | Technology                    |
-|--------------|-------------------------------|
-| Frontend     | HTML, CSS, Bootstrap, JavaScript |
-| Backend      | Python (Flask)                |
-| Database     | SQLite with SQLAlchemy ORM    |
-| Authentication | Flask-Login                 |
-| Visualisation | Chart.js / JavaScript-based libraries |
+1. **Clone the repository**
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+3. Initialise the database:
+```bash
+flask db init
+flask db migrate -m "Initial tables"
+flask db upgrade
+```
+4. Run the Flask app:
+```bash
+flask run
+```
 
----
+> **Note**: Markers should use the test account provided for login. Spotify API client credentials are required to enable the search functionality.
 
-## 📂 Project Structure
+## Team Members
 
-```plaintext
-vibeshare/
-├── app/
-│   ├── __init__.py                  # App factory, loads .env, sets up Flask app
-│   ├── models.py                    # SQLAlchemy models (User, Track, Playlist, etc.)
-│   ├── routes/                      # Folder for modular route handlers
-│   │   ├── auth.py                  # Login, logout, signup routes
-│   │   ├── dashboard.py             # Main user dashboard routes
-│   │   ├── upload.py                # Upload and handle CSV/audio data
-│   │   ├── share.py                 # Sharing tracks/playlists with other users
-│   ├── templates/                   # HTML files rendered with Jinja
-│   │   ├── base.html                # Base layout (nav/footer)
-│   │   ├── index.html               # Welcome / landing page
-│   │   ├── login.html               # Login form
-│   │   ├── signup.html              # Registration form
-│   │   ├── dashboard.html           # Main dashboard (top tracks, stats)
-│   │   ├── upload.html              # Upload music or CSV data
-│   │   ├── share.html               # Share music with friends
-│   ├── static/                      # Static files (CSS, JS, images)
-│   │   ├── css/
-│   │   │   └── style.css            # Custom styles (if any)
-│   │   ├── js/
-│   │   │   └── app.js               # Optional JS logic or AJAX
-│   │   ├── img/
-│   │   │   └── logo.png             # App logo or album art
-├── data/                            # Local data not tracked by Git
-│   └── spotify.csv                  # ✅ Your downloaded Kaggle data (gitignored)
-├── tests/                           # Unit and Selenium tests
-│   └── test_app.py                  # Example test (login, DB, etc.)
-├── deliverables/                    # Reports, screenshots for submission
-├── run.py                           # Entry point to run the Flask app
-├── .env                             # Your local config (SECRET_KEY, etc.) [gitignored]
-├── .env.example                     # ✅ Shared template of environment variables
-├── requirements.txt                 # All necessary Python packages
-├── README.md                        # Project description and setup instructions
-└── .gitignore                       # Ignore virtual env, .env, data/, etc.
+| Name             | GitHub Username   |
+|------------------|-------------------|
+| Zi Qian Tan      | Squirtl3-Nee      |
+| Lithika          | LithikaAA         |
+| Kylan Gillmore   | KylanGillmore     |
+| Adrian Gonsalves | Adundo123         |
+
+## License
+This project is for educational use only. Built for CITS3403 at UWA.
