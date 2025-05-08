@@ -27,10 +27,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Load Spotify environment variables
-    app.config['SPOTIPY_CLIENT_ID'] = os.getenv("SPOTIPY_CLIENT_ID")
+    # Spotify credentials from environment
+    app.config['SPOTIPY_CLIENT_ID']     = os.getenv("SPOTIPY_CLIENT_ID")
     app.config['SPOTIPY_CLIENT_SECRET'] = os.getenv("SPOTIPY_CLIENT_SECRET")
-    app.config['SPOTIPY_REDIRECT_URI'] = os.getenv("SPOTIPY_REDIRECT_URI")
+    app.config['SPOTIPY_REDIRECT_URI']  = os.getenv("SPOTIPY_REDIRECT_URI")
 
     # Init extensions
     db.init_app(app)

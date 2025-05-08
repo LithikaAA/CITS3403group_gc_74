@@ -187,13 +187,13 @@ class SharedData(db.Model):
     file_type: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)   # File type (e.g., CSV, JSON)
     timestamp: so.Mapped[datetime] = so.mapped_column(default=datetime.utcnow)
 
-    user: so.Mapped['User'] = so.relationship(back_populates="shared_data")
-
+    # Relationship to the User model
+    user: so.Mapped['User'] = so.relationship(back_populates="shared_data")  # Link back to User model
 
 # ------------------ Friends ------------------
 class Friend(db.Model):
     __tablename__ = 'friend'
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    id        = db.Column(db.Integer, primary_key=True)
+    user_id   = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
