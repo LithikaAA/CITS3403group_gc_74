@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}Vibe Stats Dashboard | VibeShare{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-screen-2xl mx-auto px-4 py-10 pt-14">
+  <div class="space-y-12">
+
+    <!-- Friend Selection Dropdown -->
+    <div class="mb-10 pt-2">
+        <label for="friendSelect" class="block text-lg font-semibold text-gray-700 mb-2"></label>
+        <div class="relative w-full md:w-1/3">
+        <select
+            id="friendSelect"
+            name="friend_id"
+            class="block w-full appearance-none px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 focus:ring-2 focus:ring-indigo-300 focus:outline-none">
+            <option value="" disabled selected hidden>Choose a Friend</option>
+            {% for friend in friends_list %}
+            <option value="{{ friend.id }}">{{ friend.username }}</option>
+            {% endfor %}
+        </select>
+        <!-- Custom dropdown arrow -->
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+        </div>
+    </div>
+  
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-2xl font-bold text-grey-700 mb-2">Total Minutes Played by Track</h2>
+        <p class="text-sm text-gray-500 mb-6">Top different songs between you and your friend.</p>
+        <div class="w-full overflow-x-auto">
+          <canvas id="minutesByTrack" class="w-full h-auto max-w-full"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-2xl font-bold text-grey-700 mb-2">Danceability vs Energy</h2>
+        <p class="text-sm text-gray-500 mb-6">You vs friend. Different colour dots show each of your tracks.</p>
+        <div class="w-full overflow-x-auto">
+          <canvas id="danceabilityEnergy" class="w-full h-auto max-w-full"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+
+      <!-- Comparison Summary Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col space-y-6 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
+        <h2 class="text-lg font-semibold text-gray-700">You & Friend Summary</h2>
+        <div class="space-y-4 text-sm text-gray-600">
+          <p><span class="font-bold">Top Common Track:</span> {{ shared_summary.common_track }}</p>
+          <p><span class="font-bold">Your Avg Tempo:</span> {{ shared_summary.your_avg_tempo }} BPM</p>
+          <p><span class="font-bold">Friend's Avg Tempo:</span> {{ shared_summary.friend_avg_tempo }} BPM</p>
+          <p><span class="font-bold">Total Minutes (You):</span> {{ shared_summary.your_total_minutes }}</p>
+          <p><span class="font-bold">Total Minutes (Friend):</span> {{ shared_summary.friend_total_minutes }}</p>
+          <p><span class="font-bold">Your Mood:</span> {{ shared_summary.your_mood }}</p>
+          <p><span class="font-bold">Friend's Mood:</span> {{ shared_summary.friend_mood }}</p>
+        </div>
+      </div>
+
+      <!-- Mood Profile Radar Chart -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Mood Profile Comparison</h2>
+        <p class="text-xs text-gray-400 mb-4">You vs friend, colour coded.</p>
+        <canvas id="moodProfile" class="w-full h-auto max-w-full"></canvas>
+      </div>
+
+      <!-- Listening Time by Mode -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Mode Comparison</h2>
+        <p class="text-xs text-gray-400 mb-4">Major (Happy) vs Minor (Emotional) — stacked by user.</p>
+        <canvas id="modeChart" class="w-full h-auto max-w-full"></canvas>
+      </div>
+
+      <!-- Top Artists Comparison -->
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Top Artists</h2>
+        <p class="text-xs text-gray-400 mb-4">Yours and your friend’s top 5 artists.</p>
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <p class="font-semibold text-indigo-700">Your Top Artists</p>
+            <ul class="text-sm text-gray-600 list-disc pl-5">
+              {% for artist in top_artists_user %}<li>{{ artist }}</li>{% endfor %}
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-pink-600">Friend’s Top Artists</p>
+            <ul class="text-sm text-gray-600 list-disc pl-5">
+              {% for artist in top_artists_friend %}<li>{{ artist }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js and JS block remains unchanged -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Bar Chart – Total Minutes Played by Track
+    const minutesByTrackCtx = document.getElementById('minutesByTrack').getContext('2d');
+    new Chart(minutesByTrackCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ comparison_minutes.labels | tojson | safe }},
+        datasets: [
+          {
+            label: 'You',
+            data: {{ comparison_minutes.your_data | tojson | safe }},
+            backgroundColor: '#6366F1'
+          },
+          {
+            label: 'Friend',
+            data: {{ comparison_minutes.friend_data | tojson | safe }},
+            backgroundColor: '#F472B6'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { text: 'Minutes', display: true }
+          },
+          x: {
+            title: { text: 'Track', display: true }
+          }
+        }
+      }
+    });
+  
+    // Bubble Chart – Danceability vs Energy
+    const danceabilityEnergyCtx = document.getElementById('danceabilityEnergy').getContext('2d');
+    new Chart(danceabilityEnergyCtx, {
+      type: 'bubble',
+      data: {
+        datasets: [
+          {
+            label: 'You',
+            data: {{ comparison_bubble.you | tojson | safe }},
+            backgroundColor: 'rgba(99, 102, 241, 0.5)',
+            borderColor: '#6366F1'
+          },
+          {
+            label: 'Friend',
+            data: {{ comparison_bubble.friend | tojson | safe }},
+            backgroundColor: 'rgba(244, 114, 182, 0.5)',
+            borderColor: '#F472B6'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          x: {
+            title: { text: 'Danceability', display: true }
+          },
+          y: {
+            title: { text: 'Energy', display: true }
+          }
+        }
+      }
+    });
+  
+    // Radar Chart – Mood Profile
+    const moodProfileCtx = document.getElementById('moodProfile').getContext('2d');
+    new Chart(moodProfileCtx, {
+      type: 'radar',
+      data: {
+        labels: ['Danceability', 'Energy', 'Valence', 'Acousticness', 'Liveness'],
+        datasets: [
+          {
+            label: 'You',
+            data: {{ comparison_mood.you | tojson | safe }},
+            backgroundColor: 'rgba(99, 102, 241, 0.2)',
+            borderColor: '#6366F1',
+            pointBackgroundColor: '#6366F1'
+          },
+          {
+            label: 'Friend',
+            data: {{ comparison_mood.friend | tojson | safe }},
+            backgroundColor: 'rgba(244, 114, 182, 0.2)',
+            borderColor: '#F472B6',
+            pointBackgroundColor: '#F472B6'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 1
+          }
+        }
+      }
+    });
+  
+    // Mode Comparison – Stacked Bar
+    const modeCtx = document.getElementById('modeChart').getContext('2d');
+    new Chart(modeCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Major', 'Minor'],
+        datasets: [
+          {
+            label: 'You',
+            data: {{ comparison_mode.you | tojson | safe }},
+            backgroundColor: '#6366F1'
+          },
+          {
+            label: 'Friend',
+            data: {{ comparison_mode.friend | tojson | safe }},
+            backgroundColor: '#F472B6'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { text: 'Minutes', display: true }
+          }
+        }
+      }
+    });
+  </script>
+  
+{% endblock %}

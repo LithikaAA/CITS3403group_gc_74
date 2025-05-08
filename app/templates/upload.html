@@ -1,13 +1,514 @@
 {% extends "base.html" %}
-
-{% block title %}Upload Data{% endblock %}
+{% block title %}Upload Dashboard | VibeShare{% endblock %}
 
 {% block content %}
-<h2>Upload Your Data</h2>
-<form action="/upload" method="post" enctype="multipart/form-data">
-    <label for="file">Choose a file:</label>
-    <input type="file" id="file" name="file" required>
-    <br>
-    <button type="submit">Upload</button>
-</form>
+<div class="w-full max-w-7xl mx-auto px-8 py-8">
+  <!-- Greeting -->
+  <div class="lg:flex justify-between items-center mb-6 mt-10">
+    <h1 class="text-5xl font-extrabold text-black drop-shadow-sm tracking-tight">
+      Welcome back, {{ username }}!
+    </h1>
+  </div>
+
+  <!-- Banner -->
+  <div class="relative rounded-xl overflow-hidden mb-10 h-72 bg-gradient-to-r from-purple-500 via-pink-400 to-blue-400 flex items-center justify-center">
+    <div class="text-white text-center">
+      <h1 class="typewriter text-4xl sm:text-5xl font-extrabold tracking-wide"></h1>
+    </div>
+  </div>
+
+  <!-- Visualisation Requirement Notice -->
+  <div class="bg-white rounded-xl shadow p-4 mb-6 text-center border border-yellow-300">
+    <p class="text-yellow-700 font-medium">
+      <svg xmlns="http://www.w3.org/2000/svg" class="inline h-5 w-5 mr-2 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.293 17.293a1 1 0 010-1.414L11.586 8.586a2 2 0 012.828 0l7.293 7.293a1 1 0 01-1.414 1.414L13 10.414l-7.293 7.293a1 1 0 01-1.414 0z" />
+      </svg>
+      To generate your visualisation dashboard, please add at least <strong>10 songs</strong>.
+    </p>
+  </div>
+
+  <!-- Song Search Panel -->
+  <div class="bg-white rounded-xl shadow p-8 mb-10 relative">
+    <h2 class="text-2xl font-bold mb-6 text-center">Search for Songs</h2>
+
+    <div class="relative mb-6">
+      <input id="search-query" type="text" placeholder="Type a song or artist..."
+        class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-pink-400 focus:outline-none">
+      <div id="searchResults" class="absolute bg-white shadow-lg rounded-lg z-50 w-full mt-1"
+        style="display: none;">
+        <ul id="resultsContainer" class="divide-y divide-gray-200"></ul>
+      </div>
+    </div>
+
+    <!-- Autofill Fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <input id="title" type="text" placeholder="Title" class="px-4 py-3 rounded-lg border border-gray-300 bg-white">
+      <input id="artist" type="text" placeholder="Artist" class="px-4 py-3 rounded-lg border border-gray-300 bg-white">
+      <input id="album" type="text" placeholder="Album" class="px-4 py-3 rounded-lg border border-gray-300 bg-white">
+      <input id="genre" type="text" placeholder="Genre" class="px-4 py-3 rounded-lg border border-gray-300 bg-white">
+    </div>
+
+    <!-- Song Features (Read-only) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <input id="danceability" placeholder="Danceability" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="energy" placeholder="Energy" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="liveness" placeholder="Liveness" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="acousticness" placeholder="Acousticness" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="valence" placeholder="Valence" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="mode" placeholder="Mode (Major/Minor)" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="tempo" placeholder="Tempo (BPM)" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+      <input id="duration_ms" placeholder="Duration (ms)" class="px-4 py-3 rounded-lg border border-gray-300 bg-white" readonly>
+    </div>
+
+    <button id="add-track-btn" class="w-full py-3 bg-gradient-to-r from-purple-400 to-pink-500 text-white font-semibold rounded-lg hover:brightness-110">
+      Add Data
+    </button>
+  </div>
+
+  <!-- Added Songs Section (Initially Hidden) -->
+  <div id="added-songs" class="bg-white rounded-xl shadow p-6 mt-10 hidden">
+    <h2 class="text-2xl font-bold mb-4">Your Selected Songs</h2>
+    <ul id="song-list" class="space-y-2"></ul>
+    <div class="mt-6">
+      <input id="playlist-name" type="text" placeholder="Playlist Name (required)" class="w-full mb-4 px-4 py-3 rounded-lg border border-gray-300 bg-white">
+      <button id="create-playlist-btn" class="w-full py-3 text-white font-semibold rounded-lg bg-gray-300 cursor-not-allowed" disabled>
+        Create Playlist
+      </button>
+    </div>
+  </div>
+
+<!-- Playlist Created Section (Initially Hidden) -->
+  <div id="playlist-output" class="hidden mt-10 bg-white rounded-xl shadow p-6">
+    <h2 class="text-2xl font-bold mb-4">Your Playlist</h2>
+    <div id="playlist-container" class="space-y-4"></div>
+  </div>
+</div>
+
+  
+<style>
+  @keyframes typing {
+    0% {
+      width: 0
+    }
+
+    40% {
+      width: 100%
+    }
+
+    60% {
+      width: 100%
+    }
+
+    100% {
+      width: 0
+    }
+  }
+
+  @keyframes blink {
+    0%,
+    100% {
+      border-color: transparent
+    }
+
+    50% {
+      border-color: white
+    }
+  }
+
+  .typewriter {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid white;
+  font-family: monospace;
+  animation: typing 6s steps(30, end) infinite, blink 0.8s step-end infinite;
+  width: 0;
+}
+
+.typewriter::before {
+  content: "DISCOVER. VIBE. SHARE.";
+}
+
+/* Search results dropdown */
+#searchResults {
+  max-height: 300px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  width: 100%;
+  z-index: 50;
+  pointer-events: auto;
+  margin-top: 4px;
+}
+
+#searchResults[style*="display: none"] {
+  display: none !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* Result items styling */
+.result-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+}
+
+.result-item:hover, .result-item.selected {
+  background-color: #f8f9fa;
+}
+
+.result-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.result-item .track-info {
+  flex: 1;
+}
+
+.result-item .track-name {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.result-item .track-artist {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* Added Songs Section */
+#added-songs,
+#song-list {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Song item */
+#song-list li {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Form field uniformity */
+input[type="text"],
+input[readonly] {
+  background-color: white !important;
+  border-color: #ccc;
+  color: #111;
+}
+
+/* Playlist button style when enabled */
+#create-playlist-btn.bg-gradient-to-r {
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+/* Warning block above form */
+.requirement-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 0.5rem;
+  color: #856404;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.requirement-warning svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+</style>
 {% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const queryInput = document.getElementById("search-query");
+    const resultsBox = document.getElementById("searchResults");
+    const resultsContainer = document.getElementById("resultsContainer");
+    const songList = document.getElementById("song-list");
+    const addedSongsSection = document.getElementById("added-songs");
+    const playlistOutput = document.getElementById("playlist-output");
+    const playlistContainer = document.getElementById("playlist-container");
+    const playlistNameInput = document.getElementById("playlist-name");
+
+    let selectedTracks = [];
+    let debounceTimer;
+    let selectedIndex = -1;
+
+    queryInput.addEventListener("input", function () {
+      const query = this.value.trim();
+      clearTimeout(debounceTimer);
+      selectedIndex = -1;
+
+      if (query.length < 2) {
+        resultsBox.style.display = "none";
+        return;
+      }
+
+      debounceTimer = setTimeout(() => {
+        fetch(`/api/search-tracks?query=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(data => {
+            resultsContainer.innerHTML = "";
+
+            if (!data.length) {
+              resultsContainer.innerHTML = '<li class="result-item text-center text-gray-500">No results found</li>';
+              resultsBox.style.display = "block";
+              return;
+            }
+
+            data.forEach((track) => {
+              const li = document.createElement("li");
+              li.className = "result-item";
+              li.innerHTML = `
+                <img src="${track.image}" alt="${track.name}" onerror="this.src='/static/img/default-album.png'">
+                <div class="track-info">
+                  <p class="track-name">${track.name}</p>
+                  <p class="track-artist">${track.artist}</p>
+                </div>`;
+              li.addEventListener("click", () => {
+                queryInput.value = track.name;
+                fillFormFields(track);
+                resultsBox.style.display = "none";
+              });
+              resultsContainer.appendChild(li);
+            });
+
+            resultsBox.style.display = "block";
+          });
+      }, 300);
+    });
+
+    function fillFormFields(track) {
+      document.getElementById("title").value = track.name || "";
+      document.getElementById("artist").value = track.artist || "";
+      document.getElementById("album").value = track.album || "";
+      document.getElementById("genre").value = track.genre || "";
+      document.getElementById("danceability").value = track.danceability ?? "";
+      document.getElementById("energy").value = track.energy ?? "";
+      document.getElementById("liveness").value = track.liveness ?? "";
+      document.getElementById("acousticness").value = track.acousticness ?? "";
+      document.getElementById("valence").value = track.valence ?? "";
+      document.getElementById("mode").value = track.mode || "";
+      document.getElementById("tempo").value = track.tempo ?? "";
+      document.getElementById("duration_ms").value = track.duration_ms ?? "";
+    }
+
+    function displaySelectedSong(track) {
+      if (document.getElementById(`song-${track.id}`)) return;
+
+      const songItem = document.createElement("li");
+      songItem.className = "bg-white shadow rounded p-4 flex items-center justify-between";
+      songItem.id = `song-${track.id}`;
+
+      const left = document.createElement("div");
+      left.className = "flex items-center gap-4";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "form-checkbox h-5 w-5 text-blue-500";
+      checkbox.addEventListener("change", updatePlaylistButtonState);
+
+      const details = document.createElement("div");
+      details.innerHTML = `
+        <p class="font-semibold">${track.name} <span class="text-gray-600">by</span> ${track.artist}</p>
+        <p class="text-sm text-gray-500">Album: ${track.album}${track.genre ? ` | Genre: ${track.genre}` : ''}</p>
+      `;
+
+      left.appendChild(checkbox);
+      left.appendChild(details);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "Remove";
+      removeBtn.className = "text-sm text-red-500 hover:underline";
+
+      const right = document.createElement("div");
+      right.appendChild(removeBtn);
+
+      songItem.appendChild(left);
+      songItem.appendChild(right);
+      songList.appendChild(songItem);
+      addedSongsSection.classList.remove("hidden");
+    }
+
+    songList.addEventListener("click", function (e) {
+      if (e.target.tagName === "BUTTON" && e.target.textContent === "Remove") {
+        const li = e.target.closest("li");
+        if (li) {
+          const trackId = li.id.replace("song-", "");
+          li.remove();
+          selectedTracks = selectedTracks.filter(t => t.id !== trackId);
+          updatePlaylistButtonState();
+        }
+      }
+    });
+
+    document.getElementById("add-track-btn").addEventListener("click", function () {
+      const track = {
+        id: document.getElementById("title").value + "-" + document.getElementById("artist").value,
+        name: document.getElementById("title").value,
+        artist: document.getElementById("artist").value,
+        album: document.getElementById("album").value,
+        genre: document.getElementById("genre").value,
+        danceability: document.getElementById("danceability").value,
+        energy: document.getElementById("energy").value,
+        liveness: document.getElementById("liveness").value,
+        acousticness: document.getElementById("acousticness").value,
+        valence: document.getElementById("valence").value,
+        mode: document.getElementById("mode").value,
+        tempo: document.getElementById("tempo").value,
+        duration_ms: document.getElementById("duration_ms").value
+      };
+
+      if (!track.name || !track.artist) return;
+      if (selectedTracks.some(t => t.id === track.id)) return;
+
+      selectedTracks.push(track);
+      displaySelectedSong(track);
+    });
+
+    // document.getElementById("create-playlist-btn").addEventListener("click", function () {
+    //   const checkedBoxes = document.querySelectorAll("#song-list input[type='checkbox']:checked");
+    //   const playlistName = playlistNameInput.value.trim();
+
+    //   if (checkedBoxes.length < 2 || !playlistName) return;
+
+    //   const checkedIds = Array.from(checkedBoxes).map(cb => cb.closest("li").id.replace("song-", ""));
+    //   const tracksToSend = selectedTracks.filter(t => checkedIds.includes(t.id));
+
+    //   fetch("/upload/create-playlist", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ playlist_name: playlistName, tracks: tracksToSend })
+    //   })
+    //     .then(res => res.json())
+    //     .then(() => {
+    //       const playlistBox = document.createElement("div");
+    //       playlistBox.className = "border border-gray-200 rounded-lg p-4 bg-gray-50";
+
+    //       const header = document.createElement("div");
+    //       header.className = "font-semibold text-lg text-blue-600 cursor-pointer";
+    //       header.textContent = `📁 ${playlistName}`;
+
+    //       const songListEl = document.createElement("ul");
+    //       songListEl.className = "pl-4 mt-2 space-y-1 hidden";
+
+    //       tracksToSend.forEach(track => {
+    //         const li = document.createElement("li");
+    //         li.textContent = `${track.name} by ${track.artist}`;
+    //         li.className = "text-sm text-gray-700";
+    //         songListEl.appendChild(li);
+    //       });
+
+    //       header.addEventListener("click", () => {
+    //         songListEl.classList.toggle("hidden");
+    //       });
+
+    //       playlistBox.appendChild(header);
+    //       playlistBox.appendChild(songListEl);
+    //       playlistContainer.appendChild(playlistBox);
+    //       playlistOutput.classList.remove("hidden");
+    //       playlistNameInput.value = "";
+    //     })
+    //     .catch(err => alert("Error creating playlist"));
+    // });
+
+    document.getElementById("create-playlist-btn").addEventListener("click", function () {
+      const playlistName = document.getElementById("playlist-name").value.trim();
+      if (!playlistName) return;
+
+      // Just show the card with playlist name
+      const playlistBox = document.createElement("div");
+      playlistBox.className = "border border-purple-300 rounded-lg p-4 bg-white shadow mt-4";
+
+      const title = document.createElement("div");
+      title.className = "font-semibold text-lg text-black";
+      title.textContent = ` ${playlistName}`;
+
+      playlistBox.appendChild(title);
+      document.getElementById("playlist-container").appendChild(playlistBox);
+      document.getElementById("playlist-output").classList.remove("hidden");
+
+      // Clear input
+      document.getElementById("playlist-name").value = "";
+    });
+
+
+    function updatePlaylistButtonState() {
+      const checked = document.querySelectorAll("#song-list input[type='checkbox']:checked").length;
+      const playlistBtn = document.getElementById("create-playlist-btn");
+      if (!playlistBtn) return;
+      playlistBtn.disabled = checked < 2;
+      playlistBtn.classList.toggle("bg-gradient-to-r", checked >= 2);
+      playlistBtn.classList.toggle("from-purple-400", checked >= 2);
+      playlistBtn.classList.toggle("to-pink-500", checked >= 2);
+      playlistBtn.classList.toggle("text-white", checked >= 2);
+      playlistBtn.classList.toggle("cursor-not-allowed", checked < 2);
+    }
+
+    queryInput.addEventListener("keydown", function (e) {
+      const items = resultsContainer.getElementsByClassName("result-item");
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+          updateSelection(items);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          selectedIndex = Math.max(selectedIndex - 1, 0);
+          updateSelection(items);
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (selectedIndex >= 0 && items[selectedIndex]) {
+            items[selectedIndex].click();
+          }
+          break;
+        case "Escape":
+          resultsBox.style.display = "none";
+          break;
+      }
+    });
+
+    function updateSelection(items) {
+      Array.from(items).forEach((item, index) => {
+        item.classList.toggle("selected", index === selectedIndex);
+        if (index === selectedIndex) {
+          item.scrollIntoView({ block: "nearest" });
+        }
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!resultsBox.contains(e.target) && e.target !== queryInput) {
+        resultsBox.style.display = "none";
+      }
+    });
+  });
+</script> 
+{% endblock %}
+

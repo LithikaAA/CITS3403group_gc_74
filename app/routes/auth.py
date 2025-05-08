@@ -1,48 +1,111 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify  # Flask utilities for routing and rendering
-from ..models import db, User  # Import database and User model
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session
+from werkzeug.utils import secure_filename
+from flask_login import login_user, logout_user, current_user, login_required
+from ..models import db, User
 
-# Create a blueprint for authentication routes
 auth_bp = Blueprint('auth', __name__)
 
+# ---------- LOGIN ----------
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    Handle user login.
-    :return: Rendered login page or redirect to dashboard on successful login
-    """
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        identifier = request.form.get('identifier')  # username OR email
+        password = request.form.get('password')
 
-        # Query the database for the user
-        user = User.query.filter_by(email=email).first()
+        # Match by either username or email
+        user = User.query.filter(
+            (User.username == identifier) | (User.email == identifier)
+        ).first()
+
         if user and user.check_password(password):
-            return redirect(url_for('dashboard'))  # Redirect to dashboard on successful login
-        return jsonify({'error': 'Invalid credentials'}), 401
+            login_user(user)  # Flask-Login session
+            session['user_id'] = user.id
+            session['username'] = user.username
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('dashboard.dashboard'))
+
+        flash('Invalid username/email or password.', 'error')
+        return redirect(url_for('auth.login'))
 
     return render_template('login.html')
 
+
+# ---------- SIGNUP ----------
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
-    """
-    Handle user registration.
-    :return: Rendered signup page or redirect to login on successful registration
-    """
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        profile_pic = request.files.get('profile_pic')
 
-        # Check if the user already exists
+        # Check for existing user
         if User.query.filter((User.username == username) | (User.email == email)).first():
-            return jsonify({'error': 'User already exists'}), 400
+            flash('Username or email already exists.', 'error')
+            return render_template('signup.html')
 
-        # Create a new user
-        new_user = User(username=username, email=email)
+        # Handle profile picture upload
+        pic_filename = None
+        if profile_pic and profile_pic.filename != '':
+            filename = secure_filename(profile_pic.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            profile_pic.save(os.path.join(upload_folder, filename))
+            pic_filename = filename
+
+        # Create user
+        new_user = User(username=username, email=email, profile_pic=pic_filename)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('auth.login'))  # Redirect to login page after successful signup
+        flash('Account created successfully! Please log in.', 'success')
+        return redirect(url_for('auth.login'))
 
     return render_template('signup.html')
+
+
+# ---------- LOGOUT ----------
+@auth_bp.route('/logout')
+def logout():
+    """
+    Log the user out by clearing both Flask-Login and manual session data.
+    """
+    logout_user()
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('auth.login'))
+
+# ---------- Accounts ----------
+@auth_bp.route('/account-setup', methods=['GET', 'POST'])
+@login_required
+def account_setup():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        gender = request.form.get('gender')
+        dob = request.form.get('dob')
+        email = request.form.get('email')
+        mobile = request.form.get('mobile')
+        profile_pic = request.files.get('profile_pic')
+
+        # Update user info
+        current_user.name = name
+        current_user.gender = gender
+        current_user.dob = dob
+        current_user.email = email
+        current_user.mobile = mobile
+
+        # Optional: handle new profile picture upload
+        if profile_pic and profile_pic.filename != '':
+            filename = secure_filename(profile_pic.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+            os.makedirs(upload_folder, exist_ok=True)
+            profile_pic.save(os.path.join(upload_folder, filename))
+            current_user.profile_pic = filename
+
+        db.session.commit()
+        flash('Account updated successfully!', 'success')
+        return redirect(url_for('dashboard.dashboard'))
+
+    return render_template('account_setup.html')

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Account Setup | VibeShare{% endblock %}
+
+{% block content %}
+<div class="flex max-w-4xl mx-auto bg-white shadow-lg overflow-hidden" style="border-radius: 1rem;">
+    <!-- Left Panel -->
+    <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 flex flex-col items-center justify-center p-10 text-white">
+        <img src="{{ url_for('static', filename='img/side_logo.png') }}" alt="VibeShare Logo" class="w-40 mb-6">
+
+        <!-- Profile Picture Upload -->
+        <form method="POST" action="#" enctype="multipart/form-data" class="flex flex-col items-center">
+            <div class="bg-white rounded-full p-2 mb-4">
+                <img src="{{ url_for('static', filename='img/default_profile.jpg') }}" alt="Profile Picture" class="w-24 h-24 rounded-full">
+            </div>
+            <label for="profilePicUpload" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                Upload Profile Picture
+            </label>
+            <input type="file" id="profilePicUpload" name="profile_pic" class="hidden" onchange="this.form.submit()">
+        </form>
+
+        <h2 class="text-2xl font-bold mt-6 mb-2">Let's get you set up</h2>
+        <p class="text-center text-sm">It should only take a couple minutes<br>to create your account</p>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="w-1/2 p-10">
+        <!-- Log Out Button -->
+        <div class="flex justify-end mb-4">
+            <a href="{{ url_for('auth.logout') }}" class="text-sm text-red-500 hover:text-red-600 font-semibold underline">
+            Log Out
+            </a>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Account Setup</h1>
+        <form method="POST" action="{{ url_for('auth.account_setup') }}" class="space-y-5">
+            <div>
+                <label class="block text-gray-600">Name</label>
+                <input type="text" name="name" class="w-full border px-4 py-2 rounded-lg" required>
+            </div>
+            <div>
+                <label class="block text-gray-600 mb-2">Gender</label>
+                <div class="flex space-x-6">
+                    <label><input type="radio" name="gender" value="Male" required> Male</label>
+                    <label><input type="radio" name="gender" value="Female"> Female</label>
+                    <label><input type="radio" name="gender" value="Other"> Other</label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-gray-600">Date of Birth</label>
+                <input type="date" name="dob" class="w-full border px-4 py-2 rounded-lg" required>
+            </div>
+            <div>
+                <label class="block text-gray-600">Email</label>
+                <input type="email" name="email" class="w-full border px-4 py-2 rounded-lg" required>
+            </div>
+            <div>
+                <label class="block text-gray-600">Mobile</label>
+                <input type="text" name="mobile" class="w-full border px-4 py-2 rounded-lg">
+            </div>
+            <!-- <div class="flex justify-between mt-6">
+                <button type="button" onclick="window.location.href='{{ url_for('index.home') }}'" class="px-6 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Sign Up</button>
+            </div> -->
+        </form>
+    </div>
+</div>
+
+<script>
+    feather.replace();
+</script>
+{% endblock %}
