@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, RadioField, DateField, SubmitField
-from wtforms.validators import Optional, Length, Email
+from wtforms.validators import Optional, Length, Email, DataRequired
 from flask_wtf.file import FileField, FileAllowed
 
 class AccountForm(FlaskForm):
@@ -31,3 +31,10 @@ class AccountForm(FlaskForm):
         validators=[FileAllowed(['jpg','png','jpeg'], 'Only images allowed')]
     )
     submit  = SubmitField('Save Changes')
+    
+class AddFriendForm(FlaskForm):
+    friend_username = StringField(
+        'Friend Username',
+        validators=[DataRequired(), Length(max=64)]
+    )
+    submit = SubmitField('Add Friend')

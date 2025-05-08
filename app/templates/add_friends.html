@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% block title %}Add a Friend | VibeShare{% endblock %}
+
+{% block content %}
+<!-- Flash Message Section -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="absolute top-4 right-4 space-y-2 z-50">
+      {% for category, message in messages %}
+        <div class="px-4 py-2 rounded-xl shadow-lg text-white {{ category == 'success' and 'bg-green-500' or 'bg-red-500' }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="flex h-screen w-full max-w-7xl mx-auto relative">
+  
+  <!-- Left Panel: Add Friend Form -->
+  <div class="w-1/2 p-10 z-20 relative flex items-center justify-center bg-gradient-to-br from-blue-100 to-pink-100">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-96">
+      <h2 class="text-2xl font-bold mb-6">Add a Friend</h2>
+      <form method="POST" action="{{ url_for('friends.add_friend') }}">
+        {{ form.hidden_tag() }}
+        <div class="space-y-4">
+          {{ form.friend_username(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500", placeholder="Enter their username") }}
+          {{ form.submit(class="w-full py-3 bg-gradient-to-r from-indigo-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition") }}
+        </div>
+      </form>
+      <!-- view all friends -->
+      <div class="mt-4">
+        <button
+          id="view-all-friends-btn"
+          class="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+        >
+          View All Friends
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide-in Friends Panel -->
+<div
+id="friends-panel"
+class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-full transition-transform"
+>
+<button id="close-friends-panel" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
+<div class="p-4">
+  <h2 class="text-2xl font-bold mb-4">Your Friends</h2>
+  <div class="flex space-x-2 mb-4">
+    <button data-tab="incoming" class="tab px-3 py-1 bg-blue-100 rounded">Incoming</button>
+    <button data-tab="sent"     class="tab px-3 py-1 bg-gray-100 rounded">Sent</button>
+    <button data-tab="all"      class="tab px-3 py-1 bg-gray-100 rounded">All Friends</button>
+  </div>
+  <div id="tab-incoming" class="tab-content mb-4 hidden">
+    <!-- loop your incoming requests here -->
+    {% for req in incoming_requests %} <p>{{ req.from_username }}</p> {% endfor %}
+  </div>
+  <div id="tab-sent" class="tab-content mb-4 hidden">
+    {% for req in sent_requests %} <p>{{ req.to_username }}</p> {% endfor %}
+  </div>
+  <div id="tab-all" class="tab-content">
+    {% for f in current_user.friends %} <p>{{ f.username }}</p> {% endfor %}
+  </div>
+</div>
+</div>
+
+  <!-- Right Panel: User with orbiting bubbles -->
+  <div class="w-1/2 relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-100 to-pink-100">
+    <!-- SVG for links -->
+    <svg id="link-lines" class="absolute inset-0 w-full h-full z-0 pointer-events-none">
+      <defs>
+        {% for idx in range(top_friends|length) %}
+        <linearGradient id="gradient-{{ idx }}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#818cf8" />
+          <stop offset="100%" stop-color="#ec4899" />
+        </linearGradient>
+        {% endfor %}
+      </defs>
+      {% for idx in range(top_friends[:20]|length) %}
+      <line id="line-{{ idx }}" x1="0" y1="0" x2="0" y2="0" 
+                stroke="url(#gradient-{{ idx }})" stroke-width="1" />
+      {% endfor %}
+    </svg>
+    <!-- Friend Menu (hidden by default) -->
+      <div id="friend-menu" class="hidden absolute bg-white p-4 rounded shadow-lg z-30">
+        <p id="friend-menu-username" class="font-semibold mb-2"></p>
+        <button id="view-data-btn" class="w-full py-2 mb-2 bg-blue-500 text-white rounded">
+          View Data
+        </button>
+        <button id="remove-friend-btn" class="w-full py-2 bg-red-500 text-white rounded">
+          Remove Friend
+        </button>
+      </div>
+   
+
+    <!-- Central User Bubble -->
+    <div id="center-bubble" class="relative z-10 w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg transition-transform duration-300 hover:scale-110 cursor-pointer">
+      <img src="{{ url_for('static', filename='uploads/' ~ (current_user.profile_pic if current_user.profile_pic else 'default_profile.jpg')) }}" alt="You" class="w-full h-full object-cover">
+    </div>
+
+
+    <!-- Orbiting friend bubbles (limit top 20) -->
+    {% for friend in top_friends[:20] %}
+      <div id="friend-menu" class="hidden absolute bg-white p-4 rounded shadow-lg z-30">
+        <p id="friend-menu-username" class="font-semibold mb-2"></p>
+        <button id="view-data-btn" class="w-full py-2 mb-2 bg-blue-500 text-white rounded">View Data</button>
+        <button id="remove-friend-btn" class="w-full py-2 bg-red-500 text-white rounded">Remove Friend</button>
+      </div>
+      {% set idx = loop.index0 %}
+      <div
+        id="bubble-{{ idx }}"
+        class="friend-bubble absolute rounded-full overflow-hidden border-4 border-white shadow-md cursor-pointer {% if friend.username in new_friend_usernames %}glow{% endif %}"
+        data-idx="{{ idx }}"
+        data-username="{{ friend.username }}"
+        data-bpm="{{ friend.average_bpm }}"
+        style="top:50%; left:50%;"
+        title="{{ friend.username }}"
+      >
+        <img
+          src="{{ url_for('static', filename='uploads/' ~ (friend.profile_pic or 'default_profile.jpg')) }}"
+          alt="{{ friend.username }}"
+          class="w-full h-full object-cover rounded-full"
+        />
+        <span class="friend-name absolute text-xs font-medium text-gray-700 whitespace-nowrap" 
+              style="top:50%; left:50%;">
+            {{ friend.username }}
+          </span>
+      </div>
+    {% endfor %}
+
+    <!-- Footer text -->
+    <div class="absolute bottom-8 w-full text-center text-grey font-semibold">
+      Your Top 20 BPM Matches
+    </div>
+
+    <!-- Animations: CSS & JS inline -->
+    <style>
+        #center-bubble img {
+          transition: transform 0.3s ease;
+          transform-origin: center;
+        }
+        #center-bubble img:hover {
+          transform: scale(1.1);
+        }
+      .glow {
+        box-shadow:
+          0 0 10px 2px rgba(129, 140, 248, 0.7),
+          0 0 15px 5px rgba(236, 72, 153, 0.5);
+      }
+      .friend-bubble, .friend-name {
+        opacity: 0;
+        transform: translate(-50%, -50%);
+        transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+      }
+      @keyframes idle-pulse {
+        0%, 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1); }
+        50%      { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1.05); }
+      }
+      .friend-bubble.idle {
+        animation: idle-pulse 2s ease-in-out infinite alternate;
+      }
+
+      #friend-menu.hidden { display: none; }
+      #friend-menu { display: block; }
+    </style>
+
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const center  = document.getElementById('center-bubble');
+        const svg     = document.getElementById('link-lines');
+        const bubbles = Array.from(document.querySelectorAll('.friend-bubble'));
+        const lines   = bubbles.map((_, i) => document.getElementById(`line-${i}`));
+        const menu           = document.getElementById('friend-menu');
+      const menuUsername   = document.getElementById('friend-menu-username');
+      const viewDataBtn    = document.getElementById('view-data-btn');
+      const removeFriendBtn= document.getElementById('remove-friend-btn');
+
+      // when any bubble is clicked, show the menu instead of immediate nav
+      bubbles.forEach(bubble => {
+        bubble.addEventListener('click', e => {
+          e.stopPropagation();                   // don’t trigger body‐click hiding
+          const username = bubble.dataset.username;
+          // position menu next to the bubble
+          const r = bubble.getBoundingClientRect();
+          menu.style.left = `${r.right + 10}px`;
+          menu.style.top  = `${r.top}px`;
+          menuUsername.textContent = username;
+          menu.classList.remove('hidden');
+
+          // button actions
+          viewDataBtn.onclick = () => {
+            window.location.href = `/view-data/${username}`;
+          };
+          removeFriendBtn.onclick = () => {
+            fetch(`/friends/remove/${username}`, { method: 'POST' })
+              .then(res => { if (res.ok) window.location.reload(); });
+          };
+        });
+      });
+
+      // hide menu if you click anywhere else
+      document.body.addEventListener('click', () => {
+        menu.classList.add('hidden');
+      });
+      // but don’t hide if you click inside the menu
+      menu.addEventListener('click', e => e.stopPropagation());
+
+        // user click
+        center.addEventListener('click', () => window.location.href = '/view-data');
+
+
+        // BPM logic
+        const userBpm = {{ current_user.average_bpm or 0 }};
+        const diffs   = bubbles.map(b => Math.abs(userBpm - (parseFloat(b.dataset.bpm)||0)));
+        const maxDiff = Math.max(...diffs, 1);
+
+        bubbles.forEach((bubble, idx) => {
+          const diff   = diffs[idx];
+          const t      = diff / maxDiff;
+          const minR   = 150, maxR = 280;
+          const radius = minR + t * (maxR - minR);
+          const maxS   = 80,  minS = 40;
+          const size   = maxS - t * (maxS - minS);
+          bubble.style.width  = `${size}px`;
+          bubble.style.height = `${size}px`;
+
+          const angleRad = (idx * 2 * Math.PI / bubbles.length) - Math.PI/2;
+          const tx       = Math.cos(angleRad) * radius;
+          const ty       = Math.sin(angleRad) * radius;
+          bubble.style.setProperty('--tx', `${tx}px`);
+          bubble.style.setProperty('--ty', `${ty}px`);
+
+          // animate out
+          setTimeout(() => {
+            bubble.style.opacity   = '1';
+            bubble.style.transform = `translate(-50%, -50%) translate(${tx}px, ${ty}px)`;
+            bubble.classList.add('idle');
+          }, idx * 100);
+
+          // hover extend + stop pulse + enlarge
+          const hoverFactor = 1.3;
+          bubble.addEventListener('mouseenter', () => {
+            // stop pulse
+            bubble.classList.remove('idle');
+            // move further + scale
+            bubble.style.transform = `translate(-50%, -50%) translate(${tx*hoverFactor}px, ${ty*hoverFactor}px) scale(1.15)`;
+            bubble.style.zIndex    = '20';
+          });
+          bubble.addEventListener('mouseleave', () => {
+            // resume pulse
+            bubble.classList.add('idle');
+            bubble.style.transform = `translate(-50%, -50%) translate(${tx}px, ${ty}px)`;
+            bubble.style.zIndex    = '10';
+          });
+
+         // click friend
+          bubble.addEventListener('click', () => window.location.href = `/view-data/${bubble.dataset.username}`);
+        });
+
+        // update lines
+        function updateLines() {
+          const sRect = svg.getBoundingClientRect();
+          const cRect = center.getBoundingClientRect();
+          const cx    = cRect.left + cRect.width/2 - sRect.left;
+          const cy    = cRect.top  + cRect.height/2 - sRect.top;
+          bubbles.forEach((b,i) => {
+            const br = b.getBoundingClientRect();
+            const fx = br.left + br.width/2 - sRect.left;
+            const fy = br.top  + br.height/2 - sRect.top;
+            const line = lines[i];
+            if(line) {
+              line.setAttribute('x1', cx);
+              line.setAttribute('y1', cy);
+              line.setAttribute('x2', fx);
+              line.setAttribute('y2', fy);
+            }
+          });
+          requestAnimationFrame(updateLines);
+        }
+        requestAnimationFrame(updateLines);
+      });
+    </script>
+  </div>
+</div>
+{% endblock %}

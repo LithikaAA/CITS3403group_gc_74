@@ -2,6 +2,7 @@
 from typing import Optional, List
 import sqlalchemy as sa
 import sqlalchemy.orm as so
+from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -52,6 +53,13 @@ class User(UserMixin, db.Model):
     shared_data: so.Mapped[List["SharedData"]] = so.relationship(
         back_populates="user",
         cascade="all, delete"
+    )
+    friends = relationship(
+        "User",
+        secondary="friend",
+        primaryjoin="User.id==Friend.user_id",
+        secondaryjoin="User.id==Friend.friend_id",
+        backref="friend_of"
     )
 
     def set_password(self, password):
@@ -151,3 +159,11 @@ class SharedData(db.Model):
  
      # Relationship to the User model
      user: so.Mapped['User'] = so.relationship(back_populates="shared_data")  # Link back to User model
+
+# ------------------ Friends ------------------
+class Friend(db.Model):
+    __tablename__ = 'friend'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
