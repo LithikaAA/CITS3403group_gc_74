@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from datetime import datetime
-from app.utils.spotify_auth import get_spotify_auth_manager
+from app.utils.spotify_auth import get_spotify_auth_manager  # use your custom helper
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -13,7 +13,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        identifier = request.form.get('identifier')  # username OR email
+        identifier = request.form.get('identifier')
         password = request.form.get('password')
 
         user = User.query.filter(
@@ -64,29 +64,6 @@ def signup():
 
     return render_template('signup.html')
 
-# ---------- FORGOT PASSWORD ----------
-@auth_bp.route('/change-password', methods=['POST'])
-@login_required
-def change_password():
-    current_pw = request.form.get('current_password')
-    new_pw     = request.form.get('new_password')
-    confirm_pw = request.form.get('confirm_password')
-
-    # 1. Check current password
-    if not current_user.check_password(current_pw):
-        flash('Current password is incorrect.', 'error')
-        return redirect(url_for('auth.account_setup'))
-
-    # 2. Confirm new == confirm
-    if new_pw != confirm_pw:
-        flash("New passwords don't match.", 'error')
-        return redirect(url_for('auth.account_setup'))
-
-    # 3. Update and commit
-    current_user.set_password(new_pw)
-    db.session.commit()
-    flash('Password updated successfully!', 'success')
-    return redirect(url_for('auth.account_setup'))
 
 # ---------- CHANGE PASSWORD ----------
 @auth_bp.route('/change-password', methods=['POST'])

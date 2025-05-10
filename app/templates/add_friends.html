@@ -15,7 +15,7 @@
   {% endif %}
 {% endwith %}
 
-<div class="flex h-screen w-full max-w-7xl mx-auto relative">
+<div class="flex h-screen w-full mx-auto relative overflow-x-hidden">
   
   <!-- Left Panel: Add Friend Form -->
   <div class="w-1/2 p-10 z-20 relative flex items-center justify-center bg-gradient-to-br from-blue-100 to-pink-100">
@@ -40,35 +40,11 @@
     </div>
   </div>
 
-  <!-- Slide-in Friends Panel -->
-<div
-id="friends-panel"
-class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-full transition-transform"
->
-<button id="close-friends-panel" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
-<div class="p-4">
-  <h2 class="text-2xl font-bold mb-4">Your Friends</h2>
-  <div class="flex space-x-2 mb-4">
-    <button data-tab="incoming" class="tab px-3 py-1 bg-blue-100 rounded">Incoming</button>
-    <button data-tab="sent"     class="tab px-3 py-1 bg-gray-100 rounded">Sent</button>
-    <button data-tab="all"      class="tab px-3 py-1 bg-gray-100 rounded">All Friends</button>
-  </div>
-  <div id="tab-incoming" class="tab-content mb-4 hidden">
-    <!-- loop your incoming requests here -->
-    {% for req in incoming_requests %} <p>{{ req.from_username }}</p> {% endfor %}
-  </div>
-  <div id="tab-sent" class="tab-content mb-4 hidden">
-    {% for req in sent_requests %} <p>{{ req.to_username }}</p> {% endfor %}
-  </div>
-  <div id="tab-all" class="tab-content">
-    {% for f in current_user.friends %} <p>{{ f.username }}</p> {% endfor %}
-  </div>
-</div>
-</div>
 
-  <!-- Right Panel: User with orbiting bubbles -->
-  <div class="w-1/2 relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-100 to-pink-100">
-    <!-- SVG for links -->
+  
+    <!-- Right Slide-in Overlay for All Friends -->
+     <div class="w-1/2 relative flex items-center justify-center overflow-visible bg-gradient-to-br from-blue-100 to-pink-100">
+    <!-- SVG for connection lines -->
     <svg id="link-lines" class="absolute inset-0 w-full h-full z-0 pointer-events-none">
       <defs>
         {% for idx in range(top_friends|length) %}
@@ -80,20 +56,49 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
       </defs>
       {% for idx in range(top_friends[:20]|length) %}
       <line id="line-{{ idx }}" x1="0" y1="0" x2="0" y2="0" 
-                stroke="url(#gradient-{{ idx }})" stroke-width="1" />
+            stroke="url(#gradient-{{ idx }})" stroke-width="1" />
       {% endfor %}
     </svg>
-    <!-- Friend Menu (hidden by default) -->
-      <div id="friend-menu" class="hidden absolute bg-white p-4 rounded shadow-lg z-30">
-        <p id="friend-menu-username" class="font-semibold mb-2"></p>
-        <button id="view-data-btn" class="w-full py-2 mb-2 bg-blue-500 text-white rounded">
-          View Data
-        </button>
-        <button id="remove-friend-btn" class="w-full py-2 bg-red-500 text-white rounded">
-          Remove Friend
-        </button>
+    <div id="friends-panel" class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-full transition-transform z-50">
+      <button id="close-friends-panel" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
+      <div class="p-4">
+        <h2 class="text-2xl font-bold mb-4">Your Friends</h2>
+
+        <!-- Tab buttons -->
+        <div class="flex space-x-2 mb-4">
+          <button data-tab="all" class="tab-btn bg-indigo-100 px-3 py-1 rounded">All</button>
+          <button data-tab="incoming" class="tab-btn bg-gray-100 px-3 py-1 rounded">Incoming</button>
+          <button data-tab="outgoing" class="tab-btn bg-gray-100 px-3 py-1 rounded">Outgoing</button>
+        </div>
+
+        <!-- Tab content -->
+        <div id="tab-all" class="tab-content">
+          {% for f in current_user.friends %}
+            <p>{{ f.username }}</p>
+          {% else %}
+            <p class="text-sm text-gray-400">No friends</p>
+          {% endfor %}
+        </div>
+
+        <div id="tab-incoming" class="tab-content hidden">
+          {% for req in incoming_requests %}
+            <p>{{ req.user.username }}</p>
+          {% else %}
+            <p class="text-sm text-gray-400">No incoming requests</p>
+          {% endfor %}
+        </div>
+
+        <div id="tab-outgoing" class="tab-content hidden">
+          {% for req in sent_requests %}
+            <p>{{ req.friend.username }}</p>
+          {% else %}
+            <p class="text-sm text-gray-400">No outgoing requests</p>
+          {% endfor %}
+        </div>
       </div>
-   
+    </div>
+
+
 
     <!-- Central User Bubble -->
     <div id="center-bubble" class="relative z-10 w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg transition-transform duration-300 hover:scale-110 cursor-pointer">
@@ -103,11 +108,6 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
 
     <!-- Orbiting friend bubbles (limit top 20) -->
     {% for friend in top_friends[:20] %}
-      <div id="friend-menu" class="hidden absolute bg-white p-4 rounded shadow-lg z-30">
-        <p id="friend-menu-username" class="font-semibold mb-2"></p>
-        <button id="view-data-btn" class="w-full py-2 mb-2 bg-blue-500 text-white rounded">View Data</button>
-        <button id="remove-friend-btn" class="w-full py-2 bg-red-500 text-white rounded">Remove Friend</button>
-      </div>
       {% set idx = loop.index0 %}
       <div
         id="bubble-{{ idx }}"
@@ -126,9 +126,16 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
         <span class="friend-name absolute text-xs font-medium text-gray-700 whitespace-nowrap" 
               style="top:50%; left:50%;">
             {{ friend.username }}
-          </span>
+        </span>
       </div>
     {% endfor %}
+
+    <!-- Friend Menu Popup -->
+    <div id="friend-menu" class="hidden absolute bg-white p-4 rounded shadow-lg z-30">
+      <p id="friend-menu-username" class="font-semibold mb-2"></p>
+      <button id="view-data-btn" class="w-full py-2 mb-2 bg-blue-500 text-white rounded">View Data</button>
+      <button id="remove-friend-btn" class="w-full py-2 bg-red-500 text-white rounded">Remove Friend</button>
+    </div>
 
     <!-- Footer text -->
     <div class="absolute bottom-8 w-full text-center text-grey font-semibold">
@@ -149,10 +156,8 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
           0 0 10px 2px rgba(129, 140, 248, 0.7),
           0 0 15px 5px rgba(236, 72, 153, 0.5);
       }
-      .friend-bubble, .friend-name {
-        opacity: 0;
-        transform: translate(-50%, -50%);
-        transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+      #friend-menu.hidden {
+        display: none;
       }
       @keyframes idle-pulse {
         0%, 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1); }
@@ -163,7 +168,6 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
       }
 
       #friend-menu.hidden { display: none; }
-      #friend-menu { display: block; }
     </style>
 
     <script>
@@ -176,29 +180,48 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
       const menuUsername   = document.getElementById('friend-menu-username');
       const viewDataBtn    = document.getElementById('view-data-btn');
       const removeFriendBtn= document.getElementById('remove-friend-btn');
+      console.log("Found bubbles:", bubbles.length);
 
       // when any bubble is clicked, show the menu instead of immediate nav
       bubbles.forEach(bubble => {
         bubble.addEventListener('click', e => {
-          e.stopPropagation();                   // don’t trigger body‐click hiding
-          const username = bubble.dataset.username;
-          // position menu next to the bubble
-          const r = bubble.getBoundingClientRect();
-          menu.style.left = `${r.right + 10}px`;
-          menu.style.top  = `${r.top}px`;
-          menuUsername.textContent = username;
-          menu.classList.remove('hidden');
+          e.stopPropagation();
 
-          // button actions
-          viewDataBtn.onclick = () => {
-            window.location.href = `/view-data/${username}`;
-          };
-          removeFriendBtn.onclick = () => {
-            fetch(`/friends/remove/${username}`, { method: 'POST' })
-              .then(res => { if (res.ok) window.location.reload(); });
-          };
-        });
+          const username = bubble.dataset.username;
+          const rect = bubble.getBoundingClientRect();
+
+        // Position relative to the bubble's parent container
+        const containerRect = bubble.offsetParent.getBoundingClientRect();
+        const x = rect.left - containerRect.left + rect.width + 10;
+        const y = rect.top - containerRect.top;
+
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+
+        menuUsername.textContent = username;
+        menu.classList.remove('hidden');
+
+        // Attach button events
+        viewDataBtn.onclick = () => {
+          window.location.href = `/view-data/${username}`;
+      };
+        removeFriendBtn.onclick = () => {
+          const username = menuUsername.textContent;
+          fetch(`/friends/remove/${username}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          })
+          .then(res => {
+            if (res.ok) {
+              window.location.reload();
+            } else {
+              alert("Failed to remove friend");
+            }
+          });
+        };
+
       });
+    });
 
       // hide menu if you click anywhere else
       document.body.addEventListener('click', () => {
@@ -254,9 +277,33 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
             bubble.style.transform = `translate(-50%, -50%) translate(${tx}px, ${ty}px)`;
             bubble.style.zIndex    = '10';
           });
+          // remove friend with animation
+          removeFriendBtn.onclick = () => {
+            const username = menuUsername.textContent;
+            fetch(`/friends/remove/${username}`, {
+              method: 'POST',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+              if (res.ok) {
+                // Find bubble for that username
+                const target = bubbles.find(b => b.dataset.username === username);
+                if (target) {
+                  target.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                  target.style.opacity = '0';
+                  target.style.transform = 'scale(0)';
+                  // Also hide line
+                  const line = lines.find((_, i) => bubbles[i].dataset.username === username);
+                  if (line) line.setAttribute('stroke-opacity', '0');
 
-         // click friend
-          bubble.addEventListener('click', () => window.location.href = `/view-data/${bubble.dataset.username}`);
+                  setTimeout(() => target.remove(), 500);
+                }
+                menu.classList.add('hidden');
+              } else {
+                alert("Failed to remove friend");
+              }
+            });
+          };
         });
 
         // update lines
@@ -281,6 +328,38 @@ class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-
         }
         requestAnimationFrame(updateLines);
       });
+
+      // Toggle right-side overlay
+      const viewAllBtn = document.getElementById('view-all-friends-btn');
+      const overlay    = document.getElementById('all-friends-overlay');
+      const closeBtn   = document.getElementById('close-all-friends');
+
+      // Slide panel toggle
+      document.getElementById("view-all-friends-btn").addEventListener("click", () => {
+        document.getElementById("friends-panel").classList.remove("translate-x-full");
+      });
+      document.getElementById("close-friends-panel").addEventListener("click", () => {
+        document.getElementById("friends-panel").classList.add("translate-x-full");
+      });
+
+      // Tabs switching logic
+      const tabButtons = document.querySelectorAll(".tab-btn");
+      const tabContents = document.querySelectorAll(".tab-content");
+
+      tabButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-tab");
+
+          // Switch tab content
+          tabContents.forEach(c => c.classList.add("hidden"));
+          document.getElementById(`tab-${target}`).classList.remove("hidden");
+
+          // Update button styles
+          tabButtons.forEach(b => b.classList.remove("bg-indigo-100"));
+          btn.classList.add("bg-indigo-100");
+        });
+      });
+
     </script>
   </div>
 </div>

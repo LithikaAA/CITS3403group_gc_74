@@ -2,7 +2,7 @@
 {% block title %}Account Setup | VibeShare{% endblock %}
 
 {% block content %}
-<div class="flex max-w-4xl mx-auto bg-white shadow-lg rounded-2xl mt-10 overflow-hidden relative">
+<div class="flex max-w-4xl mx-auto bg-white shadow-lg rounded-2xl mt-10 overflow-hidden">
 
   <!-- Left Panel -->
   <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 p-10 flex flex-col items-center justify-center text-white">
@@ -48,7 +48,6 @@
 
     <h1 class="text-3xl font-bold mb-8">Account Setup</h1>
 
-    <!-- Main Form -->
     <form method="POST" action="{{ url_for('auth.account_setup') }}" class="space-y-5">
       <!-- Username -->
       <div>

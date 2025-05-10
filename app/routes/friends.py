@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy.sql import func
 from ..models import db, User, Friend, Track
 from ..forms import AddFriendForm
+import sqlalchemy as sa
 
 friends_bp = Blueprint('friends', __name__)
 
@@ -29,26 +30,52 @@ def add_friend():
                 db.session.add(Friend(user_id=current_user.id, friend_id=friend.id))
                 db.session.commit()
                 flash(f'{friend.username} added successfully!', 'success')
-        return redirect(url_for('friends.add_friend'))
+        return redirect(url_for('friends.add_friend'))  
 
-    # On GET (or invalid POST), compute top_friends and render form:
-    my_bpm = db.session.query(func.avg(Track.tempo)) \
-                      .filter(Track.user_id == current_user.id) \
-                      .scalar() or 0
+    my_bpm = db.session.query(sa.func.avg(Track.tempo)) \
+        .filter(Track.user_id == current_user.id).scalar() or 0
 
     top_friends = (
-        db.session.query(User)
+        db.session.query(User, sa.func.coalesce(sa.func.avg(Track.tempo), 0).label('avg_bpm'))
         .join(Friend, Friend.friend_id == User.id)
-        .join(Track, Track.user_id == User.id)
+        .outerjoin(Track, Track.user_id == User.id)
         .filter(Friend.user_id == current_user.id)
         .group_by(User.id)
-        .order_by(func.abs(func.avg(Track.tempo) - my_bpm))
+        .order_by(sa.func.abs(sa.func.coalesce(sa.func.avg(Track.tempo), 0) - my_bpm))
         .limit(10)
         .all()
     )
 
-    return render_template(
+    top_friends = [u for u, _ in top_friends]
+
+    incoming_requests = current_user.incoming_friend_requests()
+    sent_requests = current_user.sent_friend_requests()
+    new_friend_usernames = [r.user.username for r in incoming_requests]
+
+    return render_template (
         'add_friends.html',
         form=form,
-        top_friends=top_friends
+        top_friends=top_friends,
+        incoming_requests=current_user.incoming_friend_requests(),
+        sent_requests=current_user.sent_friend_requests(),
+        new_friend_usernames=new_friend_usernames,
     )
+    
+@friends_bp.route('/friends/remove/<username>', methods=['POST'])
+@login_required
+def remove_friend(username):
+    friend = User.query.filter_by(username=username).first()
+    if not friend:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Remove friendship from both directions
+    Friend.query.filter_by(user_id=current_user.id, friend_id=friend.id).delete()
+    Friend.query.filter_by(user_id=friend.id, friend_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({'message': 'Friend removed'}), 200
+
+@friends_bp.route('/friends/list')
+@login_required
+def list_friends():
+    friends = current_user.friends()
+    return jsonify({"friends": [{"username": f.username} for f in friends]})

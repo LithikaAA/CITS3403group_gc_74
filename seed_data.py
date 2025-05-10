@@ -4,8 +4,6 @@ from app.models import db, User, Track, Friend
 import random
 
 app = create_app()
-fake = Faker()
-
 with app.app_context():
     # Clear existing data
     Friend.query.delete()
@@ -24,10 +22,7 @@ with app.app_context():
             mobile=fake.phone_number(),
             profile_pic="avatar.png"
         )
-        user.set_password("test123")
         db.session.add(user)
-        users.append(user)
-
     db.session.commit()
 
     # Add tracks for each user
@@ -52,4 +47,3 @@ with app.app_context():
             db.session.add(Friend(user_id=user.id, friend_id=friend.id))
 
     db.session.commit()
-    print("✅ Seed complete!")
