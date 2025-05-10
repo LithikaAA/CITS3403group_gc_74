@@ -35,7 +35,7 @@
 
 | Layer         | Technology                             |
 |--------------|-----------------------------------------|
-| Frontend     | HTML, CSS, Bootstrap, JavaScript        |
+| Frontend     | HTML, CSS, TailwindCSS, JavaScript        |
 | Backend      | Python (Flask)                          |
 | Database     | SQLite with SQLAlchemy ORM              |
 | Authentication | Flask-Login                           |

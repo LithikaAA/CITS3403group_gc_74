@@ -1,213 +1,337 @@
-from flask import Blueprint, render_template, session, redirect, url_for
-from app.models import db, User, UserTrack, Track
-from flask import jsonify
-import spotipy
-import json
-from flask_login import current_user
+from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify, flash
+from app.models import db, User, Playlist, Track
+from flask_login import current_user, login_required
 from sqlalchemy import func
+import pandas as pd
+from collections import Counter
 
-dashboard_bp = Blueprint('dashboard', __name__)
+# Blueprint with url_prefix
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 @dashboard_bp.route('/')
+@login_required
 def dashboard():
-    """
-    Render the user dashboard.
-    """
     if 'user_id' not in session:
-        # Redirect to login if the user is not logged in
         return redirect(url_for('auth.login'))
 
-    # Debugging: Print session data
-    print("Session data:", session)
-
-    # Mock Data for Summary Cards
-    summary = {
-        "total_songs": 1245,
-        "total_hours": 312,
-        "unique_artists": 98,
-        "top_genre": "Pop"
-    }
-
-        # Fetch top 10 tracks by total listening time
-    user_tracks = (
-        db.session.query(UserTrack, Track)
-        .join(Track, UserTrack.track_id == Track.id)
-        .filter(UserTrack.user_id == current_user.id)
-        .order_by(UserTrack.total_ms_listened.desc())
-        .limit(5)
-        .all()
-    )
-
-    minutes_by_track = {
-        "labels": [ut.song for ut, _ in user_tracks],
-        "data": [round(ut.total_ms_listened / 60000, 2) for ut, _ in user_tracks]
-    }
-
-    # Query danceability, energy, and play time (converted to minutes)
-    danceability_energy_tracks = (
-        db.session.query(Track.danceability, Track.energy, UserTrack.total_ms_listened)
-        .join(UserTrack, Track.id == UserTrack.track_id)
-        .filter(UserTrack.user_id == current_user.id)
-        .all()
-    )
-
-    danceability_energy = {
-        "data": [
-            {
-                "x": round(danceability or 0, 2),
-                "y": round(energy or 0, 2),
-                "r": max(3, round(ms / 60000))  # Bubble radius = minutes played
-            }
-            for danceability, energy, ms in danceability_energy_tracks
-        ]
-    }
-
-    # Calculate average mood attributes for the user's listened tracks
-    mood_attributes = (
-        db.session.query(
-            func.avg(Track.danceability),
-            func.avg(Track.energy),
-            func.avg(Track.valence),
-            func.avg(Track.acousticness),
-            func.avg(Track.liveness)
-        )
-        .select_from(UserTrack)
-        .join(Track, UserTrack.track_id == Track.id)
-        .filter(UserTrack.user_id == current_user.id)
-        .first()
-    )
-
-    # Unpack safely with fallback to 0 if any value is None
-    mood_profile = {
-        "data": [round(attr or 0, 2) for attr in mood_attributes]
-    }
-
-
-    # Query total listening time (in minutes) by track mode
-    mode_minutes = (
-        db.session.query(
-            Track.mode,
-            func.sum(UserTrack.total_ms_listened).label("total_ms")
-        )
-        .select_from(UserTrack)
-        .join(Track, UserTrack.track_id == Track.id)
-        .filter(UserTrack.user_id == current_user.id)
-        .group_by(Track.mode)
-        .all()
-    )
-
-    # Initialize counts
-    mode_counts = {0: 0, 1: 0}
-
-    # Fill in with actual values
-    for mode_val, total_ms in mode_minutes:
-        mode_counts[mode_val] = round((total_ms or 0) / 60000, 2)
-
-    # Prepare for Chart.js
-    mode = {
-        "data": [mode_counts[1], mode_counts[0]]  # [Major, Minor]
-    }
-
-
-    # Step 1: Get top song (by total listening time)
-    top_song = (
-        db.session.query(UserTrack.song)
-        .filter(UserTrack.user_id == current_user.id)
-        .order_by(UserTrack.total_ms_listened.desc())
-        .first()
-    )
-
-    # Step 2: Get total time listened in minutes
-    total_ms_listened = (
-        db.session.query(func.sum(UserTrack.total_ms_listened))
-        .filter(UserTrack.user_id == current_user.id)
-        .scalar()
-    )
-    total_minutes = round((total_ms_listened or 0) / 60000, 2)
-
-    # Step 3: Get weighted average tempo
-    weighted_avg_tempo = (
-        db.session.query(
-            (func.sum(Track.tempo * UserTrack.total_ms_listened) / func.sum(UserTrack.total_ms_listened))
-        )
-        .select_from(UserTrack)  # <-- this is the fix
-        .join(Track, UserTrack.track_id == Track.id)
-        .filter(UserTrack.user_id == current_user.id)
-        .scalar()
-    )
-    avg_tempo = round(weighted_avg_tempo or 0)
-
-    top_tracks = {
-        "most_played": top_song[0] if top_song else "N/A",
-        "total_minutes": total_minutes,
-        "avg_tempo": avg_tempo
+    playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
+    
+    # Default empty data
+    default_data = {
+        'valence_acousticness': {'data': []},
+        'danceability_energy': {'data': []},
+        'mood_profile': {'data': [0, 0, 0, 0, 0]},
+        'mode': {'data': [0, 0]},
+        'mode_count': {'data': [0, 0]},
+        'top_summary': {
+            'most_played': 'No tracks yet',
+            'total_minutes': 0,
+            'avg_tempo': 0
+        },
+        'top_popular_songs': []
     }
     
-    top_artists_query = (
-        db.session.query(
-            UserTrack.artist,
-            func.sum(UserTrack.total_ms_listened).label("total_ms")
+    # If no playlists, show empty dashboard with a message
+    if not playlists:
+        flash("You don't have any playlists yet. Create one to get started!", "info")
+        return render_template(
+            'dashboard.html',
+            playlists=[],
+            has_playlists=False,
+            selected_playlist=None,
+            valence_acousticness=default_data['valence_acousticness'],
+            danceability_energy=default_data['danceability_energy'],
+            mood_profile=default_data['mood_profile'],
+            mode=default_data['mode'],
+            mode_count=default_data['mode_count'],
+            top_summary=default_data['top_summary'],
+            top_popular_songs=default_data['top_popular_songs'],
+            major=0,
+            minor=0
         )
-        .filter(UserTrack.user_id == current_user.id)
-        .group_by(UserTrack.artist)
-        .order_by(func.sum(UserTrack.total_ms_listened).desc())
-        .limit(5)
-        .all()
-    )
 
-    # Extract just the artist names
-    top_artists = [artist for artist, _ in top_artists_query]
-
-    # Step 4: Get Top Mood
-    major = mode_counts[1]
-    minor = mode_counts[0]
-
+    # Get playlist_id from URL parameters
+    playlist_id = request.args.get('playlist_id', type=int)
+    
+    # If playlist_id provided, get that playlist, otherwise use the first one
+    if playlist_id:
+        selected_playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+        # If selected playlist not found, default to first playlist
+        if not selected_playlist:
+            selected_playlist = playlists[0]
+    else:
+        selected_playlist = playlists[0]
+    
+    # Get playlist statistics
+    data = get_playlist_statistics(selected_playlist)
+    
     return render_template(
         'dashboard.html',
-        username=session.get('username'),
-        summary=summary,
-        minutes_by_track=minutes_by_track,
-        danceability_energy=danceability_energy,
-        mood_profile=mood_profile,
-        mode=mode,
-        top_tracks=top_tracks,
-        top_artists=top_artists ,
-        major=major,
-        minor=minor
-)
+        playlists=playlists,
+        has_playlists=True,
+        selected_playlist=selected_playlist,
+        valence_acousticness=data['valence_acousticness'],
+        danceability_energy=data['danceability_energy'],
+        mood_profile=data['mood_profile'],
+        mode=data['mode'],
+        mode_count=data['mode_count'],
+        top_summary=data['top_summary'],
+        top_popular_songs=data['top_popular_songs'],
+        major=data['mode_count']['data'][0],
+        minor=data['mode_count']['data'][1]
+    )
 
+@dashboard_bp.route('/playlist-data')
+@login_required
+def get_playlist_data():
+    playlist_id = request.args.get('playlist_id', type=int)
+    if not playlist_id:
+        return jsonify({"error": "No playlist ID provided"}), 400
+    
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    if not playlist:
+        return jsonify({"error": "Playlist not found"}), 404
+    
+    data = get_playlist_statistics(playlist)
+    return jsonify(data)
 
-@dashboard_bp.route('/test-data')
-def test_data():
-    users = User.query.all()
-    return render_template('test_data.html', users=users)
-
-
-@dashboard_bp.route('/spotify-json')
-def spotify_json():
-    token_info = session.get('spotify_token')
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    top_tracks = sp.current_user_top_tracks(limit=10)
-    return jsonify(top_tracks)
-
-@dashboard_bp.route('/spotify-json-simplified')
-def spotify_json_simplified():
-    token_info = session.get('spotify_token')
-    if not token_info:
-        return redirect(url_for('auth.login_spotify'))
-
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_tracks(limit=10)
-
-    # Extract artist and track name
-    simplified = [
-        {
-            "track": item["name"],
-            "artist": ", ".join([artist["name"] for artist in item["artists"]])
+def get_playlist_statistics(playlist):
+    if not playlist or not playlist.tracks:
+        return {
+            'valence_acousticness': {'data': []},
+            'danceability_energy': {'data': []},
+            'mood_profile': {'data': [0, 0, 0, 0, 0]},
+            'mode': {'data': [0, 0]},
+            'mode_count': {'data': [0, 0]},
+            'top_summary': {
+                'most_played': 'No tracks yet',
+                'total_minutes': 0,
+                'avg_tempo': 0
+            },
+            'top_popular_songs': []
         }
-        for item in results["items"]
+    
+    tracks = playlist.tracks
+    
+    # Valence vs Acousticness scatter data
+    valence_acousticness_data = [
+        {
+            'x': round(t.acousticness or 0, 3),
+            'y': round(t.valence or 0, 3),
+            'title': t.title,
+            'artist': t.artist
+        }
+        for t in tracks if t.valence is not None and t.acousticness is not None
     ]
+    
+    # Danceability vs Energy bubble chart
+    danceability_energy_data = [
+        {
+            'x': round(t.danceability or 0, 2),
+            'y': round(t.energy or 0, 2),
+            'r': 20,  # fixed radius for now
+            'title': t.title,
+            'artist': t.artist
+        }
+        for t in tracks if t.danceability is not None and t.energy is not None
+    ]
+    
+    # Mood Profile radar chart
+    mood_attributes = ["danceability", "energy", "valence", "acousticness", "liveness"]
+    mood_profile_data = []
+    for attr in mood_attributes:
+        values = [getattr(t, attr, 0) or 0 for t in tracks]
+        avg_value = round(sum(values) / len(values), 2) if values else 0
+        mood_profile_data.append(avg_value)
+    
+    # Mode Analysis (Major vs Minor) - count of songs (string-based)
+    major_count = sum(1 for t in tracks if str(t.mode).lower() == "major")
+    minor_count = sum(1 for t in tracks if str(t.mode).lower() == "minor")
+    mode_count = {'data': [major_count, minor_count]}
+    mode = {'data': [major_count, minor_count]}
+    
+    # Top 5 popular songs (by popularity, fallback to 0 if not present)
+    top_popular_songs = sorted(
+        tracks,
+        key=lambda t: getattr(t, 'popularity', 0),
+        reverse=True
+    )[:5]
+    top_popular_songs = [
+        {
+            'title': t.title,
+            'artist': t.artist,
+            'popularity': getattr(t, 'popularity', 0)
+        }
+        for t in top_popular_songs
+    ]
+    
+    # Top duration songs (by duration_ms)
+    top_duration_song = max(tracks, key=lambda t: getattr(t, 'duration_ms', 0), default=None)
+    top_duration_title = top_duration_song.title if top_duration_song else 'No tracks yet'
+    
+    # Total minutes played (number of songs * average duration in ms)
+    durations = [getattr(t, 'duration_ms', 0) for t in tracks if getattr(t, 'duration_ms', 0) > 0]
+    if durations:
+        avg_duration_ms = sum(durations) / len(durations)
+    else:
+        avg_duration_ms = 210000  # fallback to 3.5 min in ms if no data
+    total_minutes = len(tracks) * avg_duration_ms / 60000
+    
+    # Average tempo
+    tempo_values = [t.tempo for t in tracks if t.tempo is not None]
+    avg_tempo = round(sum(tempo_values) / len(tempo_values), 1) if tempo_values else 0
+    
+    # Summary data
+    top_summary = {
+        'most_played': top_duration_title,
+        'total_minutes': round(total_minutes, 1),
+        'avg_tempo': avg_tempo
+    }
+    
+    return {
+        'valence_acousticness': {'data': valence_acousticness_data},
+        'danceability_energy': {'data': danceability_energy_data},
+        'mood_profile': {'data': mood_profile_data},
+        'mode': mode,
+        'mode_count': mode_count,
+        'top_summary': top_summary,
+        'top_popular_songs': top_popular_songs
+    }
 
-    # Pass JSON as a string to the template
-    json_string = json.dumps(simplified, indent=2)
-    return jsonify(json_string)
+@dashboard_bp.route('/playlist/create', methods=['GET', 'POST'])
+@login_required
+def create_playlist():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        
+        if not name:
+            flash('Please provide a name for your playlist.', 'error')
+            return redirect(url_for('dashboard.dashboard'))
+        
+        new_playlist = Playlist(
+            name=name,
+            description=description,
+            owner_id=current_user.id
+        )
+        
+        db.session.add(new_playlist)
+        db.session.commit()
+        
+        flash(f'Playlist "{name}" created successfully!', 'success')
+        return redirect(url_for('dashboard.dashboard', playlist_id=new_playlist.id))
+    
+    return render_template('create_playlist.html')
+
+@dashboard_bp.route('/playlist/<int:playlist_id>/delete', methods=['POST'])
+@login_required
+def delete_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        flash('Playlist not found.', 'error')
+        return redirect(url_for('dashboard.dashboard'))
+    
+    playlist_name = playlist.name
+    db.session.delete(playlist)
+    db.session.commit()
+    
+    flash(f'Playlist "{playlist_name}" deleted successfully.', 'success')
+    return redirect(url_for('dashboard.dashboard'))
+
+@dashboard_bp.route('/playlist/<int:playlist_id>/add-track', methods=['POST'])
+@login_required
+def add_track_to_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"error": "Playlist not found"}), 404
+    
+    track_id = request.form.get('track_id')
+    track = Track.query.get(track_id)
+    
+    if not track:
+        return jsonify({"error": "Track not found"}), 404
+    
+    playlist.tracks.append(track)
+    db.session.commit()
+    
+    return jsonify({"success": "Track added to playlist"})
+
+@dashboard_bp.route('/playlist/<int:playlist_id>/remove-track', methods=['POST'])
+@login_required
+def remove_track_from_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"error": "Playlist not found"}), 404
+    
+    track_id = request.form.get('track_id')
+    track = Track.query.get(track_id)
+    
+    if not track:
+        return jsonify({"error": "Track not found"}), 404
+    
+    if track in playlist.tracks:
+        playlist.tracks.remove(track)
+        db.session.commit()
+    
+    return jsonify({"success": "Track removed from playlist"})
+
+@dashboard_bp.route('/search-tracks')
+@login_required
+def search_tracks():
+    query = request.args.get('q', '')
+    
+    if not query or len(query) < 2:
+        return jsonify({"tracks": []})
+    
+    # Search tracks by title or artist
+    tracks = Track.query.filter(
+        (Track.title.ilike(f'%{query}%')) | 
+        (Track.artist.ilike(f'%{query}%'))
+    ).limit(10).all()
+    
+    result = [
+        {
+            'id': track.id,
+            'title': track.title,
+            'artist': track.artist,
+            'album': track.album
+        } for track in tracks
+    ]
+    
+    return jsonify({"tracks": result})
+
+@dashboard_bp.route('/export-playlist/<int:playlist_id>')
+@login_required
+def export_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"error": "Playlist not found"}), 404
+    
+    # Create CSV data
+    data = []
+    for track in playlist.tracks:
+        data.append({
+            'title': track.title,
+            'artist': track.artist,
+            'album': track.album,
+            'danceability': track.danceability,
+            'energy': track.energy,
+            'valence': track.valence,
+            'tempo': track.tempo
+        })
+    
+    df = pd.DataFrame(data)
+    
+    # Generate CSV
+    csv_data = df.to_csv(index=False)
+    
+    response = jsonify({
+        "data": csv_data,
+        "filename": f"{playlist.name}_export.csv"
+    })
+    
+    return response
