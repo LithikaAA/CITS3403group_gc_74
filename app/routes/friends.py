@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from app.models import User, Track, UserTrack, Friend
 from flask_login import login_required, current_user
 from sqlalchemy.sql import func
 from ..models import db, User, Friend, Track
@@ -32,21 +33,24 @@ def add_friend():
                 flash(f'{friend.username} added successfully!', 'success')
         return redirect(url_for('friends.add_friend'))  
 
+    # Compute current user's average BPM using UserTrack
     my_bpm = db.session.query(sa.func.avg(Track.tempo)) \
-        .filter(Track.user_id == current_user.id).scalar() or 0
+        .join(UserTrack, UserTrack.track_id == Track.id) \
+        .filter(UserTrack.user_id == current_user.id) \
+        .scalar() or 0
 
+    # Fetch friends and order by BPM similarity
     top_friends = (
-        db.session.query(User, sa.func.coalesce(sa.func.avg(Track.tempo), 0).label('avg_bpm'))
+        db.session.query(User)
         .join(Friend, Friend.friend_id == User.id)
-        .outerjoin(Track, Track.user_id == User.id)
-        .filter(Friend.user_id == current_user.id)
+        .join(UserTrack, UserTrack.user_id == User.id)
+        .join(Track, Track.id == UserTrack.track_id)
+        .filter(Friend.user_id == current_user.id, Friend.is_accepted == True)
         .group_by(User.id)
-        .order_by(sa.func.abs(sa.func.coalesce(sa.func.avg(Track.tempo), 0) - my_bpm))
-        .limit(10)
+        .order_by(sa.func.abs(sa.func.avg(Track.tempo) - my_bpm))
+        .limit(20)
         .all()
     )
-
-    top_friends = [u for u, _ in top_friends]
 
     incoming_requests = current_user.incoming_friend_requests()
     sent_requests = current_user.sent_friend_requests()
@@ -56,10 +60,11 @@ def add_friend():
         'add_friends.html',
         form=form,
         top_friends=top_friends,
-        incoming_requests=current_user.incoming_friend_requests(),
-        sent_requests=current_user.sent_friend_requests(),
+        incoming_requests=incoming_requests,
+        sent_requests=sent_requests,
         new_friend_usernames=new_friend_usernames,
     )
+
     
 @friends_bp.route('/friends/remove/<username>', methods=['POST'])
 @login_required
