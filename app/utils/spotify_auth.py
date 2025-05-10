@@ -10,7 +10,7 @@ from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 # Load environment variables
 load_dotenv()
 
-# ---------- OAuth for user-level login ----------
+# ---------- OAuth and Client Auth ----------
 def get_spotify_auth_manager(username=None):
     return SpotifyOAuth(
         client_id=os.getenv("SPOTIPY_CLIENT_ID"),
@@ -20,25 +20,22 @@ def get_spotify_auth_manager(username=None):
         cache_path=f".cache-{username}" if username else ".cache"
     )
 
-# ---------- Spotipy client for app-level access ----------
 auth_manager = SpotifyClientCredentials(
     client_id=os.getenv("SPOTIPY_CLIENT_ID"),
     client_secret=os.getenv("SPOTIPY_CLIENT_SECRET")
 )
 sp = spotipy.Spotify(auth_manager=auth_manager)
 
-# ---------- Load CSV metadata ----------
+# ---------- Load and Preprocess CSV ----------
 df = pd.read_csv("spotify.csv")
 df.columns = df.columns.str.strip()
 df["track_id"] = df["track_id"].astype(str)
 
-# ---------- Unicode-safe normalization for fuzzy matching ----------
 def normalize_str(s):
     if pd.isna(s):
         return ""
     return unicodedata.normalize('NFKC', str(s)).casefold().strip()
 
-# Preprocess DataFrame for faster fuzzy matching
 def preprocess_dataframe():
     global df
     df['normalized_track_name'] = df['track_name'].apply(normalize_str)
@@ -49,7 +46,7 @@ def preprocess_dataframe():
 
 preprocess_dataframe()
 
-# ---------- Fuzzy matching by track title + artist ----------
+# ---------- Metadata Matching ----------
 def get_metadata_by_title_artist(title, artist):
     normalized_title = normalize_str(title)
     normalized_artist = normalize_str(artist)
@@ -66,7 +63,7 @@ def get_metadata_by_title_artist(title, artist):
         if best['artist_score'] > 0.7:
             return best
 
-    possible_titles = difflib.get_close_matches(normalized_title, df['normalized_track_name'], n=10, cutoff=0.7)
+    possible_titles = difflib.get_close_matches(normalized_title, df['normalized_track_name'].unique(), n=10, cutoff=0.7)
     if possible_titles:
         candidates = df[df['normalized_track_name'].isin(possible_titles)]
 
@@ -87,7 +84,7 @@ def get_metadata_by_title_artist(title, artist):
 
     return None
 
-# ---------- Metadata extraction from row ----------
+# ---------- Metadata Extraction ----------
 def extract_metadata(row):
     duration_ms = int(row.get("duration_ms", 0))
     return {
@@ -103,7 +100,6 @@ def extract_metadata(row):
         "mode": "Major" if int(row.get("mode", 0)) == 1 else "Minor"
     }
 
-# ---------- Fallback default metadata ----------
 def generate_default_metadata():
     return {
         "genre": "Unknown",
@@ -118,7 +114,7 @@ def generate_default_metadata():
         "mode": "Major"
     }
 
-# ---------- Main enrichment logic ----------
+# ---------- Main Enrichment ----------
 def enrich_metadata(track_id, fallback_title=None, fallback_artist=None):
     row = df[df["track_id"] == track_id]
     if not row.empty:
@@ -160,7 +156,7 @@ def enrich_metadata(track_id, fallback_title=None, fallback_artist=None):
 
     return generate_default_metadata()
 
-# ---------- Search + merge ----------
+# ---------- Search Tracks ----------
 def search_tracks(query, limit=10):
     results = sp.search(q=query, limit=limit, type='track')
     tracks = []
@@ -173,6 +169,8 @@ def search_tracks(query, limit=10):
         images = item['album'].get('images') if item.get('album') else []
         image_url = images[0]['url'] if images else ''
 
+        enriched = enrich_metadata(track_id, fallback_title=name, fallback_artist=artist)
+
         base = {
             'id': track_id,
             'name': name,
@@ -181,12 +179,9 @@ def search_tracks(query, limit=10):
             'image': image_url
         }
 
-        enriched = enrich_metadata(track_id, fallback_title=name, fallback_artist=artist)
         full_track = {**base, **enriched}
-
-        if 'duration_ms' in full_track:
-            ms = full_track['duration_ms']
-            full_track['duration'] = f"{int(ms / 60000)}:{int((ms % 60000) / 1000):02d}"
+        ms = full_track.get('duration_ms', 0)
+        full_track['duration'] = f"{int(ms / 60000)}:{int((ms % 60000) / 1000):02d}"
 
         tracks.append(full_track)
 

@@ -81,7 +81,7 @@
     </button>
   </div>
 
-  <!-- Added Songs Section (Initially Hidden) -->
+  <!-- Added Songs Section -->
   <div id="added-songs" class="bg-white rounded-xl shadow p-6 mt-10 hidden">
     <h2 class="text-2xl font-bold mb-4">Your Selected Songs</h2>
     <ul id="song-list" class="space-y-2"></ul>
@@ -93,14 +93,18 @@
     </div>
   </div>
 
-<!-- Playlist Created Section (Initially Hidden) -->
+  <!-- Playlist Created Section -->
   <div id="playlist-output" class="hidden mt-10 bg-white rounded-xl shadow p-6">
     <h2 class="text-2xl font-bold mb-4">Your Playlist</h2>
     <div id="playlist-container" class="space-y-4"></div>
   </div>
 </div>
 
-  
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
 <style>
   @keyframes typing {
     0% {
@@ -118,9 +122,9 @@
     100% {
       width: 0
     }
-  }
+}
 
-  @keyframes blink {
+@keyframes blink {
     0%,
     100% {
       border-color: transparent
@@ -129,9 +133,9 @@
     50% {
       border-color: white
     }
-  }
+}
 
-  .typewriter {
+.typewriter {
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;

@@ -1,24 +1,20 @@
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
-from ..models import db, User, Playlist, Share, SharedData
+from ..models import db, User, Playlist, Share, SharedData, Track
 
 share_bp = Blueprint('share', __name__, url_prefix='/share')
 
-# Directory to store uploaded files
+# ---------- File upload settings ----------
 UPLOAD_FOLDER = 'app/static/uploads'
 ALLOWED_EXTENSIONS = {'csv', 'json'}
-
-# Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-# ---------- Share Playlist with Friend ----------
+# ---------- Share Playlist ----------
 @share_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def share():
@@ -52,8 +48,7 @@ def share():
 
     return render_template('share.html', playlists=playlists, friends=friends)
 
-
-# ---------- Upload Shared Data File ----------
+# ---------- Upload Shared Data ----------
 @share_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_shared_data():
@@ -88,8 +83,7 @@ def upload_shared_data():
     shared_data = SharedData.query.filter_by(user_id=current_user.id).all()
     return render_template('share_upload.html', shared_data=shared_data)
 
-
-# ---------- Delete Uploaded Shared File ----------
+# ---------- Delete Shared File ----------
 @share_bp.route('/upload/delete/<int:data_id>', methods=['POST'])
 @login_required
 def delete_shared_data(data_id):
@@ -105,76 +99,19 @@ def delete_shared_data(data_id):
     flash('File deleted successfully!')
     return redirect(url_for('share.upload_shared_data'))
 
-
 # ---------- View Shared Dashboard ----------
 @share_bp.route('/shared')
 @login_required
 def shared_dashboard():
-    shares = Share.query.filter_by(recipient_id=current_user.id).all()
+    playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
+    shared_playlists = Share.query.filter_by(recipient_id=current_user.id).all()
 
-    if not shares:
+    if not shared_playlists:
         flash('No playlists have been shared with you yet.', 'info')
-        owner = None
-    else:
-        owner = shares[0].owner
+        return render_template('shared_dashboard.html', 
+                               shared_playlists=[], 
+                               playlists=playlists)
 
-    shared_items = []
-    for share in shares:
-        playlist = share.playlist
-        if playlist:
-            track_data = playlist.track_data_as_chart()
-            shared_items.append({
-                'playlist_id': playlist.id,
-                'title': playlist.name,
-                'labels': track_data.get('labels', []),
-                'values': track_data.get('counts', [])
-            })
-
-    # MOCK DATA – Replace with actual comparisons later
-    comparison_minutes = {
-        'labels': ['Song A', 'Song B', 'Song C'],
-        'your_data': [120, 95, 80],
-        'friend_data': [100, 110, 60]
-    }
-
-    comparison_bubble = {
-        'you': [{'x': 0.6, 'y': 0.7, 'r': 10}, {'x': 0.4, 'y': 0.5, 'r': 8}],
-        'friend': [{'x': 0.7, 'y': 0.6, 'r': 9}, {'x': 0.5, 'y': 0.4, 'r': 7}]
-    }
-
-    comparison_mood = {
-        'you': [0.7, 0.6, 0.8, 0.3, 0.5],
-        'friend': [0.5, 0.7, 0.6, 0.4, 0.6]
-    }
-
-    comparison_mode = {
-        'you': [300, 120],
-        'friend': [250, 180]
-    }
-
-    shared_summary = {
-        'common_track': 'Song A',
-        'your_avg_tempo': 120,
-        'friend_avg_tempo': 115,
-        'your_total_minutes': 450,
-        'friend_total_minutes': 430,
-        'your_mood': 'Energetic',
-        'friend_mood': 'Chill'
-    }
-
-    top_artists_user = ['Artist 1', 'Artist 2', 'Artist 3', 'Artist 4', 'Artist 5']
-    top_artists_friend = ['Artist A', 'Artist B', 'Artist C', 'Artist D', 'Artist E']
-
-    return render_template(
-        'shared_dashboard.html',
-        shared_items=shared_items,
-        owner=owner,
-        comparison_minutes=comparison_minutes,
-        comparison_bubble=comparison_bubble,
-        comparison_mood=comparison_mood,
-        comparison_mode=comparison_mode,
-        shared_summary=shared_summary,
-        top_artists_user=top_artists_user,
-        top_artists_friend=top_artists_friend,
-        friends_list=[]
-    )
+    return render_template('shared_dashboard.html', 
+                           playlists=playlists, 
+                           shared_playlists=shared_playlists)

@@ -1,254 +1,92 @@
 {% extends "base.html" %}
 {% block title %}Vibe Stats Dashboard | VibeShare{% endblock %}
 
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div id="flash-message-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
-      {% for category, message in messages %}
-        <div class="bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100 text-blue-900 px-6 py-3 rounded-lg shadow-lg font-semibold mb-2 flex items-center space-x-2 animate-fade-in">
-          <span>{{ message }}</span>
-          <button onclick="this.parentElement.style.display='none'" class="ml-4 text-lg font-bold">&times;</button>
-        </div>
+{% if has_playlists and playlists %}
+<div class="max-w-screen-2xl mx-auto px-6 pt-8">
+  <!-- Playlist Selector -->
+  <div class="mb-6">
+    <label for="playlist-selector" class="block mb-2 text-sm font-medium text-gray-700">Select Playlist</label>
+    <select id="playlist-selector" class="w-full p-2 border rounded">
+      {% for playlist in playlists %}
+        <option value="{{ playlist.id }}" {% if selected_playlist and playlist.id == selected_playlist.id %}selected{% endif %}>{{ playlist.name }}</option>
       {% endfor %}
-    </div>
-    <script>
-      setTimeout(function() {
-        var flash = document.getElementById('flash-message-container');
-        if (flash) { flash.style.display = 'none'; }
-      }, 3000);
-    </script>
-    <style>
-      @keyframes fade-in {
-        from { opacity: 0; transform: translateY(-10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in {
-        animation: fade-in 0.5s;
-      }
-    </style>
-  {% endif %}
-{% endwith %}
+    </select>
+  </div>
 
-<!-- Dashboard Header -->
-<div class="rounded-b-2xl bg-blue-100 pb-6">
-  <div class="max-w-screen-2xl mx-auto px-4 pt-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-1">Your Vibe Stats</h1>
-    <p class="text-gray-600 text-sm mb-4">Explore your music listening habits and preferences.</p>
-
-    <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
-      <img
-        src="{% if current_user.profile_pic %}{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}{% else %}{{ url_for('static', filename='img/default_profile.jpg') }}{% endif %}"
-        alt="Profile Picture"
-        class="w-16 h-16 rounded-full object-cover border"
-      />
-      <div>
-        <h2 class="text-xl font-semibold text-gray-800">{{ current_user.username }}</h2>
-        <p class="text-sm text-gray-500">{{ current_user.email }}</p>
-      </div>
+  <!-- Charts -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Valence vs Acousticness</h2>
+      <canvas id="valenceAcousticness"></canvas>
     </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Danceability vs Energy</h2>
+      <canvas id="danceabilityEnergy"></canvas>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-2">Top Duration Song</h2>
+      <p>{{ top_summary.most_played }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-2">Total Minutes</h2>
+      <p>{{ top_summary.total_minutes }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-2">Average Tempo</h2>
+      <p>{{ top_summary.avg_tempo }} BPM</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-2">Top Mood</h2>
+      <p>{% if major > minor %}Happy{% elif major < minor %}Emotional{% else %}Balanced{% endif %}</p>
+    </div>
+  </div>
+
+  <!-- More Charts -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Mood Profile</h2>
+      <canvas id="moodProfile"></canvas>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Listening Time by Mode</h2>
+      <canvas id="modeChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Songs -->
+  <div class="mt-8">
+    <h2 class="text-xl font-semibold mb-4">Top Popular Songs</h2>
+    <ul class="space-y-2">
+      {% for song in top_popular_songs[:5] %}
+        <li class="bg-white p-4 rounded shadow">#{{ loop.index }} {{ song.title }} by {{ song.artist }}</li>
+      {% endfor %}
+    </ul>
   </div>
 </div>
 
-
-<div class="min-h-screen w-full overflow-y-auto py-8 px-4">
-  <div class="max-w-screen-2xl mx-auto space-y-12">
-
-    <!-- User Profile Header -->
-    <div class="p-1 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-2xl mb-8">
-      <div class="bg-white rounded-2xl shadow-lg p-6 flex items-center space-x-4">
-        <img
-          src="{% if current_user.profile_pic %}{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}{% else %}{{ url_for('static', filename='img/default_profile.jpg') }}{% endif %}"
-          alt="Profile Picture"
-          class="w-16 h-16 rounded-full object-cover shadow"
-        />
-        <div>
-          <h2 class="text-xl font-semibold text-gray-800">{{ current_user.username }}</h2>
-          <p class="text-sm text-gray-500">{{ current_user.email }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Spotify Connect -->
-    <div class="relative z-50 flex justify-end mb-6">
-      {% if session.get('spotify_token') %}
-        <span class="text-green-600 font-semibold">✅ Spotify Connected</span>
-      {% else %}
-        <form action="{{ url_for('auth.login_spotify') }}" method="get">
-          <button type="submit" class="bg-gradient-to-r from-indigo-400 to-pink-400 text-white font-semibold px-4 py-2 rounded-full shadow-md hover:opacity-90 transition duration-200">
-            Connect Spotify
-          </button>
-        </form>
-      {% endif %}
-    </div>
-
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- Total Minutes Played Chart -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
-        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Total Minutes Played by Track</h2>
-        <p class="text-sm text-gray-500 mb-6">See which tracks you've dedicated the most listening time to.</p>
-        <canvas id="minutesByTrack"></canvas>
-      </div>
-
-      <!-- Danceability vs Energy Chart -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
-        <h2 class="text-2xl font-bold text-indigo-700 mb-2">Danceability vs Energy</h2>
-        <p class="text-sm text-gray-500 mb-6">Bubble size = minutes played. More chill or more energetic?</p>
-        <canvas id="danceabilityEnergy"></canvas>
-      </div>
-    </div>
-
-    <!-- Data Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-
-      <!-- Summary Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 flex flex-col space-y-6 transition transform duration-300 hover:scale-105 hover:shadow-2xl">
-        <h2 class="text-xl font-semibold text-gray-700">Summary</h2>
-        <p class="text-sm text-gray-400 -mt-1">See your listening habits in a nutshell.</p>
-
-        <div class="flex items-center space-x-4">
-          <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Most Played Track</p>
-            <p class="text-lg font-bold text-indigo-700">{{ top_tracks.most_played }}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center space-x-4">
-          <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 6v6l4 2"/></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Total Minutes</p>
-            <p class="text-lg font-bold text-indigo-700">{{ top_tracks.total_minutes }}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center space-x-4">
-          <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m0 0l-6-6m6 6l6-6"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></svg>
-          </div>
-          <div>
-            <p class="text-xs text-gray-400">Average Tempo</p>
-            <p class="text-lg font-bold text-pink-500">{{ top_tracks.avg_tempo }} BPM</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mood Radar -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Mood Profile</h2>
-        <p class="text-xs text-gray-400 mb-4">Visualize your music mood distribution.</p>
-        <canvas id="moodProfile"></canvas>
-      </div>
-
-      <!-- Mode Chart -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Listening Time by Mode</h2>
-        <p class="text-xs text-gray-400 mb-4">Happy (Major) vs Emotional (Minor).</p>
-        <canvas id="modeChart"></canvas>
-      </div>
-
-      <!-- Top Artists -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Top Artists</h2>
-        <p class="text-xs text-gray-400 mb-4">Your top 5 most listened artists.</p>
-        <div class="space-y-4">
-          {% for artist in top_artists[:5] %}
-            <div class="flex items-center space-x-4 transform hover:scale-110 transition duration-300">
-              <div class="bg-gradient-to-br from-indigo-400 to-pink-400 p-3 rounded-full">
-                <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              </div>
-              <p class="font-bold text-indigo-700">#{{ loop.index }} {{ artist }}</p>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  new Chart(document.getElementById('minutesByTrack'), {
-    type: 'bar',
-    data: {
-      labels: {{ minutes_by_track.labels | tojson | safe }},
-      datasets: [{
-        label: 'Minutes Played',
-        data: {{ minutes_by_track.data | tojson | safe }},
-        backgroundColor: '#a5b4fc',
-        borderRadius: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false }},
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: 'Minutes' }},
-        x: { title: { display: true, text: 'Track' }}
-      }
-    }
-  });
-
-  new Chart(document.getElementById('danceabilityEnergy'), {
-    type: 'bubble',
-    data: {
-      datasets: [{
-        label: 'Tracks',
-        data: {{ danceability_energy.data | tojson | safe }},
-        backgroundColor: '#a5b4fc',
-        borderColor: '#6366F1'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'left' }},
-      scales: {
-        x: { title: { display: true, text: 'Danceability' }},
-        y: { title: { display: true, text: 'Energy' }}
-      }
-    }
-  });
-
-  new Chart(document.getElementById('moodProfile'), {
-    type: 'radar',
-    data: {
-      labels: ['Danceability', 'Energy', 'Valence', 'Acousticness', 'Liveness'],
-      datasets: [{
-        label: 'Mood Profile',
-        data: {{ mood_profile.data | tojson | safe }},
-        backgroundColor: 'rgba(169, 176, 207, 0.2)',
-        borderColor: '#a5b4fc',
-        pointBackgroundColor: '#6366F1'
-      }]
-    },
-    options: { responsive: true, scales: { r: { beginAtZero: true, max: 1 }}}
-  });
-
-  new Chart(document.getElementById('modeChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Major', 'Minor'],
-      datasets: [{
-        label: 'Minutes Played',
-        data: {{ mode.data | tojson | safe }},
-        backgroundColor: ['#a5b4fc', '#f472b6']
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false }},
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: 'Minutes' }}
-      }
-    }
-  });
+  window.valenceAcousticnessData = {{ valence_acousticness.data | tojson | safe }};
+  window.danceabilityEnergyData = {{ danceability_energy.data | tojson | safe }};
+  window.moodProfileData = {{ mood_profile.data | tojson | safe }};
+  window.modeCountData = {{ mode_count.data | tojson | safe }};
 </script>
+<script src="{{ url_for('static', filename='js/dashboard-charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/playlist-dropdown.js') }}"></script>
+
+{% else %}
+<div class="max-w-xl mx-auto text-center mt-16">
+  <h2 class="text-2xl font-bold mb-4">No Playlists Found</h2>
+  <p class="text-gray-600 mb-6">Upload music data to create a playlist and view your stats.</p>
+  <a href="{{ url_for('upload.upload') }}" class="bg-indigo-600 text-white px-6 py-2 rounded">Add Data</a>
+</div>
+{% endif %}
 {% endblock %}
