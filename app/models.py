@@ -177,13 +177,3 @@ class SharedData(db.Model):
     timestamp: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="shared_data")  # Link back to User model
-
-
-# ------------------ Friends ------------------
-class Friend(db.Model):
-    __tablename__ = 'friend'
-
-    id        = db.Column(db.Integer, primary_key=True)
-    user_id   = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-

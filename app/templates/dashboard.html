@@ -31,6 +31,27 @@
   {% endif %}
 {% endwith %}
 
+<!-- Dashboard Header -->
+<div class="rounded-b-2xl bg-blue-100 pb-6">
+  <div class="max-w-screen-2xl mx-auto px-4 pt-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-1">Your Vibe Stats</h1>
+    <p class="text-gray-600 text-sm mb-4">Explore your music listening habits and preferences.</p>
+
+    <div class="bg-white rounded-2xl shadow p-6 flex items-center space-x-4">
+      <img
+        src="{% if current_user.profile_pic %}{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}{% else %}{{ url_for('static', filename='img/default_profile.jpg') }}{% endif %}"
+        alt="Profile Picture"
+        class="w-16 h-16 rounded-full object-cover border"
+      />
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800">{{ current_user.username }}</h2>
+        <p class="text-sm text-gray-500">{{ current_user.email }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div class="min-h-screen w-full overflow-y-auto py-8 px-4">
   <div class="max-w-screen-2xl mx-auto space-y-12">
 
