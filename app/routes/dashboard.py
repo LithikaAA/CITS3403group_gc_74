@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify
+from flask import Blueprint, render_template, session, redirect, url_for, request, jsonify, flash
 from app.models import db, User, Playlist, Track
 from flask_login import current_user, login_required
 from sqlalchemy import func
 import pandas as pd
 from collections import Counter
 
-# Blueprint - notice the url_prefix parameter when registering the blueprint
+# Blueprint with url_prefix
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
 @dashboard_bp.route('/')
@@ -15,31 +15,60 @@ def dashboard():
         return redirect(url_for('auth.login'))
 
     playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
+    
+    # Default empty data
+    default_data = {
+        'valence_acousticness': {'data': []},
+        'danceability_energy': {'data': []},
+        'mood_profile': {'data': [0, 0, 0, 0, 0]},
+        'mode': {'data': [0, 0]},
+        'mode_count': {'data': [0, 0]},
+        'top_summary': {
+            'most_played': 'No tracks yet',
+            'total_minutes': 0,
+            'avg_tempo': 0
+        },
+        'top_popular_songs': []
+    }
+    
+    # If no playlists, show empty dashboard with a message
     if not playlists:
+        flash("You don't have any playlists yet. Create one to get started!", "info")
         return render_template(
             'dashboard.html',
             playlists=[],
-            valence_acousticness={'data': []},
-            danceability_energy={'data': []},
-            mood_profile={'data': [0, 0, 0, 0, 0]},
-            mode={'data': [0, 0]},
-            mode_count={'data': [0, 0]},
-            top_summary={
-                'most_played': 'No tracks yet',
-                'total_minutes': 0,
-                'avg_tempo': 0
-            },
-            top_popular_songs=[],
+            has_playlists=False,
+            selected_playlist=None,
+            valence_acousticness=default_data['valence_acousticness'],
+            danceability_energy=default_data['danceability_energy'],
+            mood_profile=default_data['mood_profile'],
+            mode=default_data['mode'],
+            mode_count=default_data['mode_count'],
+            top_summary=default_data['top_summary'],
+            top_popular_songs=default_data['top_popular_songs'],
             major=0,
             minor=0
         )
 
+    # Get playlist_id from URL parameters
     playlist_id = request.args.get('playlist_id', type=int)
-    selected_playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first() if playlist_id else playlists[0]
+    
+    # If playlist_id provided, get that playlist, otherwise use the first one
+    if playlist_id:
+        selected_playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+        # If selected playlist not found, default to first playlist
+        if not selected_playlist:
+            selected_playlist = playlists[0]
+    else:
+        selected_playlist = playlists[0]
+    
+    # Get playlist statistics
     data = get_playlist_statistics(selected_playlist)
+    
     return render_template(
         'dashboard.html',
         playlists=playlists,
+        has_playlists=True,
         selected_playlist=selected_playlist,
         valence_acousticness=data['valence_acousticness'],
         danceability_energy=data['danceability_energy'],
@@ -52,16 +81,17 @@ def dashboard():
         minor=data['mode_count']['data'][1]
     )
 
-# Notice the route is now just '/playlist-data' since we have the url_prefix
 @dashboard_bp.route('/playlist-data')
 @login_required
 def get_playlist_data():
     playlist_id = request.args.get('playlist_id', type=int)
     if not playlist_id:
         return jsonify({"error": "No playlist ID provided"}), 400
+    
     playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
     if not playlist:
         return jsonify({"error": "Playlist not found"}), 404
+    
     data = get_playlist_statistics(playlist)
     return jsonify(data)
 
@@ -80,7 +110,9 @@ def get_playlist_statistics(playlist):
             },
             'top_popular_songs': []
         }
+    
     tracks = playlist.tracks
+    
     # Valence vs Acousticness scatter data
     valence_acousticness_data = [
         {
@@ -91,6 +123,7 @@ def get_playlist_statistics(playlist):
         }
         for t in tracks if t.valence is not None and t.acousticness is not None
     ]
+    
     # Danceability vs Energy bubble chart
     danceability_energy_data = [
         {
@@ -102,6 +135,7 @@ def get_playlist_statistics(playlist):
         }
         for t in tracks if t.danceability is not None and t.energy is not None
     ]
+    
     # Mood Profile radar chart
     mood_attributes = ["danceability", "energy", "valence", "acousticness", "liveness"]
     mood_profile_data = []
@@ -109,11 +143,13 @@ def get_playlist_statistics(playlist):
         values = [getattr(t, attr, 0) or 0 for t in tracks]
         avg_value = round(sum(values) / len(values), 2) if values else 0
         mood_profile_data.append(avg_value)
+    
     # Mode Analysis (Major vs Minor) - count of songs (string-based)
     major_count = sum(1 for t in tracks if str(t.mode).lower() == "major")
     minor_count = sum(1 for t in tracks if str(t.mode).lower() == "minor")
     mode_count = {'data': [major_count, minor_count]}
     mode = {'data': [major_count, minor_count]}
+    
     # Top 5 popular songs (by popularity, fallback to 0 if not present)
     top_popular_songs = sorted(
         tracks,
@@ -128,9 +164,11 @@ def get_playlist_statistics(playlist):
         }
         for t in top_popular_songs
     ]
+    
     # Top duration songs (by duration_ms)
     top_duration_song = max(tracks, key=lambda t: getattr(t, 'duration_ms', 0), default=None)
     top_duration_title = top_duration_song.title if top_duration_song else 'No tracks yet'
+    
     # Total minutes played (number of songs * average duration in ms)
     durations = [getattr(t, 'duration_ms', 0) for t in tracks if getattr(t, 'duration_ms', 0) > 0]
     if durations:
@@ -138,15 +176,18 @@ def get_playlist_statistics(playlist):
     else:
         avg_duration_ms = 210000  # fallback to 3.5 min in ms if no data
     total_minutes = len(tracks) * avg_duration_ms / 60000
+    
     # Average tempo
     tempo_values = [t.tempo for t in tracks if t.tempo is not None]
     avg_tempo = round(sum(tempo_values) / len(tempo_values), 1) if tempo_values else 0
+    
     # Summary data
     top_summary = {
         'most_played': top_duration_title,
         'total_minutes': round(total_minutes, 1),
         'avg_tempo': avg_tempo
     }
+    
     return {
         'valence_acousticness': {'data': valence_acousticness_data},
         'danceability_energy': {'data': danceability_energy_data},
@@ -157,7 +198,6 @@ def get_playlist_statistics(playlist):
         'top_popular_songs': top_popular_songs
     }
 
-# All other routes adjusted for url_prefix
 @dashboard_bp.route('/playlist/create', methods=['GET', 'POST'])
 @login_required
 def create_playlist():
@@ -166,7 +206,7 @@ def create_playlist():
         description = request.form.get('description', '')
         
         if not name:
-            # Flash message would go here
+            flash('Please provide a name for your playlist.', 'error')
             return redirect(url_for('dashboard.dashboard'))
         
         new_playlist = Playlist(
@@ -178,6 +218,7 @@ def create_playlist():
         db.session.add(new_playlist)
         db.session.commit()
         
+        flash(f'Playlist "{name}" created successfully!', 'success')
         return redirect(url_for('dashboard.dashboard', playlist_id=new_playlist.id))
     
     return render_template('create_playlist.html')
@@ -188,12 +229,14 @@ def delete_playlist(playlist_id):
     playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
     
     if not playlist:
-        # Flash message would go here
+        flash('Playlist not found.', 'error')
         return redirect(url_for('dashboard.dashboard'))
     
+    playlist_name = playlist.name
     db.session.delete(playlist)
     db.session.commit()
     
+    flash(f'Playlist "{playlist_name}" deleted successfully.', 'success')
     return redirect(url_for('dashboard.dashboard'))
 
 @dashboard_bp.route('/playlist/<int:playlist_id>/add-track', methods=['POST'])
@@ -292,8 +335,3 @@ def export_playlist(playlist_id):
     })
     
     return response
-
-# Add this code to your app.py or wherever you setup your Flask app
-def register_blueprints(app):
-    app.register_blueprint(dashboard_bp)
-    # Register other blueprints as needed

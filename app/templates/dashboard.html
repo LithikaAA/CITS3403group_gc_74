@@ -6,30 +6,8 @@
 {% endblock %}
 
 {% block content %}
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div id="flash-message-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
-      {% for category, message in messages %}
-        <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg shadow-xl font-medium mb-2 flex items-center space-x-2 animate-fade-in">
-          <span>{{ message }}</span>
-          <button onclick="this.parentElement.style.display='none'" class="ml-4 text-white hover:text-gray-100 transition-colors">&times;</button>
-        </div>
-      {% endfor %}
-    </div>
-    <script>
-      setTimeout(function() {
-        var flash = document.getElementById('flash-message-container');
-        if (flash) { 
-          flash.classList.add('animate-fade-out');
-          setTimeout(() => flash.style.display = 'none', 500);
-        }
-      }, 3000);
-    </script>
-  {% endif %}
-{% endwith %}
-
 <div class="max-w-screen-2xl mx-auto px-6 pt-8">
+  {% if has_playlists and playlists %}
   <!-- Custom Playlist Selector -->
   <div class="custom-dropdown-container">
     <div class="custom-dropdown-inner">
@@ -191,19 +169,19 @@
       </div>
     </div>
 
-    <!-- Top 5 Popular Songs -->
+    <!-- Top 5 Popular Songs - FIXED -->
     <div class="dashboard-card p-8">
       <h2 class="text-lg font-bold text-gray-800 mb-2">Top 5 Popular Songs</h2>
       <p class="text-sm text-gray-500 mb-4">Based on popularity score</p>
       <div id="top-songs-container" class="space-y-3">
         {% for song in top_popular_songs[:5] %}
           <div class="flex items-center space-x-4 p-2 rounded-lg {% if loop.index == 1 %}bg-gradient-to-r from-indigo-50 to-purple-50{% endif %}">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center shadow-md">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center shadow-md flex-shrink-0">
               <span class="text-white text-sm font-bold">#{{ loop.index }}</span>
             </div>
-            <div>
-              <p class="text-base font-semibold {% if loop.index == 1 %}text-indigo-700{% else %}text-gray-800{% endif %}">{{ song.title }}</p>
-              <p class="text-sm text-gray-500">{{ song.artist }}</p>
+            <div class="overflow-hidden">
+              <p class="text-base font-semibold {% if loop.index == 1 %}text-indigo-700{% else %}text-gray-800{% endif %} truncate">{{ song.title }}</p>
+              <p class="text-sm text-gray-500 truncate">{{ song.artist }}</p>
             </div>
           </div>
         {% endfor %}
@@ -241,5 +219,20 @@
 <!-- Include separated JS files -->
 <script src="{{ url_for('static', filename='js/dashboard-charts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/playlist-dropdown.js') }}"></script>
+{% else %}
+<!-- Show empty state with link to add data tab -->
+<div class="max-w-screen-2xl mx-auto px-6 pt-8">
+  <div class="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-indigo-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+    </svg>
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">No Playlists Yet</h2>
+    <p class="text-gray-600 mb-8">You don't have any playlists yet. Go to the Add Data tab to upload your music data and create your first playlist!</p>
+    <a href="{{ url_for('upload.upload') }}" class="inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-medium py-3 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-200">
+      Go to Add Data
+    </a>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}
