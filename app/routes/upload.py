@@ -49,10 +49,7 @@ def api_search_tracks():
 
     return jsonify(enriched_results)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 1ebfa4c23a28ca24835c8da78ec76b5cbcd2e666
 # ---------- Create Playlist ----------
 @upload_bp.route("/upload/create-playlist", methods=["POST"])
 def create_playlist():
@@ -66,74 +63,7 @@ def create_playlist():
     if not tracks:
         return jsonify({"status": "error", "message": "No tracks provided."}), 400
 
-<<<<<<< HEAD
     from app.models import Playlist, PlaylistTrack  # Import here to avoid circular dependency
-=======
-    from app.models import Playlist, PlaylistTrack  # local import to avoid top-level clutter
-
-    # Create playlist
-    playlist = Playlist(name=playlist_name, owner_id=current_user.id)
-    db.session.add(playlist)
-    db.session.flush()  # ensures playlist.id is available
-
-    for song in tracks:
-        title = song.get("name")
-        artist = song.get("artist")
-        duration = int(song.get("duration_ms", 0))
-
-        if not title or not artist:
-            continue
-
-        track = Track.query.filter_by(title=title, artist=artist).first()
-        if not track:
-            track = Track(
-                title=title,
-                artist=artist,
-                genre=song.get("genre"),
-                tempo=song.get("tempo"),
-                valence=song.get("valence"),
-                energy=song.get("energy"),
-                acousticness=song.get("acousticness"),
-                liveness=song.get("liveness"),
-                danceability=song.get("danceability"),
-                mode=song.get("mode")
-            )
-            db.session.add(track)
-            db.session.flush()
-
-        db.session.add(PlaylistTrack(playlist_id=playlist.id, track_id=track.id))
-
-        if not UserTrack.query.filter_by(user_id=current_user.id, track_id=track.id).first():
-            user_track = UserTrack(
-                user_id=current_user.id,
-                track_id=track.id,
-                song=title,
-                artist=artist,
-                song_duration=duration,
-                times_played=1,
-                total_ms_listened=duration
-            )
-            db.session.add(user_track)
-
-    db.session.commit()
-    return jsonify({
-    "status": "success",
-    "message": f"Playlist '{playlist_name}' created.",
-    "playlist": {
-        "name": playlist.name,
-        "tracks": [
-            {
-                "title": t.title,
-                "artist": t.artist,
-                "genre": t.genre,
-                "valence": t.valence,
-                "energy": t.energy,
-                "acousticness": t.acousticness
-            } for t in playlist.tracks
-        ]
-    }
-})
->>>>>>> 1ebfa4c23a28ca24835c8da78ec76b5cbcd2e666
 
     # Create playlist
     playlist = Playlist(name=playlist_name, owner_id=current_user.id)

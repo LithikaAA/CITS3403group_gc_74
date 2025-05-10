@@ -1,15 +1,8 @@
-<<<<<<< HEAD
 import os
-=======
->>>>>>> 1ebfa4c23a28ca24835c8da78ec76b5cbcd2e666
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from ..models import db, User, Playlist, Share, SharedData, Track
-<<<<<<< HEAD
-=======
-import os
->>>>>>> 1ebfa4c23a28ca24835c8da78ec76b5cbcd2e666
 
 share_bp = Blueprint('share', __name__, url_prefix='/share')
 
@@ -114,20 +107,6 @@ def delete_shared_data(data_id):
 @share_bp.route('/shared')
 @login_required
 def shared_dashboard():
-<<<<<<< HEAD
-    playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
-    shared_playlists = Share.query.filter_by(recipient_id=current_user.id).all()
-
-    if not shared_playlists:
-        flash('No playlists have been shared with you yet.', 'info')
-        return render_template('shared_dashboard.html', 
-                               shared_playlists=[], 
-                               playlists=playlists)
-
-    return render_template('shared_dashboard.html', 
-                           playlists=playlists, 
-                           shared_playlists=shared_playlists)
-=======
     """
     Display the shared dashboard with playlist comparison interface
     """
@@ -742,4 +721,3 @@ def get_comparative_stats(your_playlist, friend_playlist):
     }
     
     return stats
->>>>>>> 1ebfa4c23a28ca24835c8da78ec76b5cbcd2e666
