@@ -41,11 +41,16 @@ Thumbs.db
 # === Dotenv / secrets ===
 *.env
 
+<<<<<<< HEAD
 # === Uploads / Static Generated Files ===
 app/static/uploads/
 *.csv
 *.json
 *.zip
+=======
+.cache
+migrations/versions/*.py
+>>>>>>> 1ebfa4c23a28ca24835c8da78ec76b5cbcd2e666
 
 # === Spotify or privacy-exported data ===
 spotify_data/
