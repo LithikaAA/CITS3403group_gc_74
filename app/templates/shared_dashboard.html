@@ -77,113 +77,124 @@
     </div>
   
     <!-- Main Charts Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl chart-container">
-        <h2 class="text-2xl font-bold text-grey-700 mb-2">Total Minutes Played by Track</h2>
-        <p class="text-sm text-gray-500 mb-6">Top different songs between you and your friend.</p>
-        <div class="w-full overflow-x-auto">
-          <canvas id="minutesByTrack" class="w-full h-auto max-w-full"></canvas>
+    <div class="max-w-screen-2xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      
+        <!-- Total Minutes Played by Track -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[400px]">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Total Minutes Played by Track</h2>
+          <p class="text-sm text-gray-500 mb-6">Top different songs between you and your friend.</p>
+          <div class="w-full h-[350px] min-h-[350px]">
+            <canvas id="minutesByTrack" class="w-full h-full"></canvas>
+          </div>
         </div>
-      </div>
 
-      <div class="bg-white rounded-2xl shadow-lg p-8 transition transform duration-300 hover:scale-105 hover:shadow-2xl chart-container">
-        <h2 class="text-2xl font-bold text-grey-700 mb-2">Danceability vs Energy</h2>
-        <p class="text-sm text-gray-500 mb-6">You vs friend. Different colour dots show each of your tracks.</p>
-        <div class="w-full overflow-x-auto">
-          <canvas id="danceabilityEnergy" class="w-full h-auto max-w-full"></canvas>
+        <!-- Danceability vs Energy -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[400px]">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Danceability vs Energy</h2>
+          <p class="text-sm text-gray-500 mb-6">You vs friend. Different colour dots show each of your tracks.</p>
+          <div class="w-full h-[350px] min-h-[350px]">
+            <canvas id="danceabilityEnergy" class="w-full h-full"></canvas>
+          </div>
         </div>
+        
       </div>
     </div>
 
     <!-- Grid Section -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    <div class="max-w-screen-2xl mx-auto px-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
 
-      <!-- Music Summary Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 dashboard-card">
-        <h2 class="text-lg font-bold text-gray-800 mb-4">You & Friend Summary</h2>
-        
-        <div class="space-y-3">
-          <div>
-            <p class="text-sm font-medium text-gray-700">Top Common Track:</p>
-            <p class="font-semibold text-indigo-600" data-summary="common-track">{{ shared_summary.common_track }}</p>
-          </div>
+        <!-- Music Summary Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 dashboard-card">
+          <h2 class="text-lg font-bold text-gray-800 mb-4">You & Friend Summary</h2>
           
-          <div>
-            <p class="text-sm font-medium text-gray-700">Your Avg Tempo:</p>
-            <p class="font-semibold text-indigo-600" data-summary="your-avg-tempo">{{ shared_summary.your_avg_tempo }} BPM</p>
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700">Top Common Track:</p>
+              <p class="font-semibold text-indigo-600" data-summary="common-track">{{ shared_summary.common_track }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm font-medium text-gray-700">Your Avg Tempo:</p>
+              <p class="font-semibold text-indigo-600" data-summary="your-avg-tempo">{{ shared_summary.your_avg_tempo }} BPM</p>
+            </div>
+            
+            <div>
+              <p class="text-sm font-medium text-gray-700">Friend's Avg Tempo:</p>
+              <p class="font-semibold text-pink-600" data-summary="friend-avg-tempo">{{ shared_summary.friend_avg_tempo }} BPM</p>
+            </div>
+            
+            <div>
+              <p class="text-sm font-medium text-gray-700">Total Minutes (You):</p>
+              <p class="font-semibold text-indigo-600" data-summary="your-total-minutes">{{ shared_summary.your_total_minutes }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm font-medium text-gray-700">Total Minutes (Friend):</p>
+              <p class="font-semibold text-pink-600" data-summary="friend-total-minutes">{{ shared_summary.friend_total_minutes }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm font-medium text-gray-700">Your Mood:</p>
+              <p class="font-semibold text-indigo-600" data-summary="your-mood">{{ shared_summary.your_mood }}</p>
+            </div>
+            
+            <div>
+              <p class="text-sm font-medium text-gray-700">Friend's Mood:</p>
+              <p class="font-semibold text-pink-600" data-summary="friend-mood">{{ shared_summary.friend_mood }}</p>
+            </div>
           </div>
-          
-          <div>
-            <p class="text-sm font-medium text-gray-700">Friend's Avg Tempo:</p>
-            <p class="font-semibold text-pink-600" data-summary="friend-avg-tempo">{{ shared_summary.friend_avg_tempo }} BPM</p>
+        </div>
+
+        <!-- Mood Profile Radar Chart -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 dashboard-card">
+          <h2 class="text-lg font-bold text-gray-800 mb-2">Mood Profile Comparison</h2>
+          <p class="text-sm text-gray-500 mb-4">Visualize your overall music mood</p>
+          <div class="w-full h-[260px] overflow-hidden">
+            <canvas id="moodProfile" class="w-full h-full"></canvas>
           </div>
-          
-          <div>
-            <p class="text-sm font-medium text-gray-700">Total Minutes (You):</p>
-            <p class="font-semibold text-indigo-600" data-summary="your-total-minutes">{{ shared_summary.your_total_minutes }}</p>
+        </div>
+
+        <!-- Listening Time by Mode -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 dashboard-card">
+          <h2 class="text-lg font-semibold text-gray-700 mb-2">Mode Comparison</h2>
+          <p class="text-xs text-gray-400 mb-4">Major (Happy) vs Minor (Emotional) — stacked by user.</p>
+          <div class="w-full h-[260px] overflow-hidden">
+            <canvas id="modeChart" class="w-full h-full"></canvas>
           </div>
-          
-          <div>
-            <p class="text-sm font-medium text-gray-700">Total Minutes (Friend):</p>
-            <p class="font-semibold text-pink-600" data-summary="friend-total-minutes">{{ shared_summary.friend_total_minutes }}</p>
-          </div>
-          
-          <div>
-            <p class="text-sm font-medium text-gray-700">Your Mood:</p>
-            <p class="font-semibold text-indigo-600" data-summary="your-mood">{{ shared_summary.your_mood }}</p>
-          </div>
-          
-          <div>
-            <p class="text-sm font-medium text-gray-700">Friend's Mood:</p>
-            <p class="font-semibold text-pink-600" data-summary="friend-mood">{{ shared_summary.friend_mood }}</p>
+        </div>
+
+        <!-- Top 5 Popular Songs -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 dashboard-card">
+          <h2 class="text-lg font-semibold text-gray-700 mb-2">Top 5 Popular Songs</h2>
+          <p class="text-xs text-gray-400 mb-4">Based on popularity score.</p>
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <p class="font-semibold text-indigo-700">Your Top Songs</p>
+              <ul class="text-sm text-gray-600 your-top-songs">
+                {% for song in top_popular_songs.you %}
+                <li class="flex items-center py-1">
+                  <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#{{ loop.index }}</span>
+                  <span class="truncate">{{ song.title }} - {{ song.artist }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            <div class="mt-3">
+              <p class="font-semibold text-pink-600">Friend's Top Songs</p>
+              <ul class="text-sm text-gray-600 friend-top-songs">
+                {% for song in top_popular_songs.friend %}
+                <li class="flex items-center py-1">
+                  <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#{{ loop.index }}</span>
+                  <span class="truncate">{{ song.title }} - {{ song.artist }}</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Mood Profile Radar Chart -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 dashboard-card chart-container">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Mood Profile Comparison</h2>
-        <p class="text-xs text-gray-400 mb-4">You vs friend, colour coded.</p>
-        <canvas id="moodProfile" class="w-full h-auto max-w-full"></canvas>
-      </div>
-
-      <!-- Listening Time by Mode -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 dashboard-card chart-container">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Mode Comparison</h2>
-        <p class="text-xs text-gray-400 mb-4">Major (Happy) vs Minor (Emotional) — stacked by user.</p>
-        <canvas id="modeChart" class="w-full h-auto max-w-full"></canvas>
-      </div>
-
-      <!-- Top 5 Popular Songs -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 dashboard-card">
-        <h2 class="text-lg font-semibold text-gray-700 mb-2">Top 5 Popular Songs</h2>
-        <p class="text-xs text-gray-400 mb-4">Based on popularity score.</p>
-        <div class="grid grid-cols-1 gap-4">
-          <div>
-            <p class="font-semibold text-indigo-700">Your Top Songs</p>
-            <ul class="text-sm text-gray-600 your-top-songs">
-              {% for song in top_popular_songs.you %}
-              <li class="flex items-center py-1">
-                <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#{{ loop.index }}</span>
-                <span class="truncate">{{ song.title }} - {{ song.artist }}</span>
-              </li>
-              {% endfor %}
-            </ul>
-          </div>
-          <div class="mt-3">
-            <p class="font-semibold text-pink-600">Friend's Top Songs</p>
-            <ul class="text-sm text-gray-600 friend-top-songs">
-              {% for song in top_popular_songs.friend %}
-              <li class="flex items-center py-1">
-                <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#{{ loop.index }}</span>
-                <span class="truncate">{{ song.title }} - {{ song.artist }}</span>
-              </li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 

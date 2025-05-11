@@ -115,16 +115,39 @@ def shared_dashboard():
 
     # If there are no shared playlists, show no-friends message
     if not shared_playlists:
-        return render_template('shared_dashboard.html', 
-                              shared_playlists=[],
-                              playlists=playlists)
-    
-    # Don't load any data initially - it will be loaded via AJAX
-    # when the user selects playlists from the dropdowns
+        return render_template(
+            'shared_dashboard.html',
+            shared_playlists=[],
+            playlists=playlists,
+            shared_summary=None,
+            top_popular_songs={"you": [], "friend": []},
+            comparison_minutes={"labels": [], "your_data": [], "friend_data": []},
+            comparison_bubble={"you": [], "friend": []},
+            comparison_mood={"you": [], "friend": []},
+            comparison_mode={"you": [], "friend": []}
+        )
+
+    # Provide dummy placeholders until AJAX fills real data
+    placeholder_summary = {
+        "common_track": "N/A",
+        "your_avg_tempo": 0,
+        "friend_avg_tempo": 0,
+        "your_total_minutes": 0,
+        "friend_total_minutes": 0,
+        "your_mood": "N/A",
+        "friend_mood": "N/A"
+    }
+
     return render_template(
         'shared_dashboard.html',
         playlists=playlists,
-        shared_playlists=shared_playlists
+        shared_playlists=shared_playlists,
+        shared_summary=placeholder_summary,
+        top_popular_songs={"you": [], "friend": []},
+        comparison_minutes={"labels": [], "your_data": [], "friend_data": []},
+        comparison_bubble={"you": [], "friend": []},
+        comparison_mood={"you": [], "friend": []},
+        comparison_mode={"you": [], "friend": []}
     )
 
 @share_bp.route('/compare-playlists')
