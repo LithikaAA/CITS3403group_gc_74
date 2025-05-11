@@ -7,45 +7,44 @@
   {% if current_user.all_friends %}
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
     
-    <!-- Select Playlists to Share -->
-    <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
-      <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
-        <i data-feather="music" class="w-5 h-5 mr-2"></i> Select Playlists
-      </h2>
-      <ul class="space-y-4">
-        {% for playlist in current_user.playlists %}
-        <li>
-          <label class="flex items-start space-x-3 cursor-pointer">
-            <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 accent-pink-500">
-            <div>
-              <p class="font-medium text-gray-900">{{ playlist.name }}</p>
-              <p class="text-sm text-gray-500">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
-            </div>
-          </label>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
+  <!-- Select Playlists to Share -->
+  <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 relative z-10">
+    <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
+      <i data-feather="music" class="w-5 h-5 mr-2"></i> Select Playlists
+    </h2>
+    <ul class="space-y-4">
+      {% for playlist in current_user.playlists %}
+      <li>
+        <label class="flex items-start space-x-3 cursor-pointer">
+          <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 accent-pink-500">
+          <div>
+            <p class="font-medium text-gray-900">{{ playlist.name }}</p>
+            <p class="text-sm text-gray-500">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
+          </div>
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
 
-    <!-- Select Friends to Share With -->
-    <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
-      <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
-        <i data-feather="users" class="w-5 h-5 mr-2"></i> Share with Friends
-      </h2>
-      <ul class="space-y-4">
-        {% for friend in current_user.all_friends %}
-        <li>
-          <label class="flex items-start space-x-3 cursor-pointer">
-            <input type="checkbox" name="friend_ids" value="{{ friend.id }}" class="mt-1 accent-purple-500">
-            <div>
-              <p class="font-medium text-gray-900">{{ friend.username }}</p>
-              <p class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</p>
-            </div>
-          </label>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
+  <!-- Select Friends to Share With -->
+  <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 relative z-10">
+    <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
+      <i data-feather="users" class="w-5 h-5 mr-2"></i> Share with Friends
+    </h2>
+    <ul class="space-y-4">
+      {% for friend in current_user.all_friends %}
+      <li>
+        <label class="flex items-start space-x-3 cursor-pointer">
+          <input type="checkbox" name="friend_ids" value="{{ friend.id }}" class="mt-1 accent-purple-500">
+          <div>
+            <p class="font-medium text-gray-900">{{ friend.username }}</p>
+            <p class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</p>
+          </div>
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
   </div>
 
   <!-- Share Button -->

@@ -5,6 +5,7 @@ from sqlalchemy.sql import func
 from ..models import db, User, Friend, Track
 from ..forms import AddFriendForm
 import sqlalchemy as sa
+from ..forms import AddFriendForm, AcceptFriendForm
 
 friends_bp = Blueprint('friends', __name__)
 
@@ -56,6 +57,8 @@ def add_friend():
     sent_requests = current_user.sent_friend_requests()
     new_friend_usernames = [r.user.username for r in incoming_requests]
 
+    accept_form = AcceptFriendForm()
+
     return render_template (
         'add_friends.html',
         form=form,
@@ -63,6 +66,7 @@ def add_friend():
         incoming_requests=incoming_requests,
         sent_requests=sent_requests,
         new_friend_usernames=new_friend_usernames,
+        accept_form=accept_form
     )
 
     
@@ -85,3 +89,24 @@ def list_friends():
     # Updated to use the property instead of the method
     friends = current_user.all_friends
     return jsonify({"friends": [{"username": f.username} for f in friends]})
+
+@friends_bp.route('/friends/accept/<int:request_id>', methods=['POST'])
+@login_required
+def accept_friend(request_id):
+    request = Friend.query.get_or_404(request_id)
+
+    if request.friend_id != current_user.id:
+        return "Unauthorized", 403
+
+    request.is_accepted = True
+
+    # Add reverse friendship
+    db.session.add(Friend(
+        user_id=current_user.id,
+        friend_id=request.user_id,
+        is_accepted=True
+    ))
+    db.session.commit()
+
+    flash("Friend request accepted!", "success")
+    return redirect(url_for('friends.add_friend'))

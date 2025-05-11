@@ -38,3 +38,7 @@ class AddFriendForm(FlaskForm):
         validators=[DataRequired(), Length(max=64)]
     )
     submit = SubmitField('Add Friend')
+
+
+class AcceptFriendForm(FlaskForm):
+    submit = SubmitField('Accept')
