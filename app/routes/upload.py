@@ -49,7 +49,6 @@ def api_search_tracks():
 
     return jsonify(enriched_results)
 
-
 # ---------- Create Playlist ----------
 @upload_bp.route("/upload/create-playlist", methods=["POST"])
 def create_playlist():
@@ -63,12 +62,12 @@ def create_playlist():
     if not tracks:
         return jsonify({"status": "error", "message": "No tracks provided."}), 400
 
-    from app.models import Playlist, PlaylistTrack  # Import here to avoid circular dependency
+    from app.models import Playlist, PlaylistTrack  # local import to avoid top-level clutter
 
     # Create playlist
     playlist = Playlist(name=playlist_name, owner_id=current_user.id)
     db.session.add(playlist)
-    db.session.flush()  # Ensures playlist.id is generated
+    db.session.flush()  # ensures playlist.id is available
 
     for song in tracks:
         title = song.get("name")
@@ -111,19 +110,19 @@ def create_playlist():
 
     db.session.commit()
     return jsonify({
-        "status": "success",
-        "message": f"Playlist '{playlist_name}' created.",
-        "playlist": {
-            "name": playlist.name,
-            "tracks": [
-                {
-                    "title": t.title,
-                    "artist": t.artist,
-                    "genre": t.genre,
-                    "valence": t.valence,
-                    "energy": t.energy,
-                    "acousticness": t.acousticness
-                } for t in playlist.tracks
-            ]
-        }
-    })
+    "status": "success",
+    "message": f"Playlist '{playlist_name}' created.",
+    "playlist": {
+        "name": playlist.name,
+        "tracks": [
+            {
+                "title": t.title,
+                "artist": t.artist,
+                "genre": t.genre,
+                "valence": t.valence,
+                "energy": t.energy,
+                "acousticness": t.acousticness
+            } for t in playlist.tracks
+        ]
+    }
+})
