@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from config import Config
 from dotenv import load_dotenv
 from .models import db, User
+from flask_wtf.csrf import CSRFProtect
 
 # Import all blueprints
 from .routes.auth import auth_bp
@@ -12,11 +13,13 @@ from .routes.dashboard import dashboard_bp
 from .routes.upload import upload_bp
 from .routes.share import share_bp
 from .routes.index import index_bp
+from .routes.friends import friends_bp
 
 # Load environment variables
 load_dotenv()
 
 login_manager = LoginManager()
+csrf = CSRFProtect()
 
 def create_app():
     """
@@ -27,6 +30,9 @@ def create_app():
 
     # Load configuration
     app.config.from_object(Config)
+
+    # Initialize CSRF protection
+    csrf.init_app(app)
 
     # Optionally include Spotify credentials in config
     app.config['SPOTIPY_CLIENT_ID'] = os.getenv("SPOTIPY_CLIENT_ID")
@@ -49,6 +55,7 @@ def create_app():
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(upload_bp)  # includes Spotify API routes now
     app.register_blueprint(share_bp)
+    app.register_blueprint(friends_bp)
     app.register_blueprint(index_bp)
 
     return app

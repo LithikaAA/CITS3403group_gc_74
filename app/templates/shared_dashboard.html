@@ -9,15 +9,22 @@
 {% block content %}
 <div class="w-full max-w-screen-2xl mx-auto px-4 py-10 pt-14">
   {% if not shared_playlists or shared_playlists|length == 0 %}
-  <!-- No Friends Message -->
-  <div class="dashboard-card no-friends-container">
-    <svg class="no-friends-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
-    <h2 class="no-friends-title">No Shared Playlists Yet</h2>
-    <p class="no-friends-description">You don't have any shared playlists from friends yet. Go to the Friends tab to connect with friends and ask them to share their playlists with you.</p>
-    <a href="{{ url_for('share.share') }}" class="friends-button">
-      Go to Friends Tab
+  <!-- No Friends Message - Updated Style -->
+  <div class="flex flex-col items-center justify-center py-16 bg-blue-100 rounded-xl w-full">
+    <div class="mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">No Shared Playlists Yet</h3>
+    <p class="text-center text-gray-600 mb-6 max-w-md px-6">
+      You don't have any shared playlists from friends yet. Go to the Share tab to connect with friends and ask them to share their playlists with you.
+    </p>
+    <a href="{{ url_for('share.share') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
+      Go to Share Tab
     </a>
   </div>
   {% else %}

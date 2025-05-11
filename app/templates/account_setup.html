@@ -2,70 +2,138 @@
 {% block title %}Account Setup | VibeShare{% endblock %}
 
 {% block content %}
-<div class="flex max-w-4xl mx-auto bg-white shadow-lg overflow-hidden" style="border-radius: 1rem;">
-    <!-- Left Panel -->
-    <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 flex flex-col items-center justify-center p-10 text-white">
-        <img src="{{ url_for('static', filename='img/side_logo.png') }}" alt="VibeShare Logo" class="w-40 mb-6">
+<div class="flex max-w-4xl mx-auto bg-white shadow-lg rounded-2xl mt-10 overflow-hidden">
+  <!-- Left Panel -->
+  <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 p-10 flex flex-col items-center justify-center text-white">
+    <div class="bg-white rounded-full p-1 mb-6">
+      <img
+        src="{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) if current_user.profile_pic else url_for('static', filename='img/default_profile.jpg') }}"
+        alt="Profile Picture"
+        class="w-24 h-24 rounded-full object-cover"
+      />
+    </div>
+    <form id="picForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="mb-6 flex flex-col items-center">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="relative inline-block">
+        <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
+          <i data-feather="image" class="w-4 h-4 mr-2"></i>
+          Upload Profile Picture
+          <input
+            type="file"
+            name="profile_pic"
+            accept="image/*"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onchange="document.getElementById('picForm').submit()"
+          />
+        </button>
+      </div>
+    </form>
+  </div>
 
-        <!-- Profile Picture Upload -->
-        <form method="POST" action="#" enctype="multipart/form-data" class="flex flex-col items-center">
-            <div class="bg-white rounded-full p-2 mb-4">
-                <img src="{{ url_for('static', filename='img/default_profile.jpg') }}" alt="Profile Picture" class="w-24 h-24 rounded-full">
-            </div>
-            <label for="profilePicUpload" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 transition cursor-pointer">
-                Upload Profile Picture
+  <!-- Right Panel -->
+  <div class="w-1/2 p-10 relative">
+    <a href="{{ url_for('auth.logout') }}" class="absolute top-4 right-4 inline-flex items-center text-sm text-red-500 transition p-1 rounded-full hover:bg-red-100 hover:text-red-600">
+      <i data-feather="log-out" class="w-4 h-4 mr-1"></i>
+      Log Out
+    </a>
+
+    <h1 class="text-3xl font-bold mb-8">Account Setup</h1>
+
+    <form method="POST" action="{{ url_for('auth.account_setup') }}" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="form_type" value="account" />
+      <div>
+        <label class="block text-gray-600">Username</label>
+        <input type="text" name="username" value="{{ current_user.username or '' }}" class="w-full border px-4 py-2 rounded-lg" required />
+      </div>
+      <div>
+        <label class="block text-gray-600">Gender</label>
+        <div class="flex space-x-6 mt-1">
+          {% for opt in ['Male', 'Female', 'Other'] %}
+            <label class="inline-flex items-center">
+              <input type="radio" name="gender" value="{{ opt }}" {% if current_user.gender == opt %}checked{% endif %} class="mr-2" />
+              <span>{{ opt }}</span>
             </label>
-            <input type="file" id="profilePicUpload" name="profile_pic" class="hidden" onchange="this.form.submit()">
-        </form>
-
-        <h2 class="text-2xl font-bold mt-6 mb-2">Let's get you set up</h2>
-        <p class="text-center text-sm">It should only take a couple minutes<br>to create your account</p>
-    </div>
-
-    <!-- Right Panel -->
-    <div class="w-1/2 p-10">
-        <!-- Log Out Button -->
-        <div class="flex justify-end mb-4">
-            <a href="{{ url_for('auth.logout') }}" class="text-sm text-red-500 hover:text-red-600 font-semibold underline">
-            Log Out
-            </a>
+          {% endfor %}
         </div>
-        
-        <h1 class="text-3xl font-bold text-gray-800 mb-8">Account Setup</h1>
-        <form method="POST" action="{{ url_for('auth.account_setup') }}" class="space-y-5">
-            <div>
-                <label class="block text-gray-600">Name</label>
-                <input type="text" name="name" class="w-full border px-4 py-2 rounded-lg" required>
-            </div>
-            <div>
-                <label class="block text-gray-600 mb-2">Gender</label>
-                <div class="flex space-x-6">
-                    <label><input type="radio" name="gender" value="Male" required> Male</label>
-                    <label><input type="radio" name="gender" value="Female"> Female</label>
-                    <label><input type="radio" name="gender" value="Other"> Other</label>
-                </div>
-            </div>
-            <div>
-                <label class="block text-gray-600">Date of Birth</label>
-                <input type="date" name="dob" class="w-full border px-4 py-2 rounded-lg" required>
-            </div>
-            <div>
-                <label class="block text-gray-600">Email</label>
-                <input type="email" name="email" class="w-full border px-4 py-2 rounded-lg" required>
-            </div>
-            <div>
-                <label class="block text-gray-600">Mobile</label>
-                <input type="text" name="mobile" class="w-full border px-4 py-2 rounded-lg">
-            </div>
-            <!-- <div class="flex justify-between mt-6">
-                <button type="button" onclick="window.location.href='{{ url_for('index.home') }}'" class="px-6 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
-                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Sign Up</button>
-            </div> -->
-        </form>
-    </div>
+      </div>
+      <div>
+        <label class="block text-gray-600">Date of Birth</label>
+        <input type="date" name="dob" value="{{ current_user.dob|default('', true) }}" class="w-full border px-4 py-2 rounded-lg" />
+      </div>
+      <div>
+        <label class="block text-gray-600">Email</label>
+        <input type="email" name="email" value="{{ current_user.email or '' }}" class="w-full border px-4 py-2 rounded-lg" required />
+      </div>
+      <div>
+        <label class="block text-gray-600">Mobile</label>
+        <input type="text" name="mobile" value="{{ current_user.mobile or '' }}" class="w-full border px-4 py-2 rounded-lg" />
+      </div>
+      <div class="flex justify-end mt-6 space-x-4">
+        <button id="openChangePassword" type="button" class="bg-gradient-to-r from-indigo-400 to-pink-300 text-white font-semibold px-6 py-2 rounded-lg hover:from-indigo-500 hover:to-pink-400 transition">
+          Change Password
+        </button>
+        <button type="submit" class="bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold px-6 py-2 rounded-lg hover:from-indigo-700 hover:to-pink-600 transition">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+<!-- Password Modal -->
+<div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+<div id="changePasswordModal" class="fixed top-0 right-0 h-full w-96 bg-white shadow-lg transform translate-x-full transition-transform z-50">
+  <div class="p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-semibold">Change Password</h2>
+      <button id="closeChangePassword" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('auth.change_password') }}" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="form_type" value="password" />
+      <div>
+        <label class="block text-gray-600">Current Password</label>
+        <input type="password" name="current_password" class="w-full border px-4 py-2 rounded-lg" required />
+      </div>
+      <div>
+        <label class="block text-gray-600">New Password</label>
+        <input type="password" name="new_password" class="w-full border px-4 py-2 rounded-lg" required />
+      </div>
+      <div>
+        <label class="block text-gray-600">Confirm New Password</label>
+        <input type="password" name="confirm_password" class="w-full border px-4 py-2 rounded-lg" required />
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          Update Password
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-    feather.replace();
+  feather.replace();
+  const openBtn = document.getElementById('openChangePassword');
+  const closeBtn = document.getElementById('closeChangePassword');
+  const overlay = document.getElementById('modalOverlay');
+  const modal = document.getElementById('changePasswordModal');
+
+  function openModal() {
+    overlay.classList.remove('hidden');
+    modal.classList.remove('translate-x-full');
+  }
+
+  function closeModal() {
+    overlay.classList.add('hidden');
+    modal.classList.add('translate-x-full');
+  }
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', closeModal);
 </script>
 {% endblock %}

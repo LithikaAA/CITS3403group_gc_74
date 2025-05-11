@@ -1,16 +1,14 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from ..models import db, User, Playlist, Share, SharedData, Track
-import os
 
 share_bp = Blueprint('share', __name__, url_prefix='/share')
 
-# Directory to store uploaded files
+# ---------- File upload settings ----------
 UPLOAD_FOLDER = 'app/static/uploads'
 ALLOWED_EXTENSIONS = {'csv', 'json'}
-
-# Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 #################################################
@@ -20,6 +18,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ---------- Share Playlist ----------
 @share_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def share():
@@ -53,6 +52,7 @@ def share():
 
     return render_template('share.html', playlists=playlists, friends=friends)
 
+# ---------- Upload Shared Data ----------
 @share_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_shared_data():
@@ -87,6 +87,7 @@ def upload_shared_data():
     shared_data = SharedData.query.filter_by(user_id=current_user.id).all()
     return render_template('share_upload.html', shared_data=shared_data)
 
+# ---------- Delete Shared File ----------
 @share_bp.route('/upload/delete/<int:data_id>', methods=['POST'])
 @login_required
 def delete_shared_data(data_id):
@@ -102,6 +103,7 @@ def delete_shared_data(data_id):
     flash('File deleted successfully!')
     return redirect(url_for('share.upload_shared_data'))
 
+# ---------- View Shared Dashboard ----------
 @share_bp.route('/shared')
 @login_required
 def shared_dashboard():

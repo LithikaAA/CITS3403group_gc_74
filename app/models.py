@@ -54,12 +54,82 @@ class User(UserMixin, db.Model):
     user_tracks: so.Mapped[List["UserTrack"]] = so.relationship(
         back_populates="user", cascade="all, delete"
     )
+    
+    # Keep the direct relationship to the Friend model
+    friend_requests_sent: so.Mapped[List["Friend"]] = so.relationship(
+        "Friend",
+        back_populates="user",
+        foreign_keys="Friend.user_id",
+    )
+    
+    friend_requests_received: so.Mapped[List["Friend"]] = so.relationship(
+        "Friend",
+        back_populates="friend",
+        foreign_keys="Friend.friend_id",
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    # Friend helper methods
+    def incoming_friend_requests(self):
+        return Friend.query.filter_by(friend_id=self.id, is_accepted=False).all()
+    
+    def sent_friend_requests(self):
+        return Friend.query.filter_by(user_id=self.id, is_accepted=False).all()
+    
+    def friends_list(self):
+        """Returns a list of User objects who are friends with this user"""
+        sent = Friend.query.filter_by(user_id=self.id, is_accepted=True).all()
+        received = Friend.query.filter_by(friend_id=self.id, is_accepted=True).all()
+        return [f.friend for f in sent] + [f.user for f in received]
+    
+    # Keep the method for backward compatibility
+    def friends(self):
+        """Method version - maintain for backward compatibility"""
+        return self.friends_list()
+    
+    # Add a property for easier access in templates
+    @property
+    def all_friends(self):
+        """Property for convenient access to friends list in templates"""
+        return self.friends_list()
+        
+    # Calculate average BPM for a user based on their tracks
+    @property
+    def average_bpm(self):
+        from sqlalchemy.sql import func
+        result = db.session.query(func.avg(Track.tempo)) \
+            .join(UserTrack, UserTrack.track_id == Track.id) \
+            .filter(UserTrack.user_id == self.id) \
+            .scalar()
+        return result or 0
+
+
+# ------------------ Friend Model ------------------
+class Friend(db.Model):
+    __tablename__ = "friend"
+    
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
+    friend_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
+    is_accepted: so.Mapped[bool] = so.mapped_column(sa.Boolean, default=False)
+    
+    # Fixed relationships to avoid the overlaps warning
+    user: so.Mapped["User"] = so.relationship(
+        "User", 
+        foreign_keys=[user_id], 
+        back_populates="friend_requests_sent"
+    )
+    
+    friend: so.Mapped["User"] = so.relationship(
+        "User", 
+        foreign_keys=[friend_id], 
+        back_populates="friend_requests_received"
+    )
 
 
 # ------------------ Playlist Model ------------------
@@ -114,8 +184,11 @@ class Track(db.Model):
     acousticness: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     liveness: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     danceability: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
-    mode: so.Mapped[int] = so.mapped_column(sa.Integer, default=1)
+    mode: so.Mapped[str] = so.mapped_column(sa.String(20), default="Major")
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
+    duration_ms: so.Mapped[int] = so.mapped_column(sa.Integer, default=0)  
 
+    user: so.Mapped["User"] = so.relationship(foreign_keys=[user_id])
     user_tracks: so.Mapped[List["UserTrack"]] = so.relationship(
         back_populates="track", cascade="all, delete"
     )

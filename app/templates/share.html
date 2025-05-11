@@ -1,48 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Your Friends | VibeShare{% endblock %}
+{% block title %}Share Your Playlists | VibeShare{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-6 py-12">
-  <h2 class="text-3xl font-bold text-indigo-600 mb-8">Your Friends</h2>
-  
-  <div class="grid grid-cols-1 gap-6">
-    {% for friend in friends %}
-      <div class="flex items-start bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-200">
-        <!-- Profile Picture -->
-        <img src="{{ url_for('static', filename='uploads/' + (friend.profile_pic or 'default.jpg')) }}"
-             alt="{{ friend.username }}'s profile picture"
-             class="w-16 h-16 rounded-full object-cover border-2 border-pink-400 shadow">
+<div class="max-w-6xl mx-auto px-6 py-12">
 
-        <!-- Friend Info -->
-        <div class="ml-5 flex-1">
-          <div class="flex justify-between items-center">
-            <h3 class="text-xl font-semibold text-indigo-700">{{ friend.username }}</h3>
-            <span class="text-sm text-gray-400">
-              {{ friend.last_seen or "Just now" }}
-            </span>
-          </div>
-          <p class="text-sm text-gray-600 mt-1">
-            {{ friend.status or "Enjoying some vibes 🎶" }}
-          </p>
-        </div>
+  {% if current_user.all_friends %}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+    
+    <!-- Select Playlists to Share -->
+    <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
+      <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
+        <i data-feather="music" class="w-5 h-5 mr-2"></i> Select Playlists
+      </h2>
+      <ul class="space-y-4">
+        {% for playlist in current_user.playlists %}
+        <li>
+          <label class="flex items-start space-x-3 cursor-pointer">
+            <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 accent-pink-500">
+            <div>
+              <p class="font-medium text-gray-900">{{ playlist.name }}</p>
+              <p class="text-sm text-gray-500">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
+            </div>
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
 
-        <!-- Optional Action Icons -->
-        <div class="flex items-center space-x-4 ml-4">
-          <button class="text-indigo-500 hover:text-pink-500 transition">
-            <i data-feather="message-square" class="w-5 h-5"></i>
-          </button>
-          <button class="text-indigo-500 hover:text-pink-500 transition">
-            <i data-feather="heart" class="w-5 h-5"></i>
-          </button>
-        </div>
-      </div>
-    {% else %}
-      <p class="text-center text-gray-500">You haven't added any friends yet.</p>
-    {% endfor %}
+    <!-- Select Friends to Share With -->
+    <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
+      <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
+        <i data-feather="users" class="w-5 h-5 mr-2"></i> Share with Friends
+      </h2>
+      <ul class="space-y-4">
+        {% for friend in current_user.all_friends %}
+        <li>
+          <label class="flex items-start space-x-3 cursor-pointer">
+            <input type="checkbox" name="friend_ids" value="{{ friend.id }}" class="mt-1 accent-purple-500">
+            <div>
+              <p class="font-medium text-gray-900">{{ friend.username }}</p>
+              <p class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</p>
+            </div>
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
   </div>
+
+  <!-- Share Button -->
+  <div class="text-center">
+    <button class="bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200">
+      Share Selected Playlists
+    </button>
+  </div>
+
+  {% else %}
+  <!-- No Friends Yet -->
+  <div class="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-indigo-100 to-white rounded-xl shadow-inner mt-10">
+    <div class="mb-6">
+      <i data-feather="users" class="w-12 h-12 text-indigo-500"></i>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-800 mb-2">No Friends Yet</h3>
+    <p class="text-center text-gray-600 mb-6 max-w-md px-6">
+      You haven't added anyone yet. Head over to the Add Friend tab to connect and start sharing playlists!
+    </p>
+    <a href="/add-friend" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200">
+      Go to Add Friend Tab
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 <script>
   feather.replace();
 </script>
 {% endblock %}
+s
