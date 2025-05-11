@@ -4,6 +4,14 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-6 py-12">
 
+  <!-- Header Section -->
+  <div class="text-center mb-12">
+    <h1 class="text-3xl font-bold text-indigo-700 mb-2">Share Your Playlists</h1>
+    <p class="text-gray-600 text-base max-w-2xl mx-auto">
+      Select your favorite playlists and share them with friends to compare music tastes and discover new tracks together.
+    </p>
+  </div>
+  
   {% if current_user.all_friends %}
   <form method="POST" action="{{ url_for('share.share') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -16,12 +24,12 @@
         </h2>
         <ul class="space-y-4">
           {% for playlist in current_user.playlists %}
-          <li>
-            <label class="flex items-start space-x-3 cursor-pointer">
-              <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 accent-pink-500">
+          <li class="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all">
+            <label class="flex items-start space-x-4 cursor-pointer text-lg">
+              <input type="checkbox" ... class="mt-1 accent-pink-500 scale-125">
               <div>
-                <p class="font-medium text-gray-900">{{ playlist.name }}</p>
-                <p class="text-sm text-gray-500">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
+                <p class="font-semibold text-gray-900">{{ playlist.name }}</p>
+                <p class="text-sm text-gray-600">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
               </div>
             </label>
           </li>
@@ -36,12 +44,12 @@
         </h2>
         <ul class="space-y-4">
           {% for friend in current_user.all_friends %}
-          <li>
-            <label class="flex items-start space-x-3 cursor-pointer">
-              <input type="checkbox" name="friend_ids" value="{{ friend.id }}" class="mt-1 accent-purple-500">
+          <li class="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all">
+            <label class="flex items-start space-x-4 cursor-pointer text-lg">
+              <input type="checkbox" ... class="mt-1 accent-purple-500 scale-125">
               <div>
-                <p class="font-medium text-gray-900">{{ friend.username }}</p>
-                <p class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</p>
+                <p class="font-semibold text-gray-900">{{ friend.username }}</p>
+                <p class="text-sm text-gray-600">Last shared: {{ friend.last_shared or "Never" }}</p>
               </div>
             </label>
           </li>
@@ -57,6 +65,38 @@
       </button>
     </div>
   </form>
+
+
+  <!-- Additional Info Boxes -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+    
+    <!-- Data Shared With You -->
+    <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all">
+      <div class="flex items-center mb-4">
+        <i data-feather="download" class="w-5 h-5 text-purple-600 mr-3"></i>
+        <h3 class="text-xl font-semibold text-purple-700">Data Shared With You</h3>
+      </div>
+      <p class="text-gray-600 mb-4">View data that your friends have shared with you.</p>
+      <a href="{{ url_for('share.shared_dashboard') }}"
+        class="inline-block mt-2 px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition font-medium">
+        View Shared Data
+      </a>
+    </div>
+
+    <!-- Shared Data History -->
+    <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all">
+      <div class="flex items-center mb-4">
+        <i data-feather="clock" class="w-5 h-5 text-pink-600 mr-3"></i>
+        <h3 class="text-xl font-semibold text-pink-700">Shared Data History</h3>
+      </div>
+      <p class="text-gray-600 mb-4">View your history of shared data with friends.</p>
+      <a href="{{ url_for('share.upload_shared_data') }}"
+        class="inline-block mt-2 px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 transition font-medium">
+        View Upload History
+      </a>
+    </div>
+
+  </div>
 
     {% else %}
     <!-- No Friends Yet -->
@@ -79,4 +119,3 @@
   feather.replace();
 </script>
 {% endblock %}
-s
