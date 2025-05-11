@@ -4,11 +4,12 @@
  */
 
 // Global chart objects
-let valenceChart, danceabilityChart, moodChart, modeChart;
+let valenceChart, danceabilityChart, moodChart, modeChart, minutesChart;
 
 // Initialize all charts once the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize the charts
+  initializeMinutesByTrackChart();
   initializeValenceAcousticnessChart();
   initializeDanceabilityEnergyChart();
   initializeMoodProfileChart();
@@ -17,6 +18,56 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up dropdown event listeners
   setupDropdownListeners();
 });
+
+function initializeMinutesByTrackChart() {
+  const canvas = document.getElementById('minutesByTrack');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  minutesChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: window.initialMinutesData ? window.initialMinutesData.labels : [],
+      datasets: [
+        {
+          label: 'Your Minutes',
+          data: window.initialMinutesData ? window.initialMinutesData.yourData : [],
+          backgroundColor: '#6366F1'
+        },
+        {
+          label: "Friend's Minutes",
+          data: window.initialMinutesData ? window.initialMinutesData.friendData : [],
+          backgroundColor: '#F472B6'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Minutes Played',
+            color: '#718096'
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      }
+    }
+  });
+}
 
 // Initialize Valence vs Acousticness scatter chart
 function initializeValenceAcousticnessChart() {
@@ -326,11 +377,12 @@ function updateCharts() {
     })
     .then(data => {
       // Update all charts with the new data
+      updateMinutesByTrackChart(data.comparison_minutes);
       updateValenceAcousticnessChart(data.valence_acousticness);
       updateDanceabilityEnergyChart(data.comparison_bubble);
       updateMoodProfileChart(data.comparison_mood);
       updateModeChart(data.comparison_mode);
-      updateSummary(data.summary);
+      updateSummary(data.shared_summary);
       updatePopularSongs(data.top_popular_songs);
       
       // Remove loading state
@@ -382,50 +434,61 @@ function updateModeChart(data) {
   modeChart.update();
 }
 
+function updateMinutesByTrackChart(data) {
+  if (!minutesChart) return;
+  minutesChart.data.labels = data.labels;
+  minutesChart.data.datasets[0].data = data.your_data;
+  minutesChart.data.datasets[1].data = data.friend_data;
+  minutesChart.update();
+}
+
 // Function to update the summary section
 function updateSummary(data) {
-  // Find all summary elements by their data attributes and update them
-  const topSong = document.querySelector('[data-summary="top-song"]');
-  const totalMinutes = document.querySelector('[data-summary="total-minutes"]');
-  const avgTempo = document.querySelector('[data-summary="avg-tempo"]');
-  const mood = document.querySelector('[data-summary="mood"]');
-  
-  // Update values if the elements exist
-  if (topSong) topSong.textContent = data.top_song;
-  if (totalMinutes) totalMinutes.textContent = data.total_minutes;
-  if (avgTempo) avgTempo.textContent = `${data.avg_tempo} BPM`;
-  if (mood) mood.textContent = data.mood;
+  const topSong = document.querySelector('[data-summary="common-track"]');
+  const yourAvgTempo = document.querySelector('[data-summary="your-avg-tempo"]');
+  const friendAvgTempo = document.querySelector('[data-summary="friend-avg-tempo"]');
+  const yourTotal = document.querySelector('[data-summary="your-total-minutes"]');
+  const friendTotal = document.querySelector('[data-summary="friend-total-minutes"]');
+  const yourMood = document.querySelector('[data-summary="your-mood"]');
+  const friendMood = document.querySelector('[data-summary="friend-mood"]');
+
+  if (topSong) topSong.textContent = data.common_track;
+  if (yourAvgTempo) yourAvgTempo.textContent = `${data.your_avg_tempo} BPM`;
+  if (friendAvgTempo) friendAvgTempo.textContent = `${data.friend_avg_tempo} BPM`;
+  if (yourTotal) yourTotal.textContent = data.your_total_minutes;
+  if (friendTotal) friendTotal.textContent = data.friend_total_minutes;
+  if (yourMood) yourMood.textContent = data.your_mood;
+  if (friendMood) friendMood.textContent = data.friend_mood;
 }
+
 
 // Function to update popular songs list
 function updatePopularSongs(data) {
-  const popularSongsList = document.querySelector('.popular-songs-list');
-  if (!popularSongsList) return;
-  
-  // Clear the list
-  popularSongsList.innerHTML = '';
-  
-  // Add songs to the list
-  data.forEach((song, index) => {
-    const songItem = document.createElement('div');
-    songItem.className = 'song-item';
-    
-    const rankSpan = document.createElement('span');
-    rankSpan.className = 'song-rank';
-    rankSpan.textContent = `#${index + 1}`;
-    
-    const titleSpan = document.createElement('span');
-    titleSpan.className = 'song-title';
-    titleSpan.textContent = song.title;
-    
-    const artistSpan = document.createElement('span');
-    artistSpan.className = 'song-artist';
-    artistSpan.textContent = song.artist;
-    
-    songItem.appendChild(rankSpan);
-    songItem.appendChild(titleSpan);
-    songItem.appendChild(artistSpan);
-    
-    popularSongsList.appendChild(songItem);
+  const yourList = document.querySelector('.your-top-songs');
+  const friendList = document.querySelector('.friend-top-songs');
+
+  if (!yourList || !friendList) return;
+
+  yourList.innerHTML = '';
+  friendList.innerHTML = '';
+
+  data.you.forEach((song, index) => {
+    const li = document.createElement('li');
+    li.className = 'flex items-center py-1';
+    li.innerHTML = `
+      <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#${index + 1}</span>
+      <span class="truncate">${song.title} - ${song.artist}</span>
+    `;
+    yourList.appendChild(li);
+  });
+
+  data.friend.forEach((song, index) => {
+    const li = document.createElement('li');
+    li.className = 'flex items-center py-1';
+    li.innerHTML = `
+      <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#${index + 1}</span>
+      <span class="truncate">${song.title} - ${song.artist}</span>
+    `;
+    friendList.appendChild(li);
   });
 }
