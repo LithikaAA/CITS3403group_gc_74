@@ -1,4 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
+  // Helper function to get cookie by name
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+  
   const queryInput = document.getElementById("search-query");
   const resultsBox = document.getElementById("searchResults");
   const resultsContainer = document.getElementById("resultsContainer");
@@ -38,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const li = document.createElement("li");
             li.className = "result-item";
             li.innerHTML = `
-              <img src="${track.image}" alt="${track.name}" onerror="this.src='/static/img/default-album.png'">
+              <img src="${track.image || '/static/img/default-album.png'}" alt="${track.name}" onerror="this.src='/static/img/default-album.png'">
               <div class="track-info">
                 <p class="track-name">${track.name}</p>
                 <p class="track-artist">${track.artist}</p>
@@ -51,6 +59,11 @@ document.addEventListener("DOMContentLoaded", function () {
             resultsContainer.appendChild(li);
           });
 
+          resultsBox.style.display = "block";
+        })
+        .catch(error => {
+          console.error("Error searching tracks:", error);
+          resultsContainer.innerHTML = '<li class="result-item text-center text-gray-500">Error searching tracks</li>';
           resultsBox.style.display = "block";
         });
     }, 300);
@@ -90,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const details = document.createElement("div");
     details.innerHTML = `
       <p class="font-semibold">${track.name} <span class="text-gray-600">by</span> ${track.artist}</p>
-      <p class="text-sm text-gray-500">Album: ${track.album}${track.genre ? ` | Genre: ${track.genre}` : ''}</p>
+      <p class="text-sm text-gray-500">Album: ${track.album || 'Unknown'}${track.genre ? ` | Genre: ${track.genre}` : ''}</p>
     `;
 
     left.appendChild(checkbox);
@@ -108,7 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
     songList.appendChild(songItem);
     addedSongsSection.classList.remove("hidden");
     
-    // Update button state after adding a song
+    // Update the button state when a new song is added
     updatePlaylistButtonState();
   }
 
@@ -121,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function () {
         selectedTracks = selectedTracks.filter(t => t.id !== trackId);
         updatePlaylistButtonState();
         
-        // Hide the added songs section if no songs remain
+        // Hide the added songs section if no songs are left
         if (selectedTracks.length === 0) {
           addedSongsSection.classList.add("hidden");
         }
@@ -130,85 +143,213 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   document.getElementById("add-track-btn").addEventListener("click", function () {
+    const title = document.getElementById("title").value.trim();
+    const artist = document.getElementById("artist").value.trim();
+    
+    if (!title || !artist) {
+      alert("Please add at least a title and artist for the track.");
+      return;
+    }
+    
     const track = {
-      id: document.getElementById("title").value + "-" + document.getElementById("artist").value,
-      name: document.getElementById("title").value,
-      artist: document.getElementById("artist").value,
-      album: document.getElementById("album").value,
-      genre: document.getElementById("genre").value,
-      danceability: parseFloat(document.getElementById("danceability").value) || 0,
-      energy: parseFloat(document.getElementById("energy").value) || 0,
-      liveness: parseFloat(document.getElementById("liveness").value) || 0,
-      acousticness: parseFloat(document.getElementById("acousticness").value) || 0,
-      valence: parseFloat(document.getElementById("valence").value) || 0,
-      mode: document.getElementById("mode").value || "Major",
-      tempo: parseFloat(document.getElementById("tempo").value) || 0,
-      duration_ms: parseInt(document.getElementById("duration_ms").value) || 0
+      id: `${title}-${artist}`.replace(/\s+/g, '-').toLowerCase(),
+      name: title,
+      artist: artist,
+      album: document.getElementById("album").value.trim(),
+      genre: document.getElementById("genre").value.trim(),
+      danceability: document.getElementById("danceability").value.trim(),
+      energy: document.getElementById("energy").value.trim(),
+      liveness: document.getElementById("liveness").value.trim(),
+      acousticness: document.getElementById("acousticness").value.trim(),
+      valence: document.getElementById("valence").value.trim(),
+      mode: document.getElementById("mode").value.trim(),
+      tempo: document.getElementById("tempo").value.trim(),
+      duration_ms: document.getElementById("duration_ms").value.trim() || "0"
     };
 
-    if (!track.name || !track.artist) return;
-    if (selectedTracks.some(t => t.id === track.id)) return;
+    if (selectedTracks.some(t => t.id === track.id)) {
+      alert("This song has already been added to the playlist.");
+      return;
+    }
 
     selectedTracks.push(track);
     displaySelectedSong(track);
+    
+    // Clear the form fields after adding
+    document.getElementById("title").value = "";
+    document.getElementById("artist").value = "";
+    document.getElementById("album").value = "";
+    document.getElementById("genre").value = "";
+    document.getElementById("danceability").value = "";
+    document.getElementById("energy").value = "";
+    document.getElementById("liveness").value = "";
+    document.getElementById("acousticness").value = "";
+    document.getElementById("valence").value = "";
+    document.getElementById("mode").value = "";
+    document.getElementById("tempo").value = "";
+    document.getElementById("duration_ms").value = "";
+    
+    // Clear the search query input
+    queryInput.value = "";
   });
   
   document.getElementById("create-playlist-btn").addEventListener("click", function () {
     const playlistName = document.getElementById("playlist-name").value.trim();
     if (!playlistName) {
-      alert("Please enter a playlist name");
+      alert("Please enter a playlist name.");
       return;
     }
 
     const checkedBoxes = document.querySelectorAll("#song-list input[type='checkbox']:checked");
     if (checkedBoxes.length < 2) {
-      alert("Please select at least 2 songs");
+      alert("Please select at least 2 songs for your playlist.");
       return;
     }
 
     const checkedIds = Array.from(checkedBoxes).map(cb => cb.closest("li").id.replace("song-", ""));
     const tracksToSend = selectedTracks.filter(t => checkedIds.includes(t.id));
     
-    console.log("Sending playlist data:", {
-      playlist_name: playlistName,
-      tracks: tracksToSend
+    // Validate tracks data before sending
+    if (!tracksToSend.length) {
+      alert("No valid tracks selected. Please try again.");
+      return;
+    }
+    
+    // Format the data according to what the server expects
+    const formattedTracks = tracksToSend.map(track => {
+      // Create a clean copy to avoid any unexpected properties
+      return {
+        title: track.name || "",
+        artist: track.artist || "",
+        album: track.album || "",
+        genre: track.genre || "",
+        // Convert strings to numbers with fallbacks
+        danceability: parseFloat(track.danceability) || null,
+        energy: parseFloat(track.energy) || null,
+        liveness: parseFloat(track.liveness) || null,
+        acousticness: parseFloat(track.acousticness) || null,
+        valence: parseFloat(track.valence) || null,
+        mode: track.mode || null,
+        tempo: parseFloat(track.tempo) || null,
+        duration_ms: parseInt(track.duration_ms) || 0
+      };
     });
 
+    // Show loading indicator
+    const button = document.getElementById("create-playlist-btn");
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Creating...";
+    
+    // Show a processing message to the user
+    const statusElement = document.createElement("div");
+    statusElement.className = "mt-2 text-sm text-blue-600";
+    statusElement.textContent = "Processing your request...";
+    button.parentNode.appendChild(statusElement);
+
+    // Get CSRF token from various possible sources
+    const csrfToken = window.CSRF_TOKEN || 
+                      document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                      document.querySelector('input[name="csrf_token"]')?.value || 
+                      getCookie('csrf_token');
+                      
+    if (!csrfToken) {
+      console.warn("CSRF token not found. This may cause form submissions to fail.");
+    }
+    
+    // Debug info
+    console.log("Sending request to create playlist");
+    console.log("Playlist name:", playlistName);
+    console.log("Number of tracks:", formattedTracks.length);
+    
+    // Send the request
     fetch("/upload/create-playlist", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest"
+        // Include the CSRF token in the request headers
+        "X-CSRFToken": csrfToken || "",
+        "X-XSRF-TOKEN": csrfToken || "",
+        "CSRF-Token": csrfToken || ""
       },
+      // Include credentials to ensure cookies are sent with the request
+      credentials: "same-origin",
       body: JSON.stringify({ 
         playlist_name: playlistName, 
-        tracks: tracksToSend 
+        tracks: formattedTracks 
       })
     })
     .then(res => {
-      if (!res.ok) {
-        return res.json().then(err => {
-          throw new Error(err.message || `Server error: ${res.status}`);
-        });
-      }
-      return res.json();
+      // Parse response as text first to get the raw response
+      return res.text().then(text => {
+        if (!res.ok) {
+          // Parse the error if it's JSON
+          try {
+            const errorData = JSON.parse(text);
+            throw new Error(`Server error (${res.status}): ${errorData.message || "Unknown error"}`);
+          } catch (e) {
+            // If it's not valid JSON, use the raw text
+            if (e instanceof SyntaxError) {
+              throw new Error(`Server error (${res.status}): ${text}`);
+            }
+            throw e;
+          }
+        }
+        
+        // Try to parse as JSON for valid responses
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          console.error("Invalid JSON response:", text);
+          throw new Error("Server returned invalid JSON response");
+        }
+      });
     })
     .then(data => {
       if (data.status === "success") {
+        // Update status message
+        statusElement.textContent = "Playlist created successfully!";
+        statusElement.className = "mt-2 text-sm text-green-600";
+        
+        // Show the playlist
         displaySimilarSongGroups(data.playlist);
         document.getElementById("playlist-name").value = "";
         
-        // Clear selected tracks after successful creation
-        selectedTracks = [];
-        songList.innerHTML = "";
-        addedSongsSection.classList.add("hidden");
+        // Optionally clear the selected tracks after successful creation
+        // selectedTracks = [];
+        // songList.innerHTML = "";
+        // addedSongsSection.classList.add("hidden");
+        
+        // Scroll to the playlist section
+        document.getElementById("playlist-output").scrollIntoView({ behavior: 'smooth' });
       } else {
-        alert(`Failed to create playlist: ${data.message}`);
+        // Handle success=false response
+        statusElement.textContent = `Failed to create playlist: ${data.message || "Unknown error"}`;
+        statusElement.className = "mt-2 text-sm text-red-600";
+        console.error("Server returned error:", data);
       }
     })
     .catch(err => {
       console.error("Error creating playlist:", err);
-      alert(`Error creating playlist: ${err.message}`);
+      
+      // Update status with error message
+      statusElement.textContent = `Error: ${err.message || "Failed to create playlist"}`;
+      statusElement.className = "mt-2 text-sm text-red-600";
+      
+      // Show an alert for critical errors
+      alert(`Error creating playlist: ${err.message || "Unknown error"}`);
+    })
+    .finally(() => {
+      // Reset button state
+      button.disabled = false;
+      button.textContent = originalText;
+      
+      // Remove status message after 5 seconds for success messages
+      if (statusElement.classList.contains("text-green-600")) {
+        setTimeout(() => {
+          statusElement.remove();
+        }, 5000);
+      }
     });
   });
 
@@ -220,18 +361,25 @@ document.addEventListener("DOMContentLoaded", function () {
     box.className = "border border-purple-300 rounded-lg p-4 bg-white shadow";
 
     const header = document.createElement("div");
-    header.className = "font-semibold text-lg text-black cursor-pointer";
-    header.textContent = `🎵 Your Playlist: ${playlist.name}`;
+    header.className = "font-semibold text-lg text-black cursor-pointer flex items-center";
+    header.innerHTML = `<span class="mr-2">🎵</span> <span>Your Playlist: ${playlist.name}</span>`;
     
     const songList = document.createElement("ul");
     songList.className = "pl-4 mt-2 space-y-2";
 
-    playlist.tracks.forEach(track => {
+    if (playlist.tracks && Array.isArray(playlist.tracks)) {
+      playlist.tracks.forEach(track => {
+        const li = document.createElement("li");
+        li.className = "text-sm text-gray-700";
+        li.textContent = `${track.title} by ${track.artist}${track.genre ? ` | Genre: ${track.genre}` : ''}`;
+        songList.appendChild(li);
+      });
+    } else {
       const li = document.createElement("li");
       li.className = "text-sm text-gray-700";
-      li.textContent = `${track.title} by ${track.artist} | Genre: ${track.genre || "N/A"}`;
+      li.textContent = "No tracks found in playlist";
       songList.appendChild(li);
-    });
+    }
 
     box.appendChild(header);
     box.appendChild(songList);
@@ -242,28 +390,32 @@ document.addEventListener("DOMContentLoaded", function () {
   function updatePlaylistButtonState() {
     const checked = document.querySelectorAll("#song-list input[type='checkbox']:checked").length;
     const playlistBtn = document.getElementById("create-playlist-btn");
-    const playlistNameInput = document.getElementById("playlist-name");
+    const playlistNameField = document.getElementById("playlist-name");
     
     if (!playlistBtn) return;
     
-    const hasPlaylistName = playlistNameInput && playlistNameInput.value.trim().length > 0;
-    const isValid = checked >= 2 && hasPlaylistName;
+    const isDisabled = checked < 2;
+    playlistBtn.disabled = isDisabled;
     
-    playlistBtn.disabled = !isValid;
-    
-    // Update button styling
-    if (isValid) {
-      playlistBtn.classList.add("bg-gradient-to-r", "from-purple-400", "to-pink-500", "text-white");
-      playlistBtn.classList.remove("bg-gray-300", "cursor-not-allowed");
-    } else {
+    // Update button styling based on state
+    if (isDisabled) {
       playlistBtn.classList.remove("bg-gradient-to-r", "from-purple-400", "to-pink-500", "text-white");
-      playlistBtn.classList.add("bg-gray-300", "cursor-not-allowed");
+      playlistBtn.classList.add("bg-gray-300", "text-gray-500", "cursor-not-allowed");
+    } else {
+      playlistBtn.classList.remove("bg-gray-300", "text-gray-500", "cursor-not-allowed");
+      playlistBtn.classList.add("bg-gradient-to-r", "from-purple-400", "to-pink-500", "text-white");
     }
-  }
-  
-  // Also update button state when playlist name changes
-  if (playlistNameInput) {
-    playlistNameInput.addEventListener("input", updatePlaylistButtonState);
+    
+    // Show/hide instructions based on number of tracks selected
+    const instructionElem = document.getElementById("selection-instructions");
+    if (instructionElem) {
+      if (checked < 2) {
+        instructionElem.textContent = `Select at least 2 songs (${checked} selected)`;
+        instructionElem.classList.remove("hidden");
+      } else {
+        instructionElem.textContent = `${checked} songs selected`;
+      }
+    }
   }
 
   queryInput.addEventListener("keydown", function (e) {
@@ -272,7 +424,7 @@ document.addEventListener("DOMContentLoaded", function () {
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        selectedIndex = Math.min(selectedIndex + 1, items.length - 1); 
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
         updateSelection(items);
         break;
       case "ArrowUp":
@@ -306,4 +458,7 @@ document.addEventListener("DOMContentLoaded", function () {
       resultsBox.style.display = "none";
     }
   });
+  
+  // Call updatePlaylistButtonState initially to set the correct state
+  updatePlaylistButtonState();
 });

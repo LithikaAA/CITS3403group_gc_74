@@ -186,6 +186,7 @@ class Track(db.Model):
     danceability: so.Mapped[float] = so.mapped_column(sa.Float, default=0)
     mode: so.Mapped[str] = so.mapped_column(sa.String(20), default="Major")
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
+    duration_ms: so.Mapped[int] = so.mapped_column(sa.Integer, default=0)  
 
     user: so.Mapped["User"] = so.relationship(foreign_keys=[user_id])
     user_tracks: so.Mapped[List["UserTrack"]] = so.relationship(

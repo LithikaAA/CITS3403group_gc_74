@@ -71,7 +71,7 @@
           <button data-tab="outgoing" class="tab-btn bg-gray-100 px-3 py-1 rounded">Outgoing</button>
         </div>
 
-        <!-- Tab content - CHANGED TO USE all_friends PROPERTY -->
+        <!-- Tab content -->
         <div id="tab-all" class="tab-content">
           {% for f in current_user.all_friends %}
             <p>{{ f.username }}</p>
@@ -177,62 +177,62 @@
         const bubbles = Array.from(document.querySelectorAll('.friend-bubble'));
         const lines   = bubbles.map((_, i) => document.getElementById(`line-${i}`));
         const menu           = document.getElementById('friend-menu');
-      const menuUsername   = document.getElementById('friend-menu-username');
-      const viewDataBtn    = document.getElementById('view-data-btn');
-      const removeFriendBtn= document.getElementById('remove-friend-btn');
-      console.log("Found bubbles:", bubbles.length);
+        const menuUsername   = document.getElementById('friend-menu-username');
+        const viewDataBtn    = document.getElementById('view-data-btn');
+        const removeFriendBtn= document.getElementById('remove-friend-btn');
+        console.log("Found bubbles:", bubbles.length);
 
-      // when any bubble is clicked, show the menu instead of immediate nav
-      bubbles.forEach(bubble => {
-        bubble.addEventListener('click', e => {
-          e.stopPropagation();
+        // When any bubble is clicked, show the menu
+        bubbles.forEach(bubble => {
+          bubble.addEventListener('click', e => {
+            e.stopPropagation();
 
-          const username = bubble.dataset.username;
-          const rect = bubble.getBoundingClientRect();
+            const username = bubble.dataset.username;
+            const rect = bubble.getBoundingClientRect();
 
-        // Position relative to the bubble's parent container
-        const containerRect = bubble.offsetParent.getBoundingClientRect();
-        const x = rect.left - containerRect.left + rect.width + 10;
-        const y = rect.top - containerRect.top;
+            // Position relative to the bubble's parent container
+            const containerRect = bubble.offsetParent.getBoundingClientRect();
+            const x = rect.left - containerRect.left + rect.width + 10;
+            const y = rect.top - containerRect.top;
 
-        menu.style.left = `${x}px`;
-        menu.style.top = `${y}px`;
+            menu.style.left = `${x}px`;
+            menu.style.top = `${y}px`;
 
-        menuUsername.textContent = username;
-        menu.classList.remove('hidden');
+            menuUsername.textContent = username;
+            menu.classList.remove('hidden');
 
-        // Attach button events
-        viewDataBtn.onclick = () => {
-          window.location.href = `/view-data/${username}`;
-      };
-        removeFriendBtn.onclick = () => {
-          const username = menuUsername.textContent;
-          fetch(`/friends/remove/${username}`, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-          })
-          .then(res => {
-            if (res.ok) {
-              window.location.reload();
-            } else {
-              alert("Failed to remove friend");
-            }
+            // Attach button events
+            viewDataBtn.onclick = () => {
+              window.location.href = "/share/shared-dashboard?friend=" + encodeURIComponent(username);
+            };
+            
+            removeFriendBtn.onclick = () => {
+              const username = menuUsername.textContent;
+              fetch(`/friends/remove/${username}`, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+              })
+              .then(res => {
+                if (res.ok) {
+                  window.location.reload();
+                } else {
+                  alert("Failed to remove friend");
+                }
+              });
+            };
           });
-        };
+        });
 
-      });
-    });
+        // Hide menu if you click anywhere else
+        document.body.addEventListener('click', () => {
+          menu.classList.add('hidden');
+        });
+        
+        // But don't hide if you click inside the menu
+        menu.addEventListener('click', e => e.stopPropagation());
 
-      // hide menu if you click anywhere else
-      document.body.addEventListener('click', () => {
-        menu.classList.add('hidden');
-      });
-      // but don't hide if you click inside the menu
-      menu.addEventListener('click', e => e.stopPropagation());
-
-        // user click
-        center.addEventListener('click', () => window.location.href = '/view-data');
-
+        // Central user bubble click - go to dashboard
+        center.addEventListener('click', () => window.location.href = '/dashboard');
 
         // BPM logic
         const userBpm = {{ current_user.average_bpm or 0 }};
@@ -277,33 +277,6 @@
             bubble.style.transform = `translate(-50%, -50%) translate(${tx}px, ${ty}px)`;
             bubble.style.zIndex    = '10';
           });
-          // remove friend with animation
-          removeFriendBtn.onclick = () => {
-            const username = menuUsername.textContent;
-            fetch(`/friends/remove/${username}`, {
-              method: 'POST',
-              headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(res => {
-              if (res.ok) {
-                // Find bubble for that username
-                const target = bubbles.find(b => b.dataset.username === username);
-                if (target) {
-                  target.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                  target.style.opacity = '0';
-                  target.style.transform = 'scale(0)';
-                  // Also hide line
-                  const line = lines.find((_, i) => bubbles[i].dataset.username === username);
-                  if (line) line.setAttribute('stroke-opacity', '0');
-
-                  setTimeout(() => target.remove(), 500);
-                }
-                menu.classList.add('hidden');
-              } else {
-                alert("Failed to remove friend");
-              }
-            });
-          };
         });
 
         // update lines
@@ -359,7 +332,6 @@
           btn.classList.add("bg-indigo-100");
         });
       });
-
     </script>
   </div>
 </div>

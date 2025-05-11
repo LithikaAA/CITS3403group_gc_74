@@ -3,6 +3,8 @@
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+  <!-- Add CSRF token meta tag -->
+  <meta name="csrf-token" content="{{ csrf_token }}">
 {% endblock %}
 
 {% block content %}
@@ -74,6 +76,7 @@
     <ul id="song-list" class="space-y-2"></ul>
     <div class="mt-6">
       <input id="playlist-name" type="text" placeholder="Playlist Name (required)" class="w-full mb-4 px-4 py-3 rounded-lg border border-gray-300 bg-white">
+      <div id="selection-instructions" class="text-sm text-gray-600 mb-2">Select at least 2 songs</div>
       <button id="create-playlist-btn" class="w-full py-3 text-white font-semibold rounded-lg bg-gray-300 cursor-not-allowed" disabled>
         Create Playlist
       </button>
@@ -87,9 +90,23 @@
   </div>
 </div>
 
+<!-- Hidden CSRF token input as an alternative -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script>
+  // Initialize with CSRF token 
+  document.addEventListener('DOMContentLoaded', function() {
+    // Make sure the CSRF token is available for JavaScript
+    window.CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                        document.querySelector('input[name="csrf_token"]')?.value;
+    
+    if (!window.CSRF_TOKEN) {
+      console.warn('CSRF token not found. This may cause form submissions to fail.');
+    }
+  });
+</script>
 {% endblock %}
