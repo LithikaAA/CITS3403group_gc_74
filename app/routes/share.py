@@ -26,31 +26,28 @@ def share():
     friends = User.query.filter(User.id != current_user.id).all()
 
     if request.method == 'POST':
-        selected_ids = request.form.getlist('selected_playlists')
-        friend_username = request.form.get('friend_username')
+        playlist_ids = request.form.getlist('playlist_ids')
+        friend_ids = request.form.getlist('friend_ids')
 
-        if not selected_ids:
-            flash('Please select at least one playlist to share.', 'error')
+        if not playlist_ids or not friend_ids:
+            flash('Please select at least one playlist and one friend.', 'error')
             return redirect(url_for('share.share'))
 
-        friend = User.query.filter_by(username=friend_username).first()
-        if not friend:
-            flash('Friend not found.', 'error')
-            return redirect(url_for('share.share'))
-
-        for pid in selected_ids:
-            new_share = Share(
-                playlist_id=int(pid),
-                recipient_id=friend.id,
-                owner_id=current_user.id
-            )
-            db.session.add(new_share)
+        for friend_id in friend_ids:
+            for playlist_id in playlist_ids:
+                new_share = Share(
+                    playlist_id=int(playlist_id),
+                    recipient_id=int(friend_id),
+                    owner_id=current_user.id
+                )
+                db.session.add(new_share)
+        
         db.session.commit()
-
-        flash(f'Shared {len(selected_ids)} playlist(s) with {friend.username}!', 'success')
+        flash(f'Shared {len(playlist_ids)} playlist(s) with {len(friend_ids)} friend(s)!', 'success')
         return redirect(url_for('share.share'))
 
     return render_template('share.html', playlists=playlists, friends=friends)
+
 
 # ---------- Upload Shared Data ----------
 @share_bp.route('/upload', methods=['GET', 'POST'])
