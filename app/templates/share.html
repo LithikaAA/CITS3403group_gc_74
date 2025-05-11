@@ -1,59 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Share Data | StudyTracker{% endblock %}
+{% block title %}Share Your Playlists | VibeShare{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-6 py-8">
+<div class="max-w-6xl mx-auto px-6 py-12">
 
   {% if current_user.all_friends %}
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-    <!-- What to Share -->
-    <div class="bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold text-left mb-4 text-indigo-600 flex items-center">
-        <i data-feather="share-2" class="w-5 h-5 mr-2"></i> What to Share
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+    
+    <!-- Select Playlists to Share -->
+    <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
+      <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
+        <i data-feather="music" class="w-5 h-5 mr-2"></i> Select Playlists
       </h2>
       <ul class="space-y-4">
+        {% for playlist in current_user.playlists %}
         <li>
           <label class="flex items-start space-x-3 cursor-pointer">
-            <input type="checkbox" class="mt-1">
-            <div class="text-left">
-              <span class="font-medium text-gray-800">Study Progress</span>
-              <p class="text-sm text-gray-500">Share your study time and subjects</p>
+            <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 accent-pink-500">
+            <div>
+              <p class="font-medium text-gray-900">{{ playlist.name }}</p>
+              <p class="text-sm text-gray-500">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
             </div>
           </label>
         </li>
-        <li>
-          <label class="flex items-start space-x-3 cursor-pointer">
-            <input type="checkbox" class="mt-1">
-            <div class="text-left">
-              <span class="font-medium text-gray-800">Mood Tracking</span>
-              <p class="text-sm text-gray-500">Share your mood and wellness data</p>
-            </div>
-          </label>
-        </li>
-        <li>
-          <label class="flex items-start space-x-3 cursor-pointer">
-            <input type="checkbox" class="mt-1">
-            <div class="text-left">
-              <span class="font-medium text-gray-800">Task Progress</span>
-              <p class="text-sm text-gray-500">Share your completed tasks and goals</p>
-            </div>
-          </label>
-        </li>
+        {% endfor %}
       </ul>
     </div>
 
-    <!-- Share with Friends -->
-    <div class="bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold text-left mb-4 text-indigo-600 flex items-center">
+    <!-- Select Friends to Share With -->
+    <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200">
+      <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
         <i data-feather="users" class="w-5 h-5 mr-2"></i> Share with Friends
       </h2>
       <ul class="space-y-4">
         {% for friend in current_user.all_friends %}
         <li>
           <label class="flex items-start space-x-3 cursor-pointer">
-            <input type="checkbox" class="mt-1">
-            <div class="text-left">
-              <span class="font-medium text-gray-800">{{ friend.username }}</span>
+            <input type="checkbox" name="friend_ids" value="{{ friend.id }}" class="mt-1 accent-purple-500">
+            <div>
+              <p class="font-medium text-gray-900">{{ friend.username }}</p>
               <p class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</p>
             </div>
           </label>
@@ -64,26 +49,23 @@
   </div>
 
   <!-- Share Button -->
-  <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-    Share Selected Data
-  </button>
+  <div class="text-center">
+    <button class="bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200">
+      Share Selected Playlists
+    </button>
+  </div>
 
   {% else %}
-  <!-- No Friends Yet State -->
-  <div class="flex flex-col items-center justify-center py-20 bg-blue-100 rounded-xl mt-10">
+  <!-- No Friends Yet -->
+  <div class="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-indigo-100 to-white rounded-xl shadow-inner mt-10">
     <div class="mb-6">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
+      <i data-feather="users" class="w-12 h-12 text-indigo-500"></i>
     </div>
-    <h3 class="text-xl font-bold text-gray-800 mb-2">No Friends Yet</h3>
+    <h3 class="text-2xl font-bold text-gray-800 mb-2">No Friends Yet</h3>
     <p class="text-center text-gray-600 mb-6 max-w-md px-6">
-      You don't have anyone added yet. Go to the Add Friend tab to connect with friends and start sharing progress!
+      You haven't added anyone yet. Head over to the Add Friend tab to connect and start sharing playlists!
     </p>
-    <a href="/add-friend" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
+    <a href="/add-friend" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200">
       Go to Add Friend Tab
     </a>
   </div>
@@ -94,3 +76,4 @@
   feather.replace();
 </script>
 {% endblock %}
+s
