@@ -24,7 +24,10 @@ def login():
             session['user_id'] = user.id
             session['username'] = user.username
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('dashboard.dashboard'))
+            next_page = request.args.get('next')
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('dashboard.dashboard')
+            return redirect(next_page)
 
         flash('Invalid username/email or password.', 'error')
         return redirect(url_for('auth.login'))

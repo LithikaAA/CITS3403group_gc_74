@@ -71,9 +71,9 @@
           <button data-tab="outgoing" class="tab-btn bg-gray-100 px-3 py-1 rounded">Outgoing</button>
         </div>
 
-        <!-- Tab content -->
+        <!-- Tab content - CHANGED TO USE all_friends PROPERTY -->
         <div id="tab-all" class="tab-content">
-          {% for f in current_user.friends %}
+          {% for f in current_user.all_friends %}
             <p>{{ f.username }}</p>
           {% else %}
             <p class="text-sm text-gray-400">No friends</p>
@@ -227,7 +227,7 @@
       document.body.addEventListener('click', () => {
         menu.classList.add('hidden');
       });
-      // but don’t hide if you click inside the menu
+      // but don't hide if you click inside the menu
       menu.addEventListener('click', e => e.stopPropagation());
 
         // user click

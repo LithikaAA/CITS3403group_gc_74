@@ -82,5 +82,6 @@ def remove_friend(username):
 @friends_bp.route('/friends/list')
 @login_required
 def list_friends():
-    friends = current_user.friends()
+    # Updated to use the property instead of the method
+    friends = current_user.all_friends
     return jsonify({"friends": [{"username": f.username} for f in friends]})
