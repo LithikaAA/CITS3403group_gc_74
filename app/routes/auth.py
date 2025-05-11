@@ -4,24 +4,23 @@ from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from datetime import datetime
-from app.utils.spotify_auth import get_spotify_auth_manager  # use your custom helper
 
 auth_bp = Blueprint('auth', __name__)
-
 
 # ---------- LOGIN ----------
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        identifier = request.form.get('identifier')
+        identifier = request.form.get('identifier')  # username OR email
         password = request.form.get('password')
 
+        # Match by either username or email
         user = User.query.filter(
             (User.username == identifier) | (User.email == identifier)
         ).first()
 
         if user and user.check_password(password):
-            login_user(user)
+            login_user(user)  # Flask-Login session
             session['user_id'] = user.id
             session['username'] = user.username
             flash('Logged in successfully!', 'success')
@@ -42,10 +41,12 @@ def signup():
         password = request.form.get('password')
         profile_pic = request.files.get('profile_pic')
 
+        # Check for existing user
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash('Username or email already exists.', 'error')
             return render_template('signup.html')
 
+        # Handle profile picture upload
         pic_filename = None
         if profile_pic and profile_pic.filename:
             filename = secure_filename(profile_pic.filename)
@@ -54,6 +55,7 @@ def signup():
             profile_pic.save(os.path.join(upload_folder, filename))
             pic_filename = filename
 
+        # Create user
         new_user = User(username=username, email=email, profile_pic=pic_filename)
         new_user.set_password(password)
         db.session.add(new_user)
@@ -90,10 +92,14 @@ def change_password():
 # ---------- LOGOUT ----------
 @auth_bp.route('/logout')
 def logout():
+    """
+    Log the user out by clearing both Flask-Login and manual session data.
+    """
     logout_user()
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
+
 
 # ---------- TERMS ----------
 @auth_bp.route('/terms')
@@ -114,16 +120,19 @@ def account_setup():
         mobile = request.form.get('mobile')
         profile_pic = request.files.get('profile_pic')
 
+        # Check if username is already taken (but only if changed)
         if new_username != current_user.username and User.query.filter_by(username=new_username).first():
             flash('That username is already taken.', 'error')
             return render_template('account_setup.html')
 
+        # Update user info
         current_user.username = new_username
         current_user.name = name
         current_user.gender = gender
         current_user.email = email
         current_user.mobile = mobile
 
+        # Handle date of birth properly
         if dob_str:
             try:
                 current_user.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
@@ -131,6 +140,7 @@ def account_setup():
                 flash('Invalid date format for Date of Birth.', 'error')
                 return render_template('account_setup.html')
 
+        # Handle profile picture upload
         if profile_pic and profile_pic.filename:
             filename = secure_filename(profile_pic.filename)
             upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
@@ -143,26 +153,3 @@ def account_setup():
         return redirect(url_for('auth.account_setup'))
 
     return render_template('account_setup.html')
-
-
-# ---------- SPOTIFY LOGIN ----------
-@auth_bp.route('/login/spotify')
-def login_spotify():
-    sp_oauth = get_spotify_auth_manager()
-    auth_url = sp_oauth.get_authorize_url()
-    return redirect(auth_url)
-
-
-@auth_bp.route('/callback/spotify')
-def callback_spotify():
-    sp_oauth = get_spotify_auth_manager()
-    code = request.args.get('code')
-    token_info = sp_oauth.get_access_token(code)
-
-    if not token_info:
-        flash("Spotify authentication failed.", "error")
-        return redirect(url_for('dashboard.dashboard'))
-
-    session['spotify_token'] = token_info
-    flash("Spotify account connected!", "success")
-    return redirect(url_for('dashboard.dashboard'))
