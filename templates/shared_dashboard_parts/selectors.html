@@ -1,0 +1,21 @@
+<!-- Playlist Selectors -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+  <div>
+    <label for="yourPlaylistSelect" class="block mb-2 text-lg font-medium text-gray-700">Your Playlist</label>
+    <select id="yourPlaylistSelect" class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900">
+      <option disabled selected hidden>Select Your Playlist</option>
+      {% for playlist in playlists %}
+      <option value="{{ playlist.id }}">{{ playlist.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="friendPlaylistSelect" class="block mb-2 text-lg font-medium text-gray-700">Friend's Playlist</label>
+    <select id="friendPlaylistSelect" class="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900">
+      <option disabled selected hidden>Choose a Friend's Playlist</option>
+      {% for share in shared_playlists %}
+      <option value="{{ share.playlist.id }}">{{ share.owner.username }} - {{ share.playlist.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>

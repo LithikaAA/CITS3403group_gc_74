@@ -27,6 +27,7 @@ from .routes.friends import friends_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    csrf.init_app(app)
 
     # Spotify credentials from environment
     app.config['SPOTIPY_CLIENT_ID'] = os.getenv("SPOTIPY_CLIENT_ID")
