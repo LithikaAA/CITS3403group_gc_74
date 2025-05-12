@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Add a Friend | VibeShare{% endblock %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/friends.css') }}">
+{% endblock %}
+
 {% block content %}
 <!-- Flash Message Section -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -19,20 +23,19 @@
   
   <!-- Left Panel: Add Friend Form -->
   <div class="w-1/2 p-10 z-20 relative flex items-center justify-center">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-96">
-      <h2 class="text-2xl font-bold mb-6">Add a Friend</h2>
+    <div class="bg-white p-8 rounded-xl shadow-xl w-96">
+      <h2 class="text-2xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-pink-500">Add a Friend</h2>
       <form method="POST" action="{{ url_for('friends.add_friend') }}">
         {{ form.hidden_tag() }}
         <div class="space-y-4">
-          {{ form.friend_username(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500", placeholder="Enter their username") }}
-          {{ form.submit(class="w-full py-3 bg-gradient-to-r from-indigo-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition") }}
+          {{ form.friend_username(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50", placeholder="Enter their username") }}
+          {{ form.submit(class="w-full py-3 bg-gradient-to-r from-indigo-500 to-pink-500 text-white rounded-lg hover:shadow-md transition") }}
         </div>
       </form>
-      <!-- view all friends -->
-      <div class="mt-4 relative">
+      <div class="mt-4">
         <button
           id="view-all-friends-btn"
-          class="w-full py-3 bg-gradient-to-r from-green-400 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:from-teal-500 hover:to-green-400 transition duration-300 ease-in-out relative"
+          class="w-full py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition"
         >
           View All Friends
           {% if incoming_requests|length > 0 %}
@@ -45,15 +48,15 @@
     </div>
   </div>
 
-    <!-- Right Slide-in Overlay for All Friends -->
-     <div class="w-1/2 relative flex items-center justify-center overflow-visible">
+  <!-- Right Visualization Area -->
+  <div class="w-1/2 relative flex items-center justify-center overflow-visible">
     <!-- SVG for connection lines -->
     <svg id="link-lines" class="absolute inset-0 w-full h-full z-0 pointer-events-none">
       <defs>
         {% for idx in range(top_friends|length) %}
         <linearGradient id="gradient-{{ idx }}" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#818cf8" />
-          <stop offset="100%" stop-color="#ec4899" />
+          <stop offset="0%" stop-color="#9333ea" />
+          <stop offset="100%" stop-color="#3b82f6" />
         </linearGradient>
         {% endfor %}
       </defs>
@@ -63,142 +66,131 @@
       {% endfor %}
     </svg>
     
-    <!-- Overlay for all friends -->
-    <div id="friends-panel"
-        class="fixed right-0 top-0 h-full w-96 bg-white rounded-l-3xl shadow-2xl transform translate-x-full transition-transform duration-500 z-50 overflow-y-auto border-l-4 border-indigo-300">
+    <!-- Friends Panel -->
+    <div id="friends-panel" class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-full transition-transform z-50">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-purple-600">Your Friends</h2>
+          <button id="close-friends-panel" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
 
-      <!-- Header -->
-      <div class="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-indigo-100 to-pink-100 rounded-tl-3xl border-b">
-        <h2 class="text-xl font-bold text-gray-800">Your Friends</h2>
-        <button id="close-friends-panel" class="text-gray-600 hover:text-red-500 text-lg font-bold">✕</button>
-      </div>
-
-      <!-- Tabs -->
-      <div class="flex justify-center gap-2 px-4 py-3 bg-indigo-50 border-b">
-        <button data-tab="all" class="tab-btn px-4 py-2 text-sm font-semibold text-indigo-700 bg-white rounded-full shadow hover:bg-indigo-100 transition">All</button>
-        <button data-tab="incoming"
-                class="tab-btn px-4 py-2 text-sm font-semibold text-yellow-700 bg-white rounded-full shadow hover:bg-yellow-100 transition relative">
-          Incoming
-          {% if incoming_requests|length > 0 %}
-            <span class="ml-2 inline-flex items-center justify-center text-white bg-red-500 text-xs font-bold w-5 h-5 rounded-full">
-              {{ incoming_requests|length }}
-            </span>
-          {% endif %}
-        </button>
-        <button data-tab="outgoing" class="tab-btn px-4 py-2 text-sm font-semibold text-pink-700 bg-white rounded-full shadow hover:bg-pink-100 transition">Outgoing</button>
-      </div>
-
-      <!-- Tab Content -->
-      <div class="p-5 space-y-4">
+        <!-- Tab buttons -->
+        <div class="flex w-full bg-gray-100 rounded-lg mb-4 p-1">
+          <button data-tab="all" class="tab-btn flex-1 py-2 text-center rounded-lg bg-white text-purple-600 font-medium shadow-sm">All</button>
+          <button data-tab="incoming" class="tab-btn flex-1 py-2 text-center rounded-lg text-gray-500">Incoming</button>
+          <button data-tab="outgoing" class="tab-btn flex-1 py-2 text-center rounded-lg text-gray-500">Outgoing</button>
+        </div>
 
         <!-- All Friends -->
-        <div id="tab-all" class="tab-content">
+        <div id="tab-all" class="tab-content space-y-2">
           {% for f in current_user.all_friends %}
-            <div class="flex items-center gap-4 bg-gray-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
-              <img src="{{ url_for('static', filename='uploads/' ~ (f.profile_pic or 'default_profile.jpg')) }}"
-                  alt="{{ f.username }}" class="w-10 h-10 rounded-full object-cover border">
-              <span class="font-medium text-gray-800">{{ f.username }}</span>
+            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div class="w-9 h-9 rounded-full overflow-hidden mr-3">
+                <img src="{{ url_for('static', filename='uploads/' ~ (f.profile_pic or 'default_profile.jpg')) }}" 
+                     class="w-full h-full object-cover">
+              </div>
+              <span class="font-medium">{{ f.username }}</span>
             </div>
           {% else %}
-            <p class="text-sm text-gray-400">No friends yet.</p>
+            <p class="text-sm text-gray-400 p-3 bg-gray-50 rounded-lg">No friends</p>
           {% endfor %}
         </div>
 
         <!-- Incoming Requests -->
-        <div id="tab-incoming" class="tab-content hidden">
-          {% if incoming_requests|length > 0 %}
-            <div class="mb-2">
-              <p class="text-sm text-blue-900 font-medium">
-                You have {{ incoming_requests|length }} incoming friend request{{ 's' if incoming_requests|length > 1 }}.
-              </p>
-            </div>
-          {% endif %}
-
+        <div id="tab-incoming" class="tab-content hidden space-y-2">
           {% for req in incoming_requests %}
-            <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}"
-                  class="flex items-center justify-between bg-blue-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+            <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}">
               {{ accept_form.hidden_tag() }}
-              <span class="font-medium text-blue-800">{{ req.user.username }}</span>
-              {{ accept_form.submit(class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-600 transition") }}
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center">
+                  <div class="w-9 h-9 rounded-full overflow-hidden mr-3">
+                    <img src="{{ url_for('static', filename='uploads/' ~ (req.user.profile_pic or 'default_profile.jpg')) }}" 
+                         class="w-full h-full object-cover">
+                  </div>
+                  <span class="font-medium">{{ req.user.username }}</span>
+                </div>
+                {{ accept_form.submit(class="bg-green-500 text-white px-3 py-1 rounded-md text-sm") }}
+              </div>
             </form>
           {% else %}
-            <p class="text-sm text-gray-400">No incoming friend requests.</p>
+            <p class="text-sm text-gray-400 p-3 bg-gray-50 rounded-lg">No incoming requests</p>
           {% endfor %}
         </div>
 
         <!-- Outgoing Requests -->
-        <div id="tab-outgoing" class="tab-content hidden">
+        <div id="tab-outgoing" class="tab-content hidden space-y-2">
           {% for req in sent_requests %}
-            <div class="flex items-center gap-4 bg-pink-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
-              <span class="font-medium text-pink-800">{{ req.friend.username }}</span>
+            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+              <div class="w-9 h-9 rounded-full overflow-hidden mr-3">
+                <img src="{{ url_for('static', filename='uploads/' ~ (req.friend.profile_pic or 'default_profile.jpg')) }}" 
+                     class="w-full h-full object-cover">
+              </div>
+              <span class="font-medium">{{ req.friend.username }}</span>
+              <span class="ml-auto text-xs text-gray-400">Pending</span>
             </div>
           {% else %}
-            <p class="text-sm text-gray-400">No outgoing friend requests.</p>
+            <p class="text-sm text-gray-400 p-3 bg-gray-50 rounded-lg">No outgoing requests</p>
           {% endfor %}
         </div>
       </div>
     </div>
 
-
     <!-- Central User Bubble -->
     <div id="center-bubble" class="relative z-10 w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg transition-transform duration-300 hover:scale-110 cursor-pointer">
       <img src="{{ url_for('static', filename='uploads/' ~ (current_user.profile_pic if current_user.profile_pic else 'default_profile.jpg')) }}" alt="You" class="w-full h-full object-cover">
+      <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
+        <span class="text-white font-medium text-sm truncate px-2 text-center">
+          {{ current_user.username }}
+        </span>
+      </div>
     </div>
-
 
     <!-- Orbiting friend bubbles (limit top 20) -->
     {% for friend in top_friends[:20] %}
       {% set idx = loop.index0 %}
       <div
         id="bubble-{{ idx }}"
-        class="friend-bubble absolute rounded-full overflow-hidden border-4 border-white shadow-md cursor-pointer {% if friend.username in new_friend_usernames %}glow{% endif %}"
+        class="friend-bubble absolute rounded-full overflow-hidden border-4 border-white shadow-md {% if friend.username in new_friend_usernames %}glow{% endif %}"
         data-idx="{{ idx }}"
         data-username="{{ friend.username }}"
         data-bpm="{{ friend.average_bpm }}"
         style="top:50%; left:50%;"
-        title="{{ friend.username }}"
       >
         <img
           src="{{ url_for('static', filename='uploads/' ~ (friend.profile_pic or 'default_profile.jpg')) }}"
           alt="{{ friend.username }}"
           class="w-full h-full object-cover rounded-full"
         />
-        <span class="friend-name absolute text-xs font-medium text-gray-700 whitespace-nowrap" 
-              style="top:50%; left:50%;">
+        <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
+          <span class="text-white font-medium text-xs truncate px-2 text-center">
             {{ friend.username }}
-        </span>
+          </span>
+        </div>
+        <button 
+          class="remove-friend-btn absolute bottom-1 right-1 w-6 h-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full flex items-center justify-center opacity-0 transition-opacity z-20"
+          data-username="{{ friend.username }}"
+          title="Remove {{ friend.username }}"
+        >
+          ✕
+        </button>
       </div>
     {% endfor %}
 
-    <!-- Friend Menu Popup -->
-    <div id="friend-menu" class="hidden absolute bg-white p-4 rounded-xl shadow-lg z-30 min-w-[200px]">
-      <p id="friend-menu-username" class="font-semibold mb-3 text-lg text-center"></p>
-      <button id="view-data-btn"
-        class="w-full py-2 mb-2 bg-gradient-to-r from-indigo-400 to-pink-500 text-white rounded-lg font-semibold shadow hover:opacity-90 transition flex items-center justify-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        View Data
-      </button>
-      <button id="remove-friend-btn"
-        class="w-full py-2 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-lg font-semibold shadow hover:opacity-90 transition flex items-center justify-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-        Remove Friend
-      </button>
-    </div>
-
     <!-- Footer text -->
-    <div class="absolute bottom-8 w-full flex justify-center">
-      <div class="bg-white bg-opacity-80 rounded-full px-6 py-3 shadow-lg text-gray-800 font-semibold text-lg border border-indigo-200">
-        Your Top 20 BPM Matches
+    <div class="absolute bottom-8 w-full text-center">
+      <div class="inline-block px-5 py-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md">
+        <span class="text-purple-600 font-semibold tracking-wide">
+          Your Top 20 BPM Matches
+        </span>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Hidden input for user BPM -->
+<input type="hidden" id="user-bpm-data" value="{{ current_user.average_bpm or 0 }}">
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/friends.js') }}"></script>
-{% endblock %}
-
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/friends.css') }}">
 {% endblock %}
