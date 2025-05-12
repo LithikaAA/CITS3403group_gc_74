@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize or update all charts
     function initializeOrUpdateCharts(data) {
-      initializeOrUpdateValenceChart(data.valence_acousticness);
+      //initializeOrUpdateValenceChart(data.valence_acousticness);
       initializeOrUpdateDanceabilityChart(data.comparison_bubble);
       initializeOrUpdateMoodChart(data.comparison_mood);
       initializeOrUpdateModeChart(data.comparison_mode);
@@ -92,89 +92,174 @@ document.addEventListener('DOMContentLoaded', function() {
     // Valence vs Acousticness chart
     function initializeOrUpdateValenceChart(data) {
       const canvas = document.getElementById('valenceAcousticness');
-      if (!canvas) return;
-      
-      if (valenceChart) {
-        // Update existing chart
-        valenceChart.data.datasets[0].data = data.you;
-        valenceChart.data.datasets[1].data = data.friend;
-        valenceChart.update();
-      } else {
-        // Initialize new chart
-        const ctx = canvas.getContext('2d');
-        valenceChart = new Chart(ctx, {
-          type: 'scatter',
-          data: {
-            datasets: [
-              {
-                label: 'Your Songs',
-                data: data.you,
-                backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                pointRadius: 8,
-                pointHoverRadius: 10
-              },
-              {
-                label: 'Friend\'s Songs',
-                data: data.friend,
-                backgroundColor: 'rgba(244, 114, 182, 0.7)',
-                pointRadius: 8,
-                pointHoverRadius: 10
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const point = context.raw;
-                    return [
-                      `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
-                      `Valence: ${point.y.toFixed(2)}`,
-                      `Acousticness: ${point.x.toFixed(2)}`
-                    ];
-                  }
-                }
-              }
+      if (!canvas) {
+        console.warn('Canvas #valenceacousticness not found.');
+        return;
+      }
+
+      // ✅ Destroy existing chart if it exists on this canvas
+      if (Chart.getChart(canvas)) {
+        Chart.getChart(canvas).destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Your Songs',
+              data: data.you,
+              backgroundColor: 'rgba(99, 102, 241, 0.7)',
+              pointRadius: 8,
+              pointHoverRadius: 10
             },
-            scales: {
-              x: {
-                title: { 
-                  display: true, 
-                  text: 'Acousticness',
-                  color: '#718096'
-                },
-                min: 0,
-                max: 1,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
-              },
-              y: {
-                title: { 
-                  display: true, 
-                  text: 'Valence',
-                  color: '#718096'
-                },
-                min: 0,
-                max: 1,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
+            {
+              label: "Friend's Songs",
+              data: data.friend,
+              backgroundColor: 'rgba(244, 114, 182, 0.7)',
+              pointRadius: 8,
+              pointHoverRadius: 10
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const point = context.raw;
+                  return [
+                    `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
+                    `Valence: ${point.y.toFixed(2)}`,
+                    `Acousticness: ${point.x.toFixed(2)}`
+                  ];
                 }
               }
             }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Acousticness',
+                color: '#718096'
+              },
+              min: 0,
+              max: 1,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Valence',
+                color: '#718096'
+              },
+              min: 0,
+              max: 1,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            }
           }
-        });
-      }
+        }
+      });
     }
+
+    // function initializeOrUpdateValenceChart(data) {
+    //   const canvas = document.getElementById('valenceAcousticness');
+    //   if (!canvas) return;
+      
+    //   if (valenceChart) {
+    //     // Update existing chart
+    //     valenceChart.data.datasets[0].data = data.you;
+    //     valenceChart.data.datasets[1].data = data.friend;
+    //     valenceChart.update();
+    //   } else {
+    //     // Initialize new chart
+    //     const ctx = canvas.getContext('2d');
+    //     valenceChart = new Chart(ctx, {
+    //       type: 'scatter',
+    //       data: {
+    //         datasets: [
+    //           {
+    //             label: 'Your Songs',
+    //             data: data.you,
+    //             backgroundColor: 'rgba(99, 102, 241, 0.7)',
+    //             pointRadius: 8,
+    //             pointHoverRadius: 10
+    //           },
+    //           {
+    //             label: 'Friend\'s Songs',
+    //             data: data.friend,
+    //             backgroundColor: 'rgba(244, 114, 182, 0.7)',
+    //             pointRadius: 8,
+    //             pointHoverRadius: 10
+    //           }
+    //         ]
+    //       },
+    //       options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         plugins: {
+    //           legend: { position: 'top' },
+    //           tooltip: {
+    //             callbacks: {
+    //               label: function(context) {
+    //                 const point = context.raw;
+    //                 return [
+    //                   `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
+    //                   `Valence: ${point.y.toFixed(2)}`,
+    //                   `Acousticness: ${point.x.toFixed(2)}`
+    //                 ];
+    //               }
+    //             }
+    //           }
+    //         },
+    //         scales: {
+    //           x: {
+    //             title: { 
+    //               display: true, 
+    //               text: 'Acousticness',
+    //               color: '#718096'
+    //             },
+    //             min: 0,
+    //             max: 1,
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           },
+    //           y: {
+    //             title: { 
+    //               display: true, 
+    //               text: 'Valence',
+    //               color: '#718096'
+    //             },
+    //             min: 0,
+    //             max: 1,
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           }
+    //         }
+    //       }
+    //     });
+    //   }
+    // }
     
     // Danceability vs Energy bubble chart
     function initializeOrUpdateDanceabilityChart(data) {
       const canvas = document.getElementById('danceabilityEnergy');
-      if (!canvas) return;
+      if (!canvas) {
+        console.warn('Danceabilitiy vs energy e not found.');
+        return;
+      }
 
       const ctx = canvas.getContext('2d');
 
@@ -333,7 +418,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mood Profile radar chart
     function initializeOrUpdateMoodChart(data) {
       const canvas = document.getElementById('moodProfile');
-      if (!canvas) return;
+      if (!canvas) {
+        console.warn('Canvas #moodProfile not found.');
+        return;
+      }
 
       // ✅ Destroy previous chart instance on this canvas, if it exists
       if (Chart.getChart(canvas)) {
@@ -431,7 +519,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mode comparison bar chart
     function initializeOrUpdateModeChart(data) {
       const canvas = document.getElementById('modeChart');
-      if (!canvas) return;
+      if (!canvas) {
+        console.warn('Canvas #modechart not found.');
+        return;
+      }
 
       // ✅ Destroy previous chart instance on this canvas, if it exists
       if (Chart.getChart(canvas)) {
@@ -669,10 +760,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render similar tracks section
     function renderSimilarTracks(similarTracks) {
-      const container = document.getElementById('similar-tracks-container');
-      
+      let container = document.getElementById('similar-tracks-container');
+
+      // Create the container if it doesn't exist
       if (!container) {
-        // Create the container if it doesn't exist
         const similarTracksCard = document.createElement('div');
         similarTracksCard.className = 'chart-card mt-6';
         similarTracksCard.innerHTML = `
@@ -680,27 +771,27 @@ document.addEventListener('DOMContentLoaded', function() {
           <p class="chart-subtitle">Tracks with similar mood and feel from both playlists</p>
           <div id="similar-tracks-container" class="mt-3"></div>
         `;
-        
-        // Find a good place to add this
+
         const comparisonContainer = document.getElementById('comparison-container') || 
-                                   document.querySelector('.dashboard-container');
+                                    document.querySelector('.dashboard-container');
         if (comparisonContainer) {
           comparisonContainer.appendChild(similarTracksCard);
         }
-        
-        // Call again after creating the container
-        renderSimilarTracks(similarTracks);
-        return;
+
+        // Re-fetch the newly created container without calling the whole function again
+        container = document.getElementById('similar-tracks-container');
       }
-      
+
+      if (!container) return;  // still not found? exit safely
+
       // Clear current content
       container.innerHTML = '';
-      
+
       // Add each similar track pair
       similarTracks.forEach((pair, index) => {
         const pairElement = document.createElement('div');
         pairElement.className = 'flex items-center justify-between p-2 border-b border-gray-100';
-        
+
         pairElement.innerHTML = `
           <div class="flex items-center">
             <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs mr-2">${index + 1}</span>
@@ -718,10 +809,64 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs ml-2">${index + 1}</span>
           </div>
         `;
-        
+
         container.appendChild(pairElement);
       });
     }
+    // function renderSimilarTracks(similarTracks) {
+    //   const container = document.getElementById('similar-tracks-container');
+      
+    //   if (!container) {
+    //     // Create the container if it doesn't exist
+    //     const similarTracksCard = document.createElement('div');
+    //     similarTracksCard.className = 'chart-card mt-6';
+    //     similarTracksCard.innerHTML = `
+    //       <h2 class="chart-title">Similar Tracks You Both Might Enjoy</h2>
+    //       <p class="chart-subtitle">Tracks with similar mood and feel from both playlists</p>
+    //       <div id="similar-tracks-container" class="mt-3"></div>
+    //     `;
+        
+    //     // Find a good place to add this
+    //     const comparisonContainer = document.getElementById('comparison-container') || 
+    //                                document.querySelector('.dashboard-container');
+    //     if (comparisonContainer) {
+    //       comparisonContainer.appendChild(similarTracksCard);
+    //     }
+        
+    //     // Call again after creating the container
+    //     renderSimilarTracks(similarTracks);
+    //     return;
+    //   }
+      
+    //   // Clear current content
+    //   container.innerHTML = '';
+      
+    //   // Add each similar track pair
+    //   similarTracks.forEach((pair, index) => {
+    //     const pairElement = document.createElement('div');
+    //     pairElement.className = 'flex items-center justify-between p-2 border-b border-gray-100';
+        
+    //     pairElement.innerHTML = `
+    //       <div class="flex items-center">
+    //         <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs mr-2">${index + 1}</span>
+    //         <div>
+    //           <div class="font-medium">${pair.your_track.title}</div>
+    //           <div class="text-xs text-gray-500">${pair.your_track.artist}</div>
+    //         </div>
+    //       </div>
+    //       <div class="mx-2 text-gray-400">matches</div>
+    //       <div class="flex items-center">
+    //         <div class="text-right">
+    //           <div class="font-medium">${pair.friend_track.title}</div>
+    //           <div class="text-xs text-gray-500">${pair.friend_track.artist}</div>
+    //         </div>
+    //         <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs ml-2">${index + 1}</span>
+    //       </div>
+    //     `;
+        
+    //     container.appendChild(pairElement);
+    //   });
+    // }
     
     // Render comparative stats
     function renderComparativeStats(stats) {

@@ -378,7 +378,7 @@ function updateCharts() {
     .then(data => {
       // Update all charts with the new data
       updateMinutesByTrackChart(data.comparison_minutes);
-      updateValenceAcousticnessChart(data.valence_acousticness);
+      //updateValenceAcousticnessChart(data.valence_acousticness);
       updateDanceabilityEnergyChart(data.comparison_bubble);
       updateMoodProfileChart(data.comparison_mood);
       updateModeChart(data.comparison_mode);
@@ -412,7 +412,15 @@ function updateValenceAcousticnessChart(data) {
 
 // Function to update the Danceability vs Energy chart
 function updateDanceabilityEnergyChart(data) {
-  if (!danceabilityChart) return;
+  if (
+    !danceabilityChart ||
+    !danceabilityChart.canvas ||
+    !document.body.contains(danceabilityChart.canvas)
+  ) {
+    console.warn("Danceability chart or canvas is missing or detached. Skipping update.");
+    return;
+  }
+
   danceabilityChart.data.datasets[0].data = data.you;
   danceabilityChart.data.datasets[1].data = data.friend;
   danceabilityChart.update();
@@ -420,7 +428,15 @@ function updateDanceabilityEnergyChart(data) {
 
 // Function to update the Mood Profile chart
 function updateMoodProfileChart(data) {
-  if (!moodChart) return;
+  if (
+    !moodChart ||
+    !moodChart.canvas ||
+    !document.body.contains(moodChart.canvas)
+  ) {
+    console.warn("Mood chart or canvas is missing or detached. Skipping update.");
+    return;
+  }
+
   moodChart.data.datasets[0].data = data.you;
   moodChart.data.datasets[1].data = data.friend;
   moodChart.update();
@@ -428,14 +444,30 @@ function updateMoodProfileChart(data) {
 
 // Function to update the Mode chart
 function updateModeChart(data) {
-  if (!modeChart) return;
+  if (
+    !modeChart ||
+    !modeChart.canvas ||
+    !document.body.contains(modeChart.canvas)
+  ) {
+    console.warn("Mode chart or its canvas is missing or detached. Skipping update.");
+    return;
+  }
+
   modeChart.data.datasets[0].data = data.you;
   modeChart.data.datasets[1].data = data.friend;
   modeChart.update();
 }
 
 function updateMinutesByTrackChart(data) {
-  if (!minutesChart) return;
+  if (
+    !minutesChart ||
+    !minutesChart.canvas ||
+    !document.body.contains(minutesChart.canvas)
+  ) {
+    console.warn("Minutes chart or its canvas is missing or detached. Skipping update.");
+    return;
+  }
+
   minutesChart.data.labels = data.labels;
   minutesChart.data.datasets[0].data = data.your_data;
   minutesChart.data.datasets[1].data = data.friend_data;
