@@ -5,7 +5,7 @@ from flask_login import LoginManager
 from config import Config
 from dotenv import load_dotenv
 from .models import db, User
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 # Import all blueprints
 from .routes.auth import auth_bp
@@ -33,6 +33,8 @@ def create_app():
 
     # Initialize CSRF protection
     csrf.init_app(app)
+
+    app.jinja_env.globals['csrf_token'] = generate_csrf
 
     # Optionally include Spotify credentials in config
     app.config['SPOTIPY_CLIENT_ID'] = os.getenv("SPOTIPY_CLIENT_ID")

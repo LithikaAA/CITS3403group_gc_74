@@ -92,275 +92,546 @@ document.addEventListener('DOMContentLoaded', function() {
     // Valence vs Acousticness chart
     function initializeOrUpdateValenceChart(data) {
       const canvas = document.getElementById('valenceAcousticness');
-      if (!canvas) return;
-      
-      if (valenceChart) {
-        // Update existing chart
-        valenceChart.data.datasets[0].data = data.you;
-        valenceChart.data.datasets[1].data = data.friend;
-        valenceChart.update();
-      } else {
-        // Initialize new chart
-        const ctx = canvas.getContext('2d');
-        valenceChart = new Chart(ctx, {
-          type: 'scatter',
-          data: {
-            datasets: [
-              {
-                label: 'Your Songs',
-                data: data.you,
-                backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                pointRadius: 8,
-                pointHoverRadius: 10
-              },
-              {
-                label: 'Friend\'s Songs',
-                data: data.friend,
-                backgroundColor: 'rgba(244, 114, 182, 0.7)',
-                pointRadius: 8,
-                pointHoverRadius: 10
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const point = context.raw;
-                    return [
-                      `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
-                      `Valence: ${point.y.toFixed(2)}`,
-                      `Acousticness: ${point.x.toFixed(2)}`
-                    ];
-                  }
-                }
-              }
+      if (!canvas) {
+        console.warn('Canvas #valenceacousticness not found.');
+        return;
+      }
+
+      // ✅ Destroy existing chart if it exists on this canvas
+      if (Chart.getChart(canvas)) {
+        Chart.getChart(canvas).destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Your Songs',
+              data: data.you,
+              backgroundColor: 'rgba(99, 102, 241, 0.7)',
+              pointRadius: 8,
+              pointHoverRadius: 10
             },
-            scales: {
-              x: {
-                title: { 
-                  display: true, 
-                  text: 'Acousticness',
-                  color: '#718096'
-                },
-                min: 0,
-                max: 1,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
-              },
-              y: {
-                title: { 
-                  display: true, 
-                  text: 'Valence',
-                  color: '#718096'
-                },
-                min: 0,
-                max: 1,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
+            {
+              label: "Friend's Songs",
+              data: data.friend,
+              backgroundColor: 'rgba(244, 114, 182, 0.7)',
+              pointRadius: 8,
+              pointHoverRadius: 10
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const point = context.raw;
+                  return [
+                    `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
+                    `Valence: ${point.y.toFixed(2)}`,
+                    `Acousticness: ${point.x.toFixed(2)}`
+                  ];
                 }
               }
             }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Acousticness',
+                color: '#718096'
+              },
+              min: 0,
+              max: 1,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Valence',
+                color: '#718096'
+              },
+              min: 0,
+              max: 1,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            }
           }
-        });
-      }
+        }
+      });
     }
+
+    // function initializeOrUpdateValenceChart(data) {
+    //   const canvas = document.getElementById('valenceAcousticness');
+    //   if (!canvas) return;
+      
+    //   if (valenceChart) {
+    //     // Update existing chart
+    //     valenceChart.data.datasets[0].data = data.you;
+    //     valenceChart.data.datasets[1].data = data.friend;
+    //     valenceChart.update();
+    //   } else {
+    //     // Initialize new chart
+    //     const ctx = canvas.getContext('2d');
+    //     valenceChart = new Chart(ctx, {
+    //       type: 'scatter',
+    //       data: {
+    //         datasets: [
+    //           {
+    //             label: 'Your Songs',
+    //             data: data.you,
+    //             backgroundColor: 'rgba(99, 102, 241, 0.7)',
+    //             pointRadius: 8,
+    //             pointHoverRadius: 10
+    //           },
+    //           {
+    //             label: 'Friend\'s Songs',
+    //             data: data.friend,
+    //             backgroundColor: 'rgba(244, 114, 182, 0.7)',
+    //             pointRadius: 8,
+    //             pointHoverRadius: 10
+    //           }
+    //         ]
+    //       },
+    //       options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         plugins: {
+    //           legend: { position: 'top' },
+    //           tooltip: {
+    //             callbacks: {
+    //               label: function(context) {
+    //                 const point = context.raw;
+    //                 return [
+    //                   `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
+    //                   `Valence: ${point.y.toFixed(2)}`,
+    //                   `Acousticness: ${point.x.toFixed(2)}`
+    //                 ];
+    //               }
+    //             }
+    //           }
+    //         },
+    //         scales: {
+    //           x: {
+    //             title: { 
+    //               display: true, 
+    //               text: 'Acousticness',
+    //               color: '#718096'
+    //             },
+    //             min: 0,
+    //             max: 1,
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           },
+    //           y: {
+    //             title: { 
+    //               display: true, 
+    //               text: 'Valence',
+    //               color: '#718096'
+    //             },
+    //             min: 0,
+    //             max: 1,
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           }
+    //         }
+    //       }
+    //     });
+    //   }
+    // }
     
     // Danceability vs Energy bubble chart
     function initializeOrUpdateDanceabilityChart(data) {
       const canvas = document.getElementById('danceabilityEnergy');
-      if (!canvas) return;
-      
-      if (danceabilityChart) {
-        // Update existing chart
-        danceabilityChart.data.datasets[0].data = data.you;
-        danceabilityChart.data.datasets[1].data = data.friend;
-        danceabilityChart.update();
-      } else {
-        // Initialize new chart
-        const ctx = canvas.getContext('2d');
-        danceabilityChart = new Chart(ctx, {
-          type: 'bubble',
-          data: {
-            datasets: [
-              {
-                label: 'Your Songs',
-                data: data.you,
-                backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                borderColor: '#6366F1'
-              },
-              {
-                label: 'Friend\'s Songs',
-                data: data.friend,
-                backgroundColor: 'rgba(244, 114, 182, 0.7)',
-                borderColor: '#F472B6'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const point = context.raw;
-                    return [
-                      `${point.title || 'Song'} - ${point.artist || 'Artist'}`, 
-                      `Danceability: ${point.x.toFixed(2)}`, 
-                      `Energy: ${point.y.toFixed(2)}`,
-                      `Minutes: ${(point.r/5).toFixed(1)}`
-                    ];
-                  }
-                }
-              }
+      if (!canvas) {
+        console.warn('Danceabilitiy vs energy e not found.');
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      // ✅ Always destroy the previous chart if it exists
+      if (Chart.getChart(canvas)) { // Check if a chart instance exists
+        Chart.getChart(canvas).destroy(); // Destroy the previous instance
+      }
+
+      // ✅ Create a fresh chart
+      danceabilityChart = new Chart(ctx, {
+        type: 'bubble',
+        data: {
+          datasets: [
+            {
+              label: 'Your Songs',
+              data: data.you,
+              backgroundColor: 'rgba(99, 102, 241, 0.7)',
+              borderColor: '#6366F1'
             },
-            scales: {
-              x: {
-                title: { 
-                  display: true, 
-                  text: 'Danceability',
-                  color: '#718096'
-                },
-                min: 0.4,
-                max: 0.9,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
-              },
-              y: {
-                title: { 
-                  display: true, 
-                  text: 'Energy',
-                  color: '#718096'
-                },
-                min: 0.4,
-                max: 0.9,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
+            {
+              label: "Friend's Songs",
+              data: data.friend,
+              backgroundColor: 'rgba(244, 114, 182, 0.7)',
+              borderColor: '#F472B6'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const point = context.raw;
+                  return [
+                    `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
+                    `Danceability: ${point.x.toFixed(2)}`,
+                    `Energy: ${point.y.toFixed(2)}`,
+                    `Minutes: ${(point.r / 5).toFixed(1)}`
+                  ];
                 }
               }
             }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Danceability',
+                color: '#718096'
+              },
+              min: 0.4,
+              max: 0.9,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Energy',
+                color: '#718096'
+              },
+              min: 0.4,
+              max: 0.9,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            }
           }
-        });
-      }
+        }
+      });
     }
+    // function initializeOrUpdateDanceabilityChart(data) {
+    //   const canvas = document.getElementById('danceabilityEnergy');
+    //   if (!canvas) return;
+      
+    //   if (danceabilityChart) {
+    //     // Update existing chart
+    //     danceabilityChart.data.datasets[0].data = data.you;
+    //     danceabilityChart.data.datasets[1].data = data.friend;
+    //     danceabilityChart.update();
+    //   } else {
+    //     // Initialize new chart
+    //     const ctx = canvas.getContext('2d');
+    //     danceabilityChart = new Chart(ctx, {
+    //       type: 'bubble',
+    //       data: {
+    //         datasets: [
+    //           {
+    //             label: 'Your Songs',
+    //             data: data.you,
+    //             backgroundColor: 'rgba(99, 102, 241, 0.7)',
+    //             borderColor: '#6366F1'
+    //           },
+    //           {
+    //             label: 'Friend\'s Songs',
+    //             data: data.friend,
+    //             backgroundColor: 'rgba(244, 114, 182, 0.7)',
+    //             borderColor: '#F472B6'
+    //           }
+    //         ]
+    //       },
+    //       options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         plugins: {
+    //           legend: { position: 'top' },
+    //           tooltip: {
+    //             callbacks: {
+    //               label: function(context) {
+    //                 const point = context.raw;
+    //                 return [
+    //                   `${point.title || 'Song'} - ${point.artist || 'Artist'}`, 
+    //                   `Danceability: ${point.x.toFixed(2)}`, 
+    //                   `Energy: ${point.y.toFixed(2)}`,
+    //                   `Minutes: ${(point.r/5).toFixed(1)}`
+    //                 ];
+    //               }
+    //             }
+    //           }
+    //         },
+    //         scales: {
+    //           x: {
+    //             title: { 
+    //               display: true, 
+    //               text: 'Danceability',
+    //               color: '#718096'
+    //             },
+    //             min: 0.4,
+    //             max: 0.9,
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           },
+    //           y: {
+    //             title: { 
+    //               display: true, 
+    //               text: 'Energy',
+    //               color: '#718096'
+    //             },
+    //             min: 0.4,
+    //             max: 0.9,
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           }
+    //         }
+    //       }
+    //     });
+    //   }
+    // }
     
     // Mood Profile radar chart
     function initializeOrUpdateMoodChart(data) {
       const canvas = document.getElementById('moodProfile');
-      if (!canvas) return;
-      
-      if (moodChart) {
-        // Update existing chart
-        moodChart.data.datasets[0].data = data.you;
-        moodChart.data.datasets[1].data = data.friend;
-        moodChart.update();
-      } else {
-        // Initialize new chart
-        const ctx = canvas.getContext('2d');
-        moodChart = new Chart(ctx, {
-          type: 'radar',
-          data: {
-            labels: ['Danceability', 'Energy', 'Valence', 'Acousticness', 'Liveness'],
-            datasets: [
-              {
-                label: 'Your Profile',
-                data: data.you,
-                backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                borderColor: '#6366F1',
-                pointBackgroundColor: '#6366F1'
-              },
-              {
-                label: 'Friend\'s Profile',
-                data: data.friend,
-                backgroundColor: 'rgba(244, 114, 182, 0.2)',
-                borderColor: '#F472B6',
-                pointBackgroundColor: '#F472B6'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              r: {
-                beginAtZero: true,
-                max: 1,
-                ticks: {
-                  display: false
-                }
+      if (!canvas) {
+        console.warn('Canvas #moodProfile not found.');
+        return;
+      }
+
+      // ✅ Destroy previous chart instance on this canvas, if it exists
+      if (Chart.getChart(canvas)) {
+        Chart.getChart(canvas).destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Danceability', 'Energy', 'Valence', 'Acousticness', 'Liveness'],
+          datasets: [
+            {
+              label: 'Your Profile',
+              data: data.you,
+              backgroundColor: 'rgba(99, 102, 241, 0.2)',
+              borderColor: '#6366F1',
+              pointBackgroundColor: '#6366F1'
+            },
+            {
+              label: "Friend's Profile",
+              data: data.friend,
+              backgroundColor: 'rgba(244, 114, 182, 0.2)',
+              borderColor: '#F472B6',
+              pointBackgroundColor: '#F472B6'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 1,
+              ticks: {
+                display: false
               }
             }
           }
-        });
-      }
+        }
+      });
     }
+
+    // function initializeOrUpdateMoodChart(data) {
+    //   const canvas = document.getElementById('moodProfile');
+    //   if (!canvas) return;
+      
+    //   if (moodChart) {
+    //     // Update existing chart
+    //     moodChart.data.datasets[0].data = data.you;
+    //     moodChart.data.datasets[1].data = data.friend;
+    //     moodChart.update();
+    //   } else {
+    //     // Initialize new chart
+    //     const ctx = canvas.getContext('2d');
+    //     moodChart = new Chart(ctx, {
+    //       type: 'radar',
+    //       data: {
+    //         labels: ['Danceability', 'Energy', 'Valence', 'Acousticness', 'Liveness'],
+    //         datasets: [
+    //           {
+    //             label: 'Your Profile',
+    //             data: data.you,
+    //             backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    //             borderColor: '#6366F1',
+    //             pointBackgroundColor: '#6366F1'
+    //           },
+    //           {
+    //             label: 'Friend\'s Profile',
+    //             data: data.friend,
+    //             backgroundColor: 'rgba(244, 114, 182, 0.2)',
+    //             borderColor: '#F472B6',
+    //             pointBackgroundColor: '#F472B6'
+    //           }
+    //         ]
+    //       },
+    //       options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         scales: {
+    //           r: {
+    //             beginAtZero: true,
+    //             max: 1,
+    //             ticks: {
+    //               display: false
+    //             }
+    //           }
+    //         }
+    //       }
+    //     });
+    //   }
+    // }
     
     // Mode comparison bar chart
     function initializeOrUpdateModeChart(data) {
       const canvas = document.getElementById('modeChart');
-      if (!canvas) return;
-      
-      if (modeChart) {
-        // Update existing chart
-        modeChart.data.datasets[0].data = data.you;
-        modeChart.data.datasets[1].data = data.friend;
-        modeChart.update();
-      } else {
-        // Initialize new chart
-        const ctx = canvas.getContext('2d');
-        modeChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: ['Major', 'Minor'],
-            datasets: [
-              {
-                label: 'Your Songs',
-                data: data.you,
-                backgroundColor: '#6366F1'
-              },
-              {
-                label: 'Friend\'s Songs',
-                data: data.friend,
-                backgroundColor: '#F472B6'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' }
+      if (!canvas) {
+        console.warn('Canvas #modechart not found.');
+        return;
+      }
+
+      // ✅ Destroy previous chart instance on this canvas, if it exists
+      if (Chart.getChart(canvas)) {
+        Chart.getChart(canvas).destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Major', 'Minor'],
+          datasets: [
+            {
+              label: 'Your Songs',
+              data: data.you,
+              backgroundColor: '#6366F1'
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { 
-                  display: true, 
-                  text: 'Number of Songs',
-                  color: '#718096'
-                },
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.05)'
-                }
+            {
+              label: "Friend's Songs",
+              data: data.friend,
+              backgroundColor: '#F472B6'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Songs',
+                color: '#718096'
               },
-              x: {
-                grid: {
-                  display: false
-                }
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
               }
             }
           }
-        });
-      }
+        }
+      });
     }
+
+    // function initializeOrUpdateModeChart(data) {
+    //   const canvas = document.getElementById('modeChart');
+    //   if (!canvas) return;
+      
+    //   if (modeChart) {
+    //     // Update existing chart
+    //     modeChart.data.datasets[0].data = data.you;
+    //     modeChart.data.datasets[1].data = data.friend;
+    //     modeChart.update();
+    //   } else {
+    //     // Initialize new chart
+    //     const ctx = canvas.getContext('2d');
+    //     modeChart = new Chart(ctx, {
+    //       type: 'bar',
+    //       data: {
+    //         labels: ['Major', 'Minor'],
+    //         datasets: [
+    //           {
+    //             label: 'Your Songs',
+    //             data: data.you,
+    //             backgroundColor: '#6366F1'
+    //           },
+    //           {
+    //             label: 'Friend\'s Songs',
+    //             data: data.friend,
+    //             backgroundColor: '#F472B6'
+    //           }
+    //         ]
+    //       },
+    //       options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         plugins: {
+    //           legend: { position: 'top' }
+    //         },
+    //         scales: {
+    //           y: {
+    //             beginAtZero: true,
+    //             title: { 
+    //               display: true, 
+    //               text: 'Number of Songs',
+    //               color: '#718096'
+    //             },
+    //             grid: {
+    //               color: 'rgba(0, 0, 0, 0.05)'
+    //             }
+    //           },
+    //           x: {
+    //             grid: {
+    //               display: false
+    //             }
+    //           }
+    //         }
+    //       }
+    //     });
+    //   }
+    // }
     
     // Update summary section
     function updateSummary(data) {
@@ -489,10 +760,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render similar tracks section
     function renderSimilarTracks(similarTracks) {
-      const container = document.getElementById('similar-tracks-container');
-      
+      let container = document.getElementById('similar-tracks-container');
+
+      // Create the container if it doesn't exist
       if (!container) {
-        // Create the container if it doesn't exist
         const similarTracksCard = document.createElement('div');
         similarTracksCard.className = 'chart-card mt-6';
         similarTracksCard.innerHTML = `
@@ -500,27 +771,27 @@ document.addEventListener('DOMContentLoaded', function() {
           <p class="chart-subtitle">Tracks with similar mood and feel from both playlists</p>
           <div id="similar-tracks-container" class="mt-3"></div>
         `;
-        
-        // Find a good place to add this
+
         const comparisonContainer = document.getElementById('comparison-container') || 
-                                   document.querySelector('.dashboard-container');
+                                    document.querySelector('.dashboard-container');
         if (comparisonContainer) {
           comparisonContainer.appendChild(similarTracksCard);
         }
-        
-        // Call again after creating the container
-        renderSimilarTracks(similarTracks);
-        return;
+
+        // Re-fetch the newly created container without calling the whole function again
+        container = document.getElementById('similar-tracks-container');
       }
-      
+
+      if (!container) return;  // still not found? exit safely
+
       // Clear current content
       container.innerHTML = '';
-      
+
       // Add each similar track pair
       similarTracks.forEach((pair, index) => {
         const pairElement = document.createElement('div');
         pairElement.className = 'flex items-center justify-between p-2 border-b border-gray-100';
-        
+
         pairElement.innerHTML = `
           <div class="flex items-center">
             <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs mr-2">${index + 1}</span>
@@ -538,10 +809,64 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs ml-2">${index + 1}</span>
           </div>
         `;
-        
+
         container.appendChild(pairElement);
       });
     }
+    // function renderSimilarTracks(similarTracks) {
+    //   const container = document.getElementById('similar-tracks-container');
+      
+    //   if (!container) {
+    //     // Create the container if it doesn't exist
+    //     const similarTracksCard = document.createElement('div');
+    //     similarTracksCard.className = 'chart-card mt-6';
+    //     similarTracksCard.innerHTML = `
+    //       <h2 class="chart-title">Similar Tracks You Both Might Enjoy</h2>
+    //       <p class="chart-subtitle">Tracks with similar mood and feel from both playlists</p>
+    //       <div id="similar-tracks-container" class="mt-3"></div>
+    //     `;
+        
+    //     // Find a good place to add this
+    //     const comparisonContainer = document.getElementById('comparison-container') || 
+    //                                document.querySelector('.dashboard-container');
+    //     if (comparisonContainer) {
+    //       comparisonContainer.appendChild(similarTracksCard);
+    //     }
+        
+    //     // Call again after creating the container
+    //     renderSimilarTracks(similarTracks);
+    //     return;
+    //   }
+      
+    //   // Clear current content
+    //   container.innerHTML = '';
+      
+    //   // Add each similar track pair
+    //   similarTracks.forEach((pair, index) => {
+    //     const pairElement = document.createElement('div');
+    //     pairElement.className = 'flex items-center justify-between p-2 border-b border-gray-100';
+        
+    //     pairElement.innerHTML = `
+    //       <div class="flex items-center">
+    //         <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs mr-2">${index + 1}</span>
+    //         <div>
+    //           <div class="font-medium">${pair.your_track.title}</div>
+    //           <div class="text-xs text-gray-500">${pair.your_track.artist}</div>
+    //         </div>
+    //       </div>
+    //       <div class="mx-2 text-gray-400">matches</div>
+    //       <div class="flex items-center">
+    //         <div class="text-right">
+    //           <div class="font-medium">${pair.friend_track.title}</div>
+    //           <div class="text-xs text-gray-500">${pair.friend_track.artist}</div>
+    //         </div>
+    //         <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs ml-2">${index + 1}</span>
+    //       </div>
+    //     `;
+        
+    //     container.appendChild(pairElement);
+    //   });
+    // }
     
     // Render comparative stats
     function renderComparativeStats(stats) {

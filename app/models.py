@@ -82,10 +82,13 @@ class User(UserMixin, db.Model):
         return Friend.query.filter_by(user_id=self.id, is_accepted=False).all()
     
     def friends_list(self):
-        """Returns a list of User objects who are friends with this user"""
         sent = Friend.query.filter_by(user_id=self.id, is_accepted=True).all()
         received = Friend.query.filter_by(friend_id=self.id, is_accepted=True).all()
-        return [f.friend for f in sent] + [f.user for f in received]
+        all_friends = [f.friend for f in sent] + [f.user for f in received]
+        
+        # Eliminate duplicates by ID
+        unique_friends = {f.id: f for f in all_friends}.values()
+        return list(unique_friends)
     
     # Keep the method for backward compatibility
     def friends(self):
@@ -197,6 +200,24 @@ class Track(db.Model):
         back_populates="tracks",
         viewonly=True
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "artist": self.artist,
+            "genre": self.genre,
+            "tempo": self.tempo,
+            "valence": self.valence,
+            "energy": self.energy,
+            "date_played": self.date_played.isoformat() if self.date_played else None,
+            "acousticness": self.acousticness,
+            "liveness": self.liveness,
+            "danceability": self.danceability,
+            "mode": self.mode,
+            "user_id": self.user_id,
+            "duration_ms": self.duration_ms
+        }
 
 
 # ------------------ UserTrack Model ------------------

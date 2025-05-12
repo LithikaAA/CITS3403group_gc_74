@@ -26,31 +26,28 @@ def share():
     friends = User.query.filter(User.id != current_user.id).all()
 
     if request.method == 'POST':
-        selected_ids = request.form.getlist('selected_playlists')
-        friend_username = request.form.get('friend_username')
+        playlist_ids = request.form.getlist('playlist_ids')
+        friend_ids = request.form.getlist('friend_ids')
 
-        if not selected_ids:
-            flash('Please select at least one playlist to share.', 'error')
+        if not playlist_ids or not friend_ids:
+            flash('Please select at least one playlist and one friend.', 'error')
             return redirect(url_for('share.share'))
 
-        friend = User.query.filter_by(username=friend_username).first()
-        if not friend:
-            flash('Friend not found.', 'error')
-            return redirect(url_for('share.share'))
-
-        for pid in selected_ids:
-            new_share = Share(
-                playlist_id=int(pid),
-                recipient_id=friend.id,
-                owner_id=current_user.id
-            )
-            db.session.add(new_share)
+        for friend_id in friend_ids:
+            for playlist_id in playlist_ids:
+                new_share = Share(
+                    playlist_id=int(playlist_id),
+                    recipient_id=int(friend_id),
+                    owner_id=current_user.id
+                )
+                db.session.add(new_share)
+        
         db.session.commit()
-
-        flash(f'Shared {len(selected_ids)} playlist(s) with {friend.username}!', 'success')
+        flash(f'Shared {len(playlist_ids)} playlist(s) with {len(friend_ids)} friend(s)!', 'success')
         return redirect(url_for('share.share'))
 
     return render_template('share.html', playlists=playlists, friends=friends)
+
 
 # ---------- Upload Shared Data ----------
 @share_bp.route('/upload', methods=['GET', 'POST'])
@@ -118,16 +115,39 @@ def shared_dashboard():
 
     # If there are no shared playlists, show no-friends message
     if not shared_playlists:
-        return render_template('shared_dashboard.html', 
-                              shared_playlists=[],
-                              playlists=playlists)
-    
-    # Don't load any data initially - it will be loaded via AJAX
-    # when the user selects playlists from the dropdowns
+        return render_template(
+            'shared_dashboard.html',
+            shared_playlists=[],
+            playlists=playlists,
+            shared_summary=None,
+            top_popular_songs={"you": [], "friend": []},
+            comparison_minutes={"labels": [], "your_data": [], "friend_data": []},
+            comparison_bubble={"you": [], "friend": []},
+            comparison_mood={"you": [], "friend": []},
+            comparison_mode={"you": [], "friend": []}
+        )
+
+    # Provide dummy placeholders until AJAX fills real data
+    placeholder_summary = {
+        "common_track": "N/A",
+        "your_avg_tempo": 0,
+        "friend_avg_tempo": 0,
+        "your_total_minutes": 0,
+        "friend_total_minutes": 0,
+        "your_mood": "N/A",
+        "friend_mood": "N/A"
+    }
+
     return render_template(
         'shared_dashboard.html',
         playlists=playlists,
-        shared_playlists=shared_playlists
+        shared_playlists=shared_playlists,
+        shared_summary=placeholder_summary,
+        top_popular_songs={"you": [], "friend": []},
+        comparison_minutes={"labels": [], "your_data": [], "friend_data": []},
+        comparison_bubble={"you": [], "friend": []},
+        comparison_mood={"you": [], "friend": []},
+        comparison_mode={"you": [], "friend": []}
     )
 
 @share_bp.route('/compare-playlists')
@@ -206,6 +226,9 @@ def compare_playlists():
             'friend': get_top_popular_songs(friend_playlist, 5)
         }
         
+        print("Top songs you:", get_top_popular_songs(your_playlist, 5))
+        print("Top songs friend:", get_top_popular_songs(friend_playlist, 5))
+
         # Get additional insights with the new helper functions
         similar_tracks = find_similar_tracks(your_playlist, friend_playlist, 'valence', 0.1)
         mood_difference = get_mood_difference(your_playlist, friend_playlist)
@@ -214,7 +237,24 @@ def compare_playlists():
         
         # Add annotations for the valence-acousticness chart
         chart_annotations = generate_quadrant_annotations()
-        
+        def safe_preview(obj):
+            try:
+                return obj[:1]
+            except Exception as e:
+                return f"Error previewing: {e}"
+
+        print("valence_acousticness:", type(valence_acousticness), safe_preview(valence_acousticness))
+        print("minutes_by_track:", type(minutes_by_track), safe_preview(minutes_by_track))
+        print("comparison_bubble:", type(comparison_bubble), safe_preview(comparison_bubble))
+        print("comparison_mood:", type(comparison_mood), safe_preview(comparison_mood))
+        print("comparison_mode:", type(comparison_mode), safe_preview(comparison_mode))
+        print("summary:", type(summary), safe_preview(summary))
+        print("top_popular_songs:", type(top_popular_songs), safe_preview(top_popular_songs))
+        print("chart_annotations:", type(chart_annotations), safe_preview(chart_annotations))
+        print("similar_tracks:", type(similar_tracks), safe_preview(similar_tracks))
+        print("mood_difference:", type(mood_difference), safe_preview(mood_difference))
+        print("comparative_stats:", type(comparative_stats), safe_preview(comparative_stats))
+
         return jsonify({
             'valence_acousticness': valence_acousticness,
             'comparison_minutes': minutes_by_track,
@@ -226,11 +266,12 @@ def compare_playlists():
             'chart_annotations': chart_annotations,
             'similar_tracks': [
                 {
-                    'your_track': {'title': t[0].title, 'artist': t[0].artist},
-                    'friend_track': {'title': t[1].title, 'artist': t[1].artist},
+                    'your_track': t[0].to_dict() if t[0] else None,
+                    'friend_track': t[1].to_dict() if t[1] else None,
                     'similarity': t[2]
                 } for t in similar_tracks[:5]
-            ],
+            ]
+            ,
             'mood_difference': mood_difference,
             'comparative_stats': comparative_stats,
             'recommendations': recommendations
@@ -562,8 +603,8 @@ def generate_playlist_recommendations(your_playlist, friend_playlist):
         recommendations.append({
             'type': 'track_recommendation',
             'title': "Songs your friend might like",
-            'description': f"These songs from your playlist match your friend's '{friend_mood}' music mood",
-            'tracks': mood_matches[:3]
+            'description': f"...",
+            'tracks': [t.to_dict() for t in mood_matches[:3]]  # ✅ JSON-safe
         })
     
     # Add recommendation based on musical difference

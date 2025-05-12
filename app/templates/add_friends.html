@@ -82,7 +82,13 @@
 
         <div id="tab-incoming" class="tab-content hidden">
           {% for req in incoming_requests %}
-            <p>{{ req.user.username }}</p>
+            <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}">
+              {{ accept_form.hidden_tag() }}
+              <p class="mb-2 flex justify-between items-center">
+                <span>{{ req.user.username }}</span>
+                {{ accept_form.submit(class="bg-green-500 text-white px-2 py-1 rounded text-sm") }}
+              </p>
+            </form>
           {% else %}
             <p class="text-sm text-gray-400">No incoming requests</p>
           {% endfor %}
