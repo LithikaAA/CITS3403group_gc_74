@@ -25,6 +25,7 @@ migrations/versions/*.py
 .venv/
 ENV/
 env/
+venv/
 
 # === IDE / Editor files ===
 .vscode/
@@ -40,7 +41,8 @@ Thumbs.db
 *.spec
 
 # === Dotenv / secrets ===
-*.env
+.env
+.env.*
 
 # === Uploads / Static Generated Files ===
 app/static/uploads/
@@ -59,4 +61,19 @@ yarn-debug.log
 yarn-error.log
 
 # === Cache ===
-.cache
+.cache/
+
+# === Coverage / test output ===
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+test-output/
+
+# === Logs ===
+*.log
+logs/
