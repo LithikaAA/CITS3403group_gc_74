@@ -15,10 +15,11 @@
   {% if current_user.all_friends %}
   <form method="POST" action="{{ url_for('share.share') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+
       
       <!-- Select Playlists to Share -->
-      <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 relative z-10">
+      <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 h-full relative z-10">
         <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
           <i data-feather="music" class="w-5 h-5 mr-2"></i> Select Playlists
         </h2>
@@ -38,7 +39,7 @@
       </div>
 
       <!-- Select Friends to Share With -->
-      <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 relative z-10">
+      <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 h-full relative z-10">
         <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
           <i data-feather="users" class="w-5 h-5 mr-2"></i> Share with Friends
         </h2>
@@ -59,7 +60,7 @@
     </div>
 
     <!-- Share Button -->
-    <div class="text-center relative z-10">
+    <div class="text-center relative z-10 mt-4 mb-8">
       <button class="bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200">
         Share Selected Playlists
       </button>
@@ -68,30 +69,22 @@
 
 
   <!-- Additional Info Boxes -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-4 relative z-20">
     
     <!-- Data Shared With You -->
-    <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all">
-      <div class="flex items-center mb-4">
-        <i data-feather="download" class="w-5 h-5 text-purple-600 mr-3"></i>
-        <h3 class="text-xl font-semibold text-purple-700">Data Shared With You</h3>
-      </div>
-      <p class="text-gray-600 mb-4">View data that your friends have shared with you.</p>
-      <a href="{{ url_for('share.shared_dashboard') }}"
-        class="inline-block mt-2 px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition font-medium">
+    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all">
+      <h3 class="text-lg font-semibold text-indigo-700 mb-2">Data Shared With You</h3>
+      <p class="text-sm text-gray-600 mb-4">View data that your friends have shared with you.</p>
+      <a href="{{ url_for('share.shared_dashboard') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
         View Shared Data
       </a>
     </div>
 
     <!-- Shared Data History -->
-    <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all">
-      <div class="flex items-center mb-4">
-        <i data-feather="clock" class="w-5 h-5 text-pink-600 mr-3"></i>
-        <h3 class="text-xl font-semibold text-pink-700">Shared Data History</h3>
-      </div>
-      <p class="text-gray-600 mb-4">View your history of shared data with friends.</p>
-      <a href="{{ url_for('share.upload_shared_data') }}"
-        class="inline-block mt-2 px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 transition font-medium">
+    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all">
+      <h3 class="text-lg font-semibold text-indigo-700 mb-2">Shared Data History</h3>
+      <p class="text-sm text-gray-600 mb-4">View your history of shared data with friends.</p>
+      <a href="{{ url_for('share.upload_shared_data') }}" class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
         View Upload History
       </a>
     </div>

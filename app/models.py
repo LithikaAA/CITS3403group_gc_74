@@ -201,6 +201,24 @@ class Track(db.Model):
         viewonly=True
     )
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "artist": self.artist,
+            "genre": self.genre,
+            "tempo": self.tempo,
+            "valence": self.valence,
+            "energy": self.energy,
+            "date_played": self.date_played.isoformat() if self.date_played else None,
+            "acousticness": self.acousticness,
+            "liveness": self.liveness,
+            "danceability": self.danceability,
+            "mode": self.mode,
+            "user_id": self.user_id,
+            "duration_ms": self.duration_ms
+        }
+
 
 # ------------------ UserTrack Model ------------------
 class UserTrack(db.Model):

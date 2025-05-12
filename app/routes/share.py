@@ -226,6 +226,9 @@ def compare_playlists():
             'friend': get_top_popular_songs(friend_playlist, 5)
         }
         
+        print("Top songs you:", get_top_popular_songs(your_playlist, 5))
+        print("Top songs friend:", get_top_popular_songs(friend_playlist, 5))
+
         # Get additional insights with the new helper functions
         similar_tracks = find_similar_tracks(your_playlist, friend_playlist, 'valence', 0.1)
         mood_difference = get_mood_difference(your_playlist, friend_playlist)
@@ -234,7 +237,24 @@ def compare_playlists():
         
         # Add annotations for the valence-acousticness chart
         chart_annotations = generate_quadrant_annotations()
-        
+        def safe_preview(obj):
+            try:
+                return obj[:1]
+            except Exception as e:
+                return f"Error previewing: {e}"
+
+        print("valence_acousticness:", type(valence_acousticness), safe_preview(valence_acousticness))
+        print("minutes_by_track:", type(minutes_by_track), safe_preview(minutes_by_track))
+        print("comparison_bubble:", type(comparison_bubble), safe_preview(comparison_bubble))
+        print("comparison_mood:", type(comparison_mood), safe_preview(comparison_mood))
+        print("comparison_mode:", type(comparison_mode), safe_preview(comparison_mode))
+        print("summary:", type(summary), safe_preview(summary))
+        print("top_popular_songs:", type(top_popular_songs), safe_preview(top_popular_songs))
+        print("chart_annotations:", type(chart_annotations), safe_preview(chart_annotations))
+        print("similar_tracks:", type(similar_tracks), safe_preview(similar_tracks))
+        print("mood_difference:", type(mood_difference), safe_preview(mood_difference))
+        print("comparative_stats:", type(comparative_stats), safe_preview(comparative_stats))
+
         return jsonify({
             'valence_acousticness': valence_acousticness,
             'comparison_minutes': minutes_by_track,
@@ -246,11 +266,12 @@ def compare_playlists():
             'chart_annotations': chart_annotations,
             'similar_tracks': [
                 {
-                    'your_track': {'title': t[0].title, 'artist': t[0].artist},
-                    'friend_track': {'title': t[1].title, 'artist': t[1].artist},
+                    'your_track': t[0].to_dict() if t[0] else None,
+                    'friend_track': t[1].to_dict() if t[1] else None,
                     'similarity': t[2]
                 } for t in similar_tracks[:5]
-            ],
+            ]
+            ,
             'mood_difference': mood_difference,
             'comparative_stats': comparative_stats,
             'recommendations': recommendations
@@ -582,8 +603,8 @@ def generate_playlist_recommendations(your_playlist, friend_playlist):
         recommendations.append({
             'type': 'track_recommendation',
             'title': "Songs your friend might like",
-            'description': f"These songs from your playlist match your friend's '{friend_mood}' music mood",
-            'tracks': mood_matches[:3]
+            'description': f"...",
+            'tracks': [t.to_dict() for t in mood_matches[:3]]  # ✅ JSON-safe
         })
     
     # Add recommendation based on musical difference
