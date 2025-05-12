@@ -43,6 +43,7 @@ Thumbs.db
 # === Dotenv / secrets ===
 .env
 .env.*
+!.env.example  # Allow safe template to be committed
 
 # === Uploads / Static Generated Files ===
 app/static/uploads/
@@ -53,6 +54,8 @@ app/static/uploads/
 # === Spotify or privacy-exported data ===
 spotify_data/
 privacy_export/
+.cache
+.cache/
 
 # === Node / frontend build (if ever added) ===
 node_modules/
@@ -62,6 +65,11 @@ yarn-error.log
 
 # === Cache ===
 .cache/
+.cache
+.cache/*
+*.tmp
+*.temp
+*.bak
 
 # === Coverage / test output ===
 htmlcov/
