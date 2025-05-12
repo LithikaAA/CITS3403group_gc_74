@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize or update all charts
     function initializeOrUpdateCharts(data) {
-      //initializeOrUpdateValenceChart(data.valence_acousticness);
+      initializeOrUpdateValenceChart(data.valence_acousticness);
       initializeOrUpdateDanceabilityChart(data.comparison_bubble);
       initializeOrUpdateMoodChart(data.comparison_mood);
       initializeOrUpdateModeChart(data.comparison_mode);

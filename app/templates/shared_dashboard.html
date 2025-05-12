@@ -80,14 +80,15 @@
     <div class="max-w-screen-2xl mx-auto px-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
       
-        <!-- Total Minutes Played by Track -->
+        <!-- Valence vs Acousticness Chart -->
         <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[400px]">
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">Total Minutes Played by Track</h2>
-          <p class="text-sm text-gray-500 mb-6">Top different songs between you and your friend.</p>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Valence vs Acousticness</h2>
+          <p class="text-sm text-gray-500 mb-6">See how your music maps between emotional tone and acoustic quality.</p>
           <div class="w-full h-[350px] min-h-[350px]">
-            <canvas id="minutesByTrack" class="w-full h-full"></canvas>
+            <canvas id="valenceAcousticness" class="w-full h-full"></canvas>
           </div>
         </div>
+
 
         <!-- Danceability vs Energy -->
         <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[400px]">
@@ -110,10 +111,10 @@
           <h2 class="text-lg font-bold text-gray-800 mb-4">You & Friend Summary</h2>
           
           <div class="space-y-3">
-            <div>
+            <!-- <div>
               <p class="text-sm font-medium text-gray-700">Top Common Track:</p>
               <p class="font-semibold text-indigo-600" data-summary="common-track">{{ shared_summary.common_track }}</p>
-            </div>
+            </div> -->
             
             <div>
               <p class="text-sm font-medium text-gray-700">Your Avg Tempo:</p>
@@ -125,7 +126,7 @@
               <p class="font-semibold text-pink-600" data-summary="friend-avg-tempo">{{ shared_summary.friend_avg_tempo }} BPM</p>
             </div>
             
-            <div>
+            <!-- <div>
               <p class="text-sm font-medium text-gray-700">Total Minutes (You):</p>
               <p class="font-semibold text-indigo-600" data-summary="your-total-minutes">{{ shared_summary.your_total_minutes }}</p>
             </div>
@@ -133,7 +134,7 @@
             <div>
               <p class="text-sm font-medium text-gray-700">Total Minutes (Friend):</p>
               <p class="font-semibold text-pink-600" data-summary="friend-total-minutes">{{ shared_summary.friend_total_minutes }}</p>
-            </div>
+            </div> -->
             
             <div>
               <p class="text-sm font-medium text-gray-700">Your Mood:</p>
@@ -226,6 +227,7 @@
       you: {{ top_popular_songs.you | tojson | safe }},
       friend: {{ top_popular_songs.friend | tojson | safe }}
     };
+
   </script>
   
   <!-- Chart.js library -->
