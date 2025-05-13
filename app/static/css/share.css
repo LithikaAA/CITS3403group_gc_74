@@ -1,0 +1,38 @@
+/* Additional CSS for profile photos */
+
+/* Make profile photos bigger and more prominent */
+.w-14.h-14.rounded-full {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+  
+  /* Add subtle animation on hover */
+  .w-14.h-14.rounded-full:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Ensure text is centered perfectly in the circle */
+  .w-14.h-14.rounded-full {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  
+  /* Make sure checkboxes don't have border issues */
+  input[type="checkbox"] {
+    border: 1.5px solid #d1d5db;
+  }
+  
+  /* Add more spacing between friend entries */
+  .space-y-5 > div {
+    margin-bottom: 8px;
+  }
+  
+  /* Make the hover effect more pleasant */
+  .bg-gray-50:hover .w-14.h-14.rounded-full {
+    background-color: #6366f1;
+  }

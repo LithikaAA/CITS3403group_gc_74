@@ -1,112 +1,469 @@
 {% extends "base.html" %}
-{% block title %}Share Your Playlists | VibeShare{% endblock %}
+{% block title %}Share Data | VibeShare{% endblock %}
+
+{% block head %}
+{{ super() }}
+
+<!-- Add CSS and JavaScript files -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/share.css') }}">
+<script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
+
+<!-- Inline styles for critical fixes -->
+<style>
+  /* Critical fixes for clickability */
+  input[type="checkbox"], button[type="submit"] {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 10 !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* Animation for appear effect */
+  @keyframes appear {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-appear {
+    animation: appear 0.5s ease-out forwards;
+  }
+  
+  /* Animation for spin effect */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-6 py-12">
-
+<div class="max-w-4xl mx-auto px-6 py-10">
   <!-- Header Section -->
-  <div class="text-center mb-12">
-    <h1 class="text-3xl font-bold text-indigo-700 mb-2">Share Your Playlists</h1>
-    <p class="text-gray-600 text-base max-w-2xl mx-auto">
-      Select your favorite playlists and share them with friends to compare music tastes and discover new tracks together.
+  <div class="text-center mb-10">
+    <h1 class="text-3xl font-bold text-gray-800 mb-3">Share Your Playlists</h1>
+    <p class="text-gray-600 max-w-2xl mx-auto">
+      Select your favourite playlists and share them with friends to compare music tastes 
+      and discover new tracks together.
     </p>
   </div>
-  
-  {% if current_user.all_friends %}
-  <form method="POST" action="{{ url_for('share.share') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
 
-      
-      <!-- Select Playlists to Share -->
-      <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 h-full relative z-10">
-        <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
-          <i data-feather="music" class="w-5 h-5 mr-2"></i> Select Playlists
-        </h2>
-        <ul class="space-y-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+    <!-- Left Card: What to Share -->
+    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Select Playlists</h2>
+      </div>
+
+      <form id="shareForm" method="POST" action="{{ url_for('share.share') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="space-y-5">
           {% for playlist in current_user.playlists %}
-          <li class="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all">
-            <label class="flex items-start space-x-4 cursor-pointer text-lg">
-              <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 accent-pink-500 scale-125">
-              <div>
-                <p class="font-semibold text-gray-900">{{ playlist.name }}</p>
-                <p class="text-sm text-gray-600">{{ playlist.track_data_as_chart().labels | join(', ') or 'No genres tagged' }}</p>
+          <div class="bg-gray-50 rounded-lg p-5 hover:bg-gray-100 transition-all">
+            <label class="flex items-start cursor-pointer">
+              <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+              <div class="ml-4">
+                <div class="font-medium text-gray-800 text-lg">{{ playlist.name }}</div>
+                <div class="text-sm text-gray-500">Share your playlist and genre preferences</div>
               </div>
             </label>
-          </li>
+          </div>
           {% endfor %}
-        </ul>
-      </div>
+        </div>
+      </form>
+    </div>
 
-      <!-- Select Friends to Share With -->
-      <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 h-full relative z-10">
-        <h2 class="text-xl font-semibold text-indigo-600 mb-5 flex items-center">
-          <i data-feather="users" class="w-5 h-5 mr-2"></i> Share with Friends
-        </h2>
-        <ul class="space-y-4">
-          {% for friend in current_user.all_friends %}
-          <li class="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all">
-            <label class="flex items-start space-x-4 cursor-pointer text-lg">
-              <input type="checkbox" name="friend_ids" value="{{ friend.id }}" class="mt-1 accent-purple-500 scale-125">
+    <!-- Right Card: Share with Friends -->
+    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Share with Friends</h2>
+      </div>
+      
+      <div class="space-y-5">
+        {% for friend in current_user.all_friends %}
+        <div class="bg-gray-50 rounded-lg p-5 hover:bg-gray-100 transition-all">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" name="friend_ids" form="shareForm" value="{{ friend.id }}" class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            <div class="ml-4 flex items-center">
+              {% if friend.profile_photo %}
+                <img src="{{ url_for('static', filename='uploads/profile_photos/' + friend.profile_photo) }}" alt="{{ friend.username }}" class="w-14 h-14 rounded-full object-cover mr-4">
+              {% else %}
+                <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-3xl mr-4">
+                  {{ friend.username[0] | upper }}
+                </div>
+              {% endif %}
               <div>
-                <p class="font-semibold text-gray-900">{{ friend.username }}</p>
-                <p class="text-sm text-gray-600">Last shared: {{ friend.last_shared or "Never" }}</p>
+                <div class="font-medium text-gray-800 text-lg">{{ friend.username }}</div>
+                <div class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</div>
               </div>
-            </label>
-          </li>
-          {% endfor %}
-        </ul>
+            </div>
+          </label>
+        </div>
+        {% endfor %}
       </div>
     </div>
-
-    <!-- Share Button -->
-    <div class="text-center relative z-10 mt-4 mb-8">
-      <button class="bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200">
-        Share Selected Playlists
-      </button>
-    </div>
-  </form>
-  <!-- Additional Info Boxes -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-4 relative z-20">
-    
-    <!-- Data Shared With You -->
-    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all">
-      <h3 class="text-lg font-semibold text-indigo-700 mb-2">Data Shared With You</h3>
-      <p class="text-sm text-gray-600 mb-4">View data that your friends have shared with you.</p>
-      <a href="{{ url_for('share.shared_dashboard') }}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-        View Shared Data
-      </a>
-    </div>
-
-    <!-- Shared Data History -->
-    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all">
-      <h3 class="text-lg font-semibold text-indigo-700 mb-2">Shared Data History</h3>
-      <p class="text-sm text-gray-600 mb-4">View your history of shared data with friends.</p>
-      <a href="{{ url_for('share.upload_shared_data') }}" class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-        View Upload History
-      </a>
-    </div>
-
   </div>
 
-    {% else %}
-    <!-- No Friends Yet -->
-    <div class="flex flex-col items-center justify-center py-20 bg-gradient-to-br from-indigo-100 to-white rounded-xl shadow-inner mt-10">
-      <div class="mb-6">
-        <i data-feather="users" class="w-12 h-12 text-indigo-500"></i>
+  <!-- Share Button -->
+  <div class="flex justify-center mb-8">
+    <button type="submit" form="shareForm" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-medium transition-all shadow-md text-lg" style="pointer-events: auto !important; position: relative !important; z-index: 100 !important; cursor: pointer !important;">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      </svg>
+      Share Selected Playlists
+    </button>
+  </div>
+
+  <!-- Bottom Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Left Card: Playlists Shared With You -->
+    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Playlists Shared With You</h2>
       </div>
-      <h3 class="text-2xl font-bold text-gray-800 mb-2">No Friends Yet</h3>
-      <p class="text-center text-gray-600 mb-6 max-w-md px-6">
-        You haven't added anyone yet. Head over to the Add Friend tab to connect and start sharing playlists!
-      </p>
-      <a href="/add-friend" class="z-10 bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200">
-        Go to Add Friend Tab
-      </a>
+
+      {% if current_user.received_shares %}
+        <div class="space-y-2">
+          {% for share in current_user.received_shares %}
+            <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
+              <div class="flex items-center">
+                {% if share.shared_by.profile_photo %}
+                  <img src="{{ url_for('static', filename='uploads/profile_photos/' + share.shared_by.profile_photo) }}" alt="{{ share.shared_by.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+                {% else %}
+                  <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                    {{ share.shared_by.username[0] | upper }}
+                  </div>
+                {% endif %}
+                <div>
+                  <div class="font-medium">{{ share.playlist.name }}</div>
+                  <div class="text-sm text-gray-500">Shared by {{ share.shared_by.username }}</div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="flex items-center justify-center h-32">
+          <p class="text-gray-500 text-lg">No playlists have been shared with you yet.</p>
+        </div>
+      {% endif %}
     </div>
-    {% endif %}
+
+    <!-- Right Card: Your Sharing History -->
+    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 your-sharing-history-container">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Your Sharing History</h2>
+      </div>
+      
+      <div id="sharing-history-content">
+        {% if current_user.sent_shares %}
+          <div class="space-y-2">
+            {% for share in current_user.sent_shares %}
+              <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
+                <div class="flex items-center">
+                  {% if share.shared_with.profile_photo %}
+                    <img src="{{ url_for('static', filename='uploads/profile_photos/' + share.shared_with.profile_photo) }}" alt="{{ share.shared_with.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+                  {% else %}
+                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                      {{ share.shared_with.username[0] | upper }}
+                    </div>
+                  {% endif %}
+                  <div>
+                    <div class="font-medium">{{ share.playlist.name }}</div>
+                    <div class="text-sm text-gray-500">Shared with {{ share.shared_with.username }}</div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="flex items-center justify-center h-32">
+            <p class="text-gray-500 text-lg">You haven't shared any playlists yet.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Emergency fix script for the share button -->
 <script>
-  feather.replace();
+  // Run this immediately to ensure the button is clickable
+  (function() {
+    console.log('Emergency share button fix running');
+    
+    // Get all form buttons
+    document.querySelectorAll('button[type="submit"]').forEach(function(btn) {
+      btn.style.pointerEvents = 'auto';
+      btn.style.cursor = 'pointer';
+      btn.style.position = 'relative';
+      btn.style.zIndex = '9999';
+      
+      console.log('Fixed button:', btn);
+    });
+    
+    // Direct fix for the main share button
+    const shareButton = document.querySelector('button[form="shareForm"]');
+    if (shareButton) {
+      shareButton.onclick = function(e) {
+        console.log('Share button clicked (emergency handler)');
+        
+        // Get selected playlists and friends
+        const playlistCheckboxes = document.querySelectorAll('input[name="playlist_ids"]:checked');
+        const friendCheckboxes = document.querySelectorAll('input[name="friend_ids"]:checked');
+        
+        // Basic validation
+        if (playlistCheckboxes.length === 0) {
+          alert('Please select at least one playlist');
+          e.preventDefault();
+          return false;
+        }
+        
+        if (friendCheckboxes.length === 0) {
+          alert('Please select at least one friend');
+          e.preventDefault();
+          return false;
+        }
+        
+        // Update sharing history
+        try {
+          // Get the history container
+          const historyContainer = document.querySelector('.your-sharing-history-container');
+          if (historyContainer) {
+            // Remove empty state
+            const emptyState = historyContainer.querySelector('.flex.items-center.justify-center');
+            if (emptyState) {
+              emptyState.remove();
+            }
+            
+            // Create entries container if needed
+            let entriesContainer = historyContainer.querySelector('.space-y-2');
+            if (!entriesContainer) {
+              entriesContainer = document.createElement('div');
+              entriesContainer.className = 'space-y-2';
+              
+              // Insert after header
+              const header = historyContainer.querySelector('h2');
+              if (header) {
+                const headerContainer = header.closest('.flex');
+                if (headerContainer) {
+                  headerContainer.parentNode.insertBefore(entriesContainer, headerContainer.nextSibling);
+                } else {
+                  historyContainer.appendChild(entriesContainer);
+                }
+              } else {
+                historyContainer.appendChild(entriesContainer);
+              }
+            }
+            
+            // Add entries for each friend
+            friendCheckboxes.forEach(friendCheckbox => {
+              // Get friend details
+              const label = friendCheckbox.closest('label');
+              if (label) {
+                const nameElement = label.querySelector('.font-medium.text-gray-800');
+                const friendName = nameElement ? nameElement.textContent.trim() : 'Friend';
+                const initial = friendName[0].toUpperCase();
+                
+                // Check for profile photo
+                let photoHTML = '';
+                const photoElement = label.querySelector('img.rounded-full');
+                if (photoElement) {
+                  photoHTML = `<img src="${photoElement.src}" alt="${friendName}" class="w-10 h-10 rounded-full object-cover mr-3">`;
+                } else {
+                  photoHTML = `
+                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                      ${initial}
+                    </div>
+                  `;
+                }
+                
+                // Get playlist names
+                const playlistNames = [];
+                playlistCheckboxes.forEach(playlistCheckbox => {
+                  const playlistLabel = playlistCheckbox.closest('label');
+                  if (playlistLabel) {
+                    const nameEl = playlistLabel.querySelector('.font-medium.text-gray-800');
+                    if (nameEl) {
+                      playlistNames.push(nameEl.textContent.trim());
+                    }
+                  }
+                });
+                
+                // Format playlist names
+                const playlistDisplay = playlistNames.length === 1 
+                  ? playlistNames[0] 
+                  : playlistNames.length === 2 
+                    ? `${playlistNames[0]} and ${playlistNames[1]}`
+                    : `${playlistNames[0]} and ${playlistNames.length - 1} more`;
+                
+                // Create entry
+                const entry = document.createElement('div');
+                entry.className = 'bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all animate-appear';
+                entry.innerHTML = `
+                  <div class="flex items-center">
+                    ${photoHTML}
+                    <div>
+                      <div class="font-medium">${playlistDisplay}</div>
+                      <div class="text-sm text-gray-500">Shared with ${friendName}</div>
+                    </div>
+                  </div>
+                `;
+                
+                // Add to container
+                entriesContainer.prepend(entry);
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Error updating sharing history:', err);
+        }
+        
+        // Show loading state
+        shareButton.innerHTML = '<span class="animate-spin mr-2">↻</span> Sharing...';
+        shareButton.disabled = true;
+        
+        // Allow form submission to continue
+        return true;
+      };
+    }
+    
+    // Fix all checkboxes too
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+      checkbox.style.pointerEvents = 'auto';
+      checkbox.style.position = 'relative';
+      checkbox.style.zIndex = '10';
+    });
+  })();
+</script>
+
+<!-- Add this inline script to the HTML template -->
+<script>
+  // Run this immediately to preserve history
+  (function() {
+    console.log('Immediate history preservation running');
+    
+    // Function to save history to sessionStorage
+    function saveHistory() {
+      try {
+        const historyContainer = document.querySelector('.your-sharing-history-container');
+        if (!historyContainer) return;
+        
+        const entriesContainer = historyContainer.querySelector('.space-y-2');
+        if (!entriesContainer || entriesContainer.querySelectorAll('.bg-gray-50').length === 0) return;
+        
+        // Save the HTML content
+        sessionStorage.setItem('vibeshare_history', entriesContainer.outerHTML);
+        console.log('Saved sharing history to sessionStorage');
+      } catch (err) {
+        console.error('Error saving history:', err);
+      }
+    }
+    
+    // Function to restore history
+    function restoreHistory() {
+      try {
+        const savedHistory = sessionStorage.getItem('vibeshare_history');
+        if (!savedHistory) return;
+        
+        const historyContainer = document.querySelector('.your-sharing-history-container');
+        if (!historyContainer) return;
+        
+        // Remove empty state message if present
+        const emptyMessage = historyContainer.querySelector('.flex.items-center.justify-center');
+        if (emptyMessage) {
+          emptyMessage.remove();
+        }
+        
+        // Insert the saved history
+        const existingContainer = historyContainer.querySelector('.space-y-2');
+        if (existingContainer) {
+          // If container already exists, only populate it if empty
+          if (existingContainer.querySelectorAll('.bg-gray-50').length === 0) {
+            existingContainer.outerHTML = savedHistory;
+          }
+        } else {
+          // If no container exists, insert after the heading
+          const header = historyContainer.querySelector('h2');
+          if (header) {
+            const headerContainer = header.closest('.flex');
+            if (headerContainer) {
+              headerContainer.insertAdjacentHTML('afterend', savedHistory);
+            } else {
+              historyContainer.insertAdjacentHTML('beforeend', savedHistory);
+            }
+          } else {
+            historyContainer.insertAdjacentHTML('beforeend', savedHistory);
+          }
+        }
+        
+        console.log('Restored sharing history from sessionStorage');
+      } catch (err) {
+        console.error('Error restoring history:', err);
+      }
+    }
+    
+    // Save history before unload
+    window.addEventListener('beforeunload', saveHistory);
+    
+    // Restore history on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait a bit to ensure the page is fully loaded
+      setTimeout(restoreHistory, 500);
+      
+      // Also run on form submission
+      const shareForm = document.getElementById('shareForm');
+      if (shareForm) {
+        shareForm.addEventListener('submit', function() {
+          // Save current history before submission
+          saveHistory();
+        });
+      }
+      
+      // Fix the share button staying in loading state
+      const shareButton = document.querySelector('button[type="submit"]');
+      if (shareButton && shareButton.textContent.includes('Sharing...')) {
+        // Button is stuck in loading state, restore it
+        shareButton.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          Share Selected Playlists
+        `;
+        shareButton.disabled = false;
+      }
+    });
+    
+    // Run immediately as well
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      // Document already ready, restore now
+      restoreHistory();
+    }
+  })();
 </script>
 {% endblock %}
