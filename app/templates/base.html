@@ -204,8 +204,35 @@ document.addEventListener('DOMContentLoaded', function () {
     feather.replace();
   </script>
 
-  <!-- FIXED: Add this block for page-specific scripts -->
+  <!-- Add this block for page-specific scripts -->
   {% block scripts %}{% endblock %}
+
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg flex justify-around items-center py-2 md:hidden">
+    <a href="{{ url_for('dashboard.dashboard') }}" class="flex flex-col items-center text-gray-500 hover:text-indigo-500">
+      <i data-feather="home"></i>
+      <span class="text-xs">Home</span>
+    </a>
+    <a href="{{ url_for('upload.upload') }}" class="flex flex-col items-center text-gray-500 hover:text-indigo-500">
+      <i data-feather="plus-square"></i>
+      <span class="text-xs">Add</span>
+    </a>
+    <a href="{{ url_for('share.shared_dashboard') }}" class="flex flex-col items-center text-gray-500 hover:text-indigo-500">
+      <i data-feather="eye"></i>
+      <span class="text-xs">View</span>
+    </a>
+    <a href="{{ url_for('share.share') }}" class="flex flex-col items-center text-gray-500 hover:text-indigo-500">
+      <i data-feather="share-2"></i>
+      <span class="text-xs">Share</span>
+    </a>
+    <a href="{{ url_for('friends.add_friend') }}" class="flex flex-col items-center text-gray-500 hover:text-indigo-500">
+      <i data-feather="user-plus"></i>
+      <span class="text-xs">Friends</span>
+    </a>
+    <a href="{{ url_for('auth.account_setup') }}" class="flex flex-col items-center text-gray-500 hover:text-indigo-500">
+      <i data-feather="user"></i>
+      <span class="text-xs">Account</span>
+    </a>
+  </nav>
 
 </body>
 </html>
