@@ -1,10 +1,10 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from config import Config
 from dotenv import load_dotenv
-from .models import db, User
+from .models import db, User, Friend
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 # Import all blueprints
@@ -58,5 +58,11 @@ def create_app(config_class=Config):
     app.register_blueprint(share_bp)
     app.register_blueprint(friends_bp)
     app.register_blueprint(index_bp)
-
+    
+    @app.context_processor
+    def inject_incoming_requests():
+        if current_user.is_authenticated:
+            requests = Friend.query.filter_by(friend_id=current_user.id, is_accepted=False).all()
+            return dict(incoming_requests=requests)
+        return dict(incoming_requests=[])
     return app

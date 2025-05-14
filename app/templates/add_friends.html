@@ -29,19 +29,22 @@
         </div>
       </form>
       <!-- view all friends -->
-      <div class="mt-4">
+      <div class="mt-4 relative">
         <button
           id="view-all-friends-btn"
-          class="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+          class="w-full py-3 bg-gradient-to-r from-green-400 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg hover:from-teal-500 hover:to-green-400 transition duration-300 ease-in-out relative"
         >
-          View All Friends
+          👥 View All Friends
+          {% if incoming_requests|length > 0 %}
+            <span class="absolute -top-1 -right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              {{ incoming_requests|length }}
+            </span>
+          {% endif %}
         </button>
       </div>
     </div>
   </div>
 
-
-  
     <!-- Right Slide-in Overlay for All Friends -->
      <div class="w-1/2 relative flex items-center justify-center overflow-visible bg-gradient-to-br from-blue-100 to-pink-100">
     <!-- SVG for connection lines -->
@@ -59,51 +62,82 @@
             stroke="url(#gradient-{{ idx }})" stroke-width="1" />
       {% endfor %}
     </svg>
-    <div id="friends-panel" class="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform translate-x-full transition-transform z-50">
-      <button id="close-friends-panel" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">✕</button>
-      <div class="p-4">
-        <h2 class="text-2xl font-bold mb-4">Your Friends</h2>
+    
+    <!-- Overlay for all friends -->
+    <div id="friends-panel"
+        class="fixed right-0 top-0 h-full w-96 bg-white rounded-l-3xl shadow-2xl transform translate-x-full transition-transform duration-500 z-50 overflow-y-auto border-l-4 border-indigo-300">
 
-        <!-- Tab buttons -->
-        <div class="flex space-x-2 mb-4">
-          <button data-tab="all" class="tab-btn bg-indigo-100 px-3 py-1 rounded">All</button>
-          <button data-tab="incoming" class="tab-btn bg-gray-100 px-3 py-1 rounded">Incoming</button>
-          <button data-tab="outgoing" class="tab-btn bg-gray-100 px-3 py-1 rounded">Outgoing</button>
-        </div>
+      <!-- Header -->
+      <div class="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-indigo-100 to-pink-100 rounded-tl-3xl border-b">
+        <h2 class="text-xl font-bold text-gray-800">👥 Your Friends</h2>
+        <button id="close-friends-panel" class="text-gray-600 hover:text-red-500 text-lg font-bold">✕</button>
+      </div>
 
-        <!-- Tab content -->
+      <!-- Tabs -->
+      <div class="flex justify-center gap-2 px-4 py-3 bg-indigo-50 border-b">
+        <button data-tab="all" class="tab-btn px-4 py-2 text-sm font-semibold text-indigo-700 bg-white rounded-full shadow hover:bg-indigo-100 transition">All</button>
+        <button data-tab="incoming"
+                class="tab-btn px-4 py-2 text-sm font-semibold text-yellow-700 bg-white rounded-full shadow hover:bg-yellow-100 transition relative">
+          Incoming
+          {% if incoming_requests|length > 0 %}
+            <span class="ml-2 inline-flex items-center justify-center text-white bg-red-500 text-xs font-bold w-5 h-5 rounded-full">
+              {{ incoming_requests|length }}
+            </span>
+          {% endif %}
+        </button>
+        <button data-tab="outgoing" class="tab-btn px-4 py-2 text-sm font-semibold text-pink-700 bg-white rounded-full shadow hover:bg-pink-100 transition">Outgoing</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-5 space-y-4">
+
+        <!-- All Friends -->
         <div id="tab-all" class="tab-content">
           {% for f in current_user.all_friends %}
-            <p>{{ f.username }}</p>
+            <div class="flex items-center gap-4 bg-gray-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+              <img src="{{ url_for('static', filename='uploads/' ~ (f.profile_pic or 'default_profile.jpg')) }}"
+                  alt="{{ f.username }}" class="w-10 h-10 rounded-full object-cover border">
+              <span class="font-medium text-gray-800">{{ f.username }}</span>
+            </div>
           {% else %}
-            <p class="text-sm text-gray-400">No friends</p>
+            <p class="text-sm text-gray-400">No friends yet.</p>
           {% endfor %}
         </div>
 
+        <!-- Incoming Requests -->
         <div id="tab-incoming" class="tab-content hidden">
-          {% for req in incoming_requests %}
-            <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}">
-              {{ accept_form.hidden_tag() }}
-              <p class="mb-2 flex justify-between items-center">
-                <span>{{ req.user.username }}</span>
-                {{ accept_form.submit(class="bg-green-500 text-white px-2 py-1 rounded text-sm") }}
+          {% if incoming_requests|length > 0 %}
+            <div class="mb-2">
+              <p class="text-sm text-blue-900 font-medium">
+                You have {{ incoming_requests|length }} incoming friend request{{ 's' if incoming_requests|length > 1 }}.
               </p>
+            </div>
+          {% endif %}
+
+          {% for req in incoming_requests %}
+            <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}"
+                  class="flex items-center justify-between bg-blue-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+              {{ accept_form.hidden_tag() }}
+              <span class="font-medium text-blue-800">{{ req.user.username }}</span>
+              {{ accept_form.submit(class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-600 transition") }}
             </form>
           {% else %}
-            <p class="text-sm text-gray-400">No incoming requests</p>
+            <p class="text-sm text-gray-400">No incoming friend requests.</p>
           {% endfor %}
         </div>
 
+        <!-- Outgoing Requests -->
         <div id="tab-outgoing" class="tab-content hidden">
           {% for req in sent_requests %}
-            <p>{{ req.friend.username }}</p>
+            <div class="flex items-center gap-4 bg-pink-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+              <span class="font-medium text-pink-800">{{ req.friend.username }}</span>
+            </div>
           {% else %}
-            <p class="text-sm text-gray-400">No outgoing requests</p>
+            <p class="text-sm text-gray-400">No outgoing friend requests.</p>
           {% endfor %}
         </div>
       </div>
     </div>
-
 
 
     <!-- Central User Bubble -->
@@ -176,6 +210,10 @@
       }
 
       #friend-menu.hidden { display: none; }
+      
+      .tab-content {
+        transition: opacity 0.3s ease-in-out;
+      }
     </style>
 
     <script>
