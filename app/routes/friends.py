@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from app.models import User, Track, UserTrack, Friend
+from app.models import db, User, Track, UserTrack, Friend
 from flask_login import login_required, current_user
 from sqlalchemy.sql import func
 from ..models import db, User, Friend, Track
@@ -75,13 +75,26 @@ def add_friend():
 def remove_friend(username):
     friend = User.query.filter_by(username=username).first()
     if not friend:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'status': 'error', 'message': 'User not found'}), 404
 
-    # Remove friendship from both directions
-    Friend.query.filter_by(user_id=current_user.id, friend_id=friend.id).delete()
-    Friend.query.filter_by(user_id=friend.id, friend_id=current_user.id).delete()
-    db.session.commit()
-    return jsonify({'message': 'Friend removed'}), 200
+    # Remove both directions if needed
+    deleted = False
+
+    friendship = Friend.query.filter_by(user_id=current_user.id, friend_id=friend.id).first()
+    if friendship:
+        db.session.delete(friendship)
+        deleted = True
+
+    reverse = Friend.query.filter_by(user_id=friend.id, friend_id=current_user.id).first()
+    if reverse:
+        db.session.delete(reverse)
+        deleted = True
+
+    if deleted:
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': f'Removed {username} from friends'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Friendship not found'}), 400
 
 @friends_bp.route('/friends/list')
 @login_required

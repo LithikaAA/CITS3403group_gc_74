@@ -110,6 +110,44 @@ class User(UserMixin, db.Model):
             .filter(UserTrack.user_id == self.id) \
             .scalar()
         return result or 0
+    
+    def get_top_friends_by_bpm(self, limit=20):
+        from sqlalchemy import func
+        from app.models import Friend, Track, User, db
+
+        # Get all accepted friendships for the current user
+        accepted = Friend.query.filter(
+            ((Friend.user_id == self.id) | (Friend.friend_id == self.id)),
+            Friend.is_accepted == True
+        ).all()
+
+        friend_ids = []
+        for f in accepted:
+            fid = f.friend_id if f.user_id == self.id else f.user_id
+            friend_ids.append(fid)
+
+        if not friend_ids:
+            return []
+
+        # Get average BPM of each friend
+        friends_with_bpm = (
+            db.session.query(User, func.avg(Track.tempo).label("average_bpm"))
+            .join(Track, Track.user_id == User.id)
+            .filter(User.id.in_(friend_ids))
+            .group_by(User.id)
+            .order_by(func.abs(func.avg(Track.tempo) - self.average_bpm))
+            .limit(limit)
+            .all()
+        )
+
+        # Attach BPM to user objects
+        result = []
+        for friend, bpm in friends_with_bpm:
+            friend.average_bpm = round(bpm, 2) if bpm else 0
+            result.append(friend)
+
+        return result
+
 
 
 # ------------------ Friend Model ------------------
