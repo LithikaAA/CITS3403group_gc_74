@@ -20,15 +20,16 @@ document.addEventListener('DOMContentLoaded', function () {
         </a>
       </nav>
 
-      <!-- Account Section -->
-      <div class="mt-10 border-t pt-4 border-gray-300">
-        <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Account</p>
-        <a href="/auth/account-setup" class="nav-item" data-path="/auth/account-setup">
-          <i data-feather="user"></i><span>Account Settings</span>
+      <!-- Account Section at bottom -->
+      <div class="mt-auto border-t pt-4 border-gray-300">
+        <a href="{{ url_for('auth.account_setup') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 rounded-lg transition">
+          <img src="{{ url_for('static', filename='uploads/' ~ (current_user.profile_pic or 'default_profile.jpg')) }}"
+              alt="Profile Picture"
+              class="w-10 h-10 rounded-full object-cover border" />
+          <span class="text-gray-700 font-semibold">{{ current_user.username }}</span>
         </a>
       </div>
-    </aside>
-    <div class="pt-20 md:ml-72"></div>
+
   `;
 
   const navbarContainer = document.getElementById('navbar-container');

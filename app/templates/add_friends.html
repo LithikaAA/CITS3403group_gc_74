@@ -182,6 +182,18 @@
         const svg     = document.getElementById('link-lines');
         const bubbles = Array.from(document.querySelectorAll('.friend-bubble'));
         const lines   = bubbles.map((_, i) => document.getElementById(`line-${i}`));
+        lines.forEach(line => {
+          if (line) {
+            if (window.innerWidth >= 1600) {
+              line.setAttribute('stroke-width', '2.5');
+            } else if (window.innerWidth >= 1024) {
+              line.setAttribute('stroke-width', '1.5');
+            } else {
+              line.setAttribute('stroke-width', '1');
+            }
+          }
+        });
+
         const menu           = document.getElementById('friend-menu');
         const menuUsername   = document.getElementById('friend-menu-username');
         const viewDataBtn    = document.getElementById('view-data-btn');
@@ -209,8 +221,9 @@
 
             // Attach button events
             viewDataBtn.onclick = () => {
-              window.location.href = "/share/shared-dashboard?friend=" + encodeURIComponent(username);
+              window.location.href = "{{ url_for('share.shared_dashboard') }}?friend=" + encodeURIComponent(username);
             };
+
             
             removeFriendBtn.onclick = () => {
               const username = menuUsername.textContent;
@@ -248,9 +261,24 @@
         bubbles.forEach((bubble, idx) => {
           const diff   = diffs[idx];
           const t      = diff / maxDiff;
-          const minR   = 150, maxR = 280;
+          let minR, maxR;
+          if (window.innerWidth >= 1600) {
+            minR = 180; maxR = 340;
+          } else if (window.innerWidth >= 1024) {
+            minR = 150; maxR = 280;
+          } else {
+            minR = 120; maxR = 220;
+          }
+
           const radius = minR + t * (maxR - minR);
-          const maxS   = 80,  minS = 40;
+          let maxS, minS;
+          if (window.innerWidth >= 1600) {
+            maxS = 120; minS = 60;
+          } else if (window.innerWidth >= 1024) {
+            maxS = 100; minS = 50;
+          } else {
+            maxS = 80; minS = 40;
+          }
           const size   = maxS - t * (maxS - minS);
           bubble.style.width  = `${size}px`;
           bubble.style.height = `${size}px`;
