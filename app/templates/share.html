@@ -3,7 +3,6 @@
 
 {% block head %}
 {{ super() }}
-
 <!-- Add CSS and JavaScript files -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/share.css') }}">
 <script src="{{ url_for('static', filename='js/share.js') }}" defer></script>
@@ -23,20 +22,58 @@
   /* Animation for appear effect */
   @keyframes appear {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .animate-appear {
     animation: appear 0.5s ease-out forwards;
   }
   
+  /* Animation for fade out effect */
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
+  }
+  .fade-out {
+    animation: fadeOut 0.3s ease forwards;
+  }
+  
   /* Animation for spin effect */
   @keyframes spin {
     from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    to   { transform: rotate(360deg); }
   }
   .animate-spin {
     display: inline-block;
     animation: spin 1s linear infinite;
+  }
+  
+  /* Close button styling */
+  .remove-playlist-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    opacity: 0.4;
+    transition: opacity 0.2s, transform 0.2s;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .bg-gray-50:hover .remove-playlist-btn { 
+    opacity: 1; 
+  }
+  .remove-playlist-btn:hover { 
+    transform: scale(1.2); 
+  }
+  
+  /* Card styling */
+  .bg-gray-50 {
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .bg-gray-50:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 </style>
 {% endblock %}
@@ -47,34 +84,48 @@
   <div class="text-center mb-10">
     <h1 class="text-3xl font-bold text-gray-800 mb-3">Share Your Playlists</h1>
     <p class="text-gray-600 max-w-2xl mx-auto">
-      Select your favourite playlists and share them with friends to compare music tastes 
+      Select your favourite playlists and share them with friends to compare music tastes
       and discover new tracks together.
     </p>
   </div>
-
+  
+  <!-- Selection & Friends -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-    <!-- Left Card: What to Share -->
+    <!-- Select Playlists -->
     <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
       <div class="flex items-center mb-6">
         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342
+                     m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316
+                     m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3
+                     0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
         </div>
         <h2 class="text-xl font-semibold text-gray-800">Select Playlists</h2>
       </div>
-
       <form id="shareForm" method="POST" action="{{ url_for('share.share') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
         <div class="space-y-5">
-          {% for playlist in current_user.playlists %}
+          {% for playlist in playlists %}
           <div class="bg-gray-50 rounded-lg p-5 hover:bg-gray-100 transition-all">
             <label class="flex items-start cursor-pointer">
-              <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" class="mt-1 w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+              <input type="checkbox" name="playlist_ids" value="{{ playlist.id }}"
+                     class="mt-1 w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
               <div class="ml-4">
                 <div class="font-medium text-gray-800 text-lg">{{ playlist.name }}</div>
-                <div class="text-sm text-gray-500">Share your playlist and genre preferences</div>
+                <div class="text-sm text-gray-500">
+                  {% if playlist.tracks %}
+                    {{ playlist.tracks|length }} tracks
+                    {% if playlist.tracks|length > 0 %}
+                    • {{ (playlist.tracks|length * 3)|round }} minutes (est.)
+                    {% endif %}
+                  {% else %}
+                    No tracks
+                  {% endif %}
+                </div>
               </div>
             </label>
           </div>
@@ -83,33 +134,41 @@
       </form>
     </div>
 
-    <!-- Right Card: Share with Friends -->
+    <!-- Share with Friends -->
     <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
       <div class="flex items-center mb-6">
         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1
+                     zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
         </div>
         <h2 class="text-xl font-semibold text-gray-800">Share with Friends</h2>
       </div>
-      
       <div class="space-y-5">
-        {% for friend in current_user.all_friends %}
+        {% for friend in friends %}
         <div class="bg-gray-50 rounded-lg p-5 hover:bg-gray-100 transition-all">
           <label class="flex items-center cursor-pointer">
-            <input type="checkbox" name="friend_ids" form="shareForm" value="{{ friend.id }}" class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+            <input type="checkbox" name="friend_ids" form="shareForm" value="{{ friend.id }}"
+                   class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
             <div class="ml-4 flex items-center">
-              {% if friend.profile_photo %}
-                <img src="{{ url_for('static', filename='uploads/profile_photos/' + friend.profile_photo) }}" alt="{{ friend.username }}" class="w-14 h-14 rounded-full object-cover mr-4">
+              {% if friend.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/profile_photos/' ~ friend.profile_pic) }}"
+                     alt="{{ friend.username }}"
+                     class="w-14 h-14 rounded-full object-cover mr-4">
               {% else %}
-                <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-3xl mr-4">
+                <div class="w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center
+                            text-white font-bold text-3xl mr-4">
                   {{ friend.username[0] | upper }}
                 </div>
               {% endif %}
               <div>
                 <div class="font-medium text-gray-800 text-lg">{{ friend.username }}</div>
-                <div class="text-sm text-gray-500">Last shared: {{ friend.last_shared or "Never" }}</div>
+                <div class="text-sm text-gray-500">
+                  Last shared: {{ friend.last_shared if friend.last_shared is defined else 'Never' }}
+                </div>
               </div>
             </div>
           </label>
@@ -121,9 +180,17 @@
 
   <!-- Share Button -->
   <div class="flex justify-center mb-8">
-    <button type="submit" form="shareForm" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-lg font-medium transition-all shadow-md text-lg" style="pointer-events: auto !important; position: relative !important; z-index: 100 !important; cursor: pointer !important;">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+    <button type="submit" form="shareForm"
+            class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600
+                   hover:to-pink-600 text-white px-8 py-3 rounded-lg font-medium
+                   transition-all shadow-md text-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342
+                 m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316
+                 m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3
+                 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
       </svg>
       Share Selected Playlists
     </button>
@@ -131,339 +198,149 @@
 
   <!-- Bottom Cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    <!-- Left Card: Playlists Shared With You -->
-    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+    <!-- Playlists Shared With You -->
+    <div id="shared-playlists" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
       <div class="flex items-center mb-6">
         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0
+                     01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2
+                     2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
           </svg>
         </div>
         <h2 class="text-xl font-semibold text-gray-800">Playlists Shared With You</h2>
       </div>
-
-      {% if current_user.received_shares %}
+      {% if received_shares %}
         <div class="space-y-2">
-          {% for share in current_user.received_shares %}
-            <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
-              <div class="flex items-center">
-                {% if share.shared_by.profile_photo %}
-                  <img src="{{ url_for('static', filename='uploads/profile_photos/' + share.shared_by.profile_photo) }}" alt="{{ share.shared_by.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
-                {% else %}
-                  <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                    {{ share.shared_by.username[0] | upper }}
-                  </div>
-                {% endif %}
-                <div>
-                  <div class="font-medium">{{ share.playlist.name }}</div>
-                  <div class="text-sm text-gray-500">Shared by {{ share.shared_by.username }}</div>
+          {% for share in received_shares %}
+          <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
+            <div class="flex items-center">
+              {% set owner = share.owner if share.owner is defined else None %}
+              {% if owner and owner.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/profile_photos/' ~ owner.profile_pic) }}"
+                     alt="{{ owner.username }}"
+                     class="w-10 h-10 rounded-full object-cover mr-3">
+              {% else %}
+                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
+                            text-white font-bold text-lg mr-3">
+                  {% if owner and owner.username %}
+                    {{ owner.username[0] | upper }}
+                  {% else %}
+                    U
+                  {% endif %}
+                </div>
+              {% endif %}
+              <div>
+                <div class="font-medium">
+                  {% if share.playlist is defined and share.playlist %}
+                    {{ share.playlist.name }}
+                  {% else %}
+                    Playlist
+                  {% endif %}
+                </div>
+                <div class="text-sm text-gray-500">
+                  Shared by {{ owner.username if owner and owner.username is defined else 'Unknown' }}
                 </div>
               </div>
             </div>
+            <!-- Close button will be added by JavaScript -->
+          </div>
           {% endfor %}
         </div>
       {% else %}
-        <div class="flex items-center justify-center h-32">
-          <p class="text-gray-500 text-lg">No playlists have been shared with you yet.</p>
+        <div id="empty-shared-with-you"
+             class="flex items-center justify-center h-32">
+          <p class="text-gray-500 text-lg">
+            No playlists have been shared with you yet.
+          </p>
         </div>
       {% endif %}
     </div>
 
-    <!-- Right Card: Your Sharing History -->
-    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 your-sharing-history-container">
+    <!-- Your Sharing History -->
+    <div id="sharing-history" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
       <div class="flex items-center mb-6">
         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <h2 class="text-xl font-semibold text-gray-800">Your Sharing History</h2>
       </div>
-      
-      <div id="sharing-history-content">
-        {% if current_user.sent_shares %}
-          <div class="space-y-2">
-            {% for share in current_user.sent_shares %}
-              <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
-                <div class="flex items-center">
-                  {% if share.shared_with.profile_photo %}
-                    <img src="{{ url_for('static', filename='uploads/profile_photos/' + share.shared_with.profile_photo) }}" alt="{{ share.shared_with.username }}" class="w-10 h-10 rounded-full object-cover mr-3">
+      {% if sent_shares %}
+        <div class="space-y-2">
+          {% for share in sent_shares %}
+          <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
+            <div class="flex items-center">
+              {% set recipient = share.recipient if share.recipient is defined else None %}
+              {% if recipient and recipient.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/profile_photos/' ~ recipient.profile_pic) }}"
+                     alt="{{ recipient.username }}"
+                     class="w-10 h-10 rounded-full object-cover mr-3">
+              {% else %}
+                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
+                            text-white font-bold text-lg mr-3">
+                  {% if recipient and recipient.username %}
+                    {{ recipient.username[0] | upper }}
                   {% else %}
-                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                      {{ share.shared_with.username[0] | upper }}
-                    </div>
+                    U
                   {% endif %}
-                  <div>
-                    <div class="font-medium">{{ share.playlist.name }}</div>
-                    <div class="text-sm text-gray-500">Shared with {{ share.shared_with.username }}</div>
-                  </div>
+                </div>
+              {% endif %}
+              <div>
+                <div class="font-medium">
+                  {% if share.playlist is defined and share.playlist %}
+                    {{ share.playlist.name }}
+                  {% else %}
+                    Playlist
+                  {% endif %}
+                </div>
+                <div class="text-sm text-gray-500">
+                  Shared with {{ recipient.username if recipient and recipient.username is defined else 'Unknown' }}
                 </div>
               </div>
-            {% endfor %}
+            </div>
+            <!-- Close button will be added by JavaScript -->
           </div>
-        {% else %}
-          <div class="flex items-center justify-center h-32">
-            <p class="text-gray-500 text-lg">You haven't shared any playlists yet.</p>
-          </div>
-        {% endif %}
-      </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div id="empty-sharing-history"
+             class="flex items-center justify-center h-32">
+          <p class="text-gray-500 text-lg">
+            You haven't shared any playlists yet.
+          </p>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>
 
-<!-- Emergency fix script for the share button -->
-<script>
-  // Run this immediately to ensure the button is clickable
-  (function() {
-    console.log('Emergency share button fix running');
-    
-    // Get all form buttons
-    document.querySelectorAll('button[type="submit"]').forEach(function(btn) {
-      btn.style.pointerEvents = 'auto';
-      btn.style.cursor = 'pointer';
-      btn.style.position = 'relative';
-      btn.style.zIndex = '9999';
-      
-      console.log('Fixed button:', btn);
-    });
-    
-    // Direct fix for the main share button
-    const shareButton = document.querySelector('button[form="shareForm"]');
-    if (shareButton) {
-      shareButton.onclick = function(e) {
-        console.log('Share button clicked (emergency handler)');
-        
-        // Get selected playlists and friends
-        const playlistCheckboxes = document.querySelectorAll('input[name="playlist_ids"]:checked');
-        const friendCheckboxes = document.querySelectorAll('input[name="friend_ids"]:checked');
-        
-        // Basic validation
-        if (playlistCheckboxes.length === 0) {
-          alert('Please select at least one playlist');
-          e.preventDefault();
-          return false;
-        }
-        
-        if (friendCheckboxes.length === 0) {
-          alert('Please select at least one friend');
-          e.preventDefault();
-          return false;
-        }
-        
-        // Update sharing history
-        try {
-          // Get the history container
-          const historyContainer = document.querySelector('.your-sharing-history-container');
-          if (historyContainer) {
-            // Remove empty state
-            const emptyState = historyContainer.querySelector('.flex.items-center.justify-center');
-            if (emptyState) {
-              emptyState.remove();
-            }
-            
-            // Create entries container if needed
-            let entriesContainer = historyContainer.querySelector('.space-y-2');
-            if (!entriesContainer) {
-              entriesContainer = document.createElement('div');
-              entriesContainer.className = 'space-y-2';
-              
-              // Insert after header
-              const header = historyContainer.querySelector('h2');
-              if (header) {
-                const headerContainer = header.closest('.flex');
-                if (headerContainer) {
-                  headerContainer.parentNode.insertBefore(entriesContainer, headerContainer.nextSibling);
-                } else {
-                  historyContainer.appendChild(entriesContainer);
-                }
-              } else {
-                historyContainer.appendChild(entriesContainer);
-              }
-            }
-            
-            // Add entries for each friend
-            friendCheckboxes.forEach(friendCheckbox => {
-              // Get friend details
-              const label = friendCheckbox.closest('label');
-              if (label) {
-                const nameElement = label.querySelector('.font-medium.text-gray-800');
-                const friendName = nameElement ? nameElement.textContent.trim() : 'Friend';
-                const initial = friendName[0].toUpperCase();
-                
-                // Check for profile photo
-                let photoHTML = '';
-                const photoElement = label.querySelector('img.rounded-full');
-                if (photoElement) {
-                  photoHTML = `<img src="${photoElement.src}" alt="${friendName}" class="w-10 h-10 rounded-full object-cover mr-3">`;
-                } else {
-                  photoHTML = `
-                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                      ${initial}
-                    </div>
-                  `;
-                }
-                
-                // Get playlist names
-                const playlistNames = [];
-                playlistCheckboxes.forEach(playlistCheckbox => {
-                  const playlistLabel = playlistCheckbox.closest('label');
-                  if (playlistLabel) {
-                    const nameEl = playlistLabel.querySelector('.font-medium.text-gray-800');
-                    if (nameEl) {
-                      playlistNames.push(nameEl.textContent.trim());
-                    }
-                  }
-                });
-                
-                // Format playlist names
-                const playlistDisplay = playlistNames.length === 1 
-                  ? playlistNames[0] 
-                  : playlistNames.length === 2 
-                    ? `${playlistNames[0]} and ${playlistNames[1]}`
-                    : `${playlistNames[0]} and ${playlistNames.length - 1} more`;
-                
-                // Create entry
-                const entry = document.createElement('div');
-                entry.className = 'bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all animate-appear';
-                entry.innerHTML = `
-                  <div class="flex items-center">
-                    ${photoHTML}
-                    <div>
-                      <div class="font-medium">${playlistDisplay}</div>
-                      <div class="text-sm text-gray-500">Shared with ${friendName}</div>
-                    </div>
-                  </div>
-                `;
-                
-                // Add to container
-                entriesContainer.prepend(entry);
-              }
-            });
-          }
-        } catch (err) {
-          console.error('Error updating sharing history:', err);
-        }
-        
-        // Show loading state
-        shareButton.innerHTML = '<span class="animate-spin mr-2">↻</span> Sharing...';
-        shareButton.disabled = true;
-        
-        // Allow form submission to continue
-        return true;
-      };
-    }
-    
-    // Fix all checkboxes too
-    document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
-      checkbox.style.pointerEvents = 'auto';
-      checkbox.style.position = 'relative';
-      checkbox.style.zIndex = '10';
-    });
-  })();
-</script>
-
-<!-- Add this inline script to the HTML template -->
-<script>
-  // Run this immediately to preserve history
-  (function() {
-    console.log('Immediate history preservation running');
-    
-    // Function to save history to sessionStorage
-    function saveHistory() {
-      try {
-        const historyContainer = document.querySelector('.your-sharing-history-container');
-        if (!historyContainer) return;
-        
-        const entriesContainer = historyContainer.querySelector('.space-y-2');
-        if (!entriesContainer || entriesContainer.querySelectorAll('.bg-gray-50').length === 0) return;
-        
-        // Save the HTML content
-        sessionStorage.setItem('vibeshare_history', entriesContainer.outerHTML);
-        console.log('Saved sharing history to sessionStorage');
-      } catch (err) {
-        console.error('Error saving history:', err);
-      }
-    }
-    
-    // Function to restore history
-    function restoreHistory() {
-      try {
-        const savedHistory = sessionStorage.getItem('vibeshare_history');
-        if (!savedHistory) return;
-        
-        const historyContainer = document.querySelector('.your-sharing-history-container');
-        if (!historyContainer) return;
-        
-        // Remove empty state message if present
-        const emptyMessage = historyContainer.querySelector('.flex.items-center.justify-center');
-        if (emptyMessage) {
-          emptyMessage.remove();
-        }
-        
-        // Insert the saved history
-        const existingContainer = historyContainer.querySelector('.space-y-2');
-        if (existingContainer) {
-          // If container already exists, only populate it if empty
-          if (existingContainer.querySelectorAll('.bg-gray-50').length === 0) {
-            existingContainer.outerHTML = savedHistory;
-          }
-        } else {
-          // If no container exists, insert after the heading
-          const header = historyContainer.querySelector('h2');
-          if (header) {
-            const headerContainer = header.closest('.flex');
-            if (headerContainer) {
-              headerContainer.insertAdjacentHTML('afterend', savedHistory);
-            } else {
-              historyContainer.insertAdjacentHTML('beforeend', savedHistory);
-            }
-          } else {
-            historyContainer.insertAdjacentHTML('beforeend', savedHistory);
-          }
-        }
-        
-        console.log('Restored sharing history from sessionStorage');
-      } catch (err) {
-        console.error('Error restoring history:', err);
-      }
-    }
-    
-    // Save history before unload
-    window.addEventListener('beforeunload', saveHistory);
-    
-    // Restore history on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Wait a bit to ensure the page is fully loaded
-      setTimeout(restoreHistory, 500);
-      
-      // Also run on form submission
-      const shareForm = document.getElementById('shareForm');
-      if (shareForm) {
-        shareForm.addEventListener('submit', function() {
-          // Save current history before submission
-          saveHistory();
-        });
-      }
-      
-      // Fix the share button staying in loading state
-      const shareButton = document.querySelector('button[type="submit"]');
-      if (shareButton && shareButton.textContent.includes('Sharing...')) {
-        // Button is stuck in loading state, restore it
-        shareButton.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-          Share Selected Playlists
-        `;
-        shareButton.disabled = false;
-      }
-    });
-    
-    // Run immediately as well
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      // Document already ready, restore now
-      restoreHistory();
-    }
-  })();
-</script>
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="fixed top-4 right-4 z-50">
+      {% for category, message in messages %}
+        <div class="bg-{{ 'green' if category == 'success' else 'red' }}-100 border border-{{ 'green' if category == 'success' else 'red' }}-400 text-{{ 'green' if category == 'success' else 'red' }}-700 px-4 py-3 rounded mb-2 animate-appear">
+          <div class="flex items-center">
+            {% if category == 'success' %}
+              <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            {% else %}
+              <svg class="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            {% endif %}
+            <span>{{ message }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 {% endblock %}
