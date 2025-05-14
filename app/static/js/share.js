@@ -1,9 +1,3 @@
-/**
- * Process shared playlists between users
- * This function ensures shared playlists appear in the correct sections:
- * - "Your Sharing History" for the sender 
- * - "Playlists Shared With You" for the recipient
- */
 function processPlaylistSharing() {
   console.log('Processing playlist sharing...');
   
@@ -631,4 +625,5 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeImprovements);
 } else {
   initializeImprovements();
+  setTimeout(initializeImprovements, 500);
 }

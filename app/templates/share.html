@@ -155,7 +155,7 @@
                    class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
             <div class="ml-4 flex items-center">
               {% if friend.profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/profile_photos/' ~ friend.profile_pic) }}"
+                <img src="{{ url_for('static', filename='uploads/' ~ friend.profile_pic) }}"
                      alt="{{ friend.username }}"
                      class="w-14 h-14 rounded-full object-cover mr-4">
               {% else %}
@@ -219,7 +219,7 @@
             <div class="flex items-center">
               {% set owner = share.owner if share.owner is defined else None %}
               {% if owner and owner.profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/profile_photos/' ~ owner.profile_pic) }}"
+                <img src="{{ url_for('static', filename='uploads/' ~ owner.profile_pic) }}"
                      alt="{{ owner.username }}"
                      class="w-10 h-10 rounded-full object-cover mr-3">
               {% else %}
@@ -278,7 +278,7 @@
             <div class="flex items-center">
               {% set recipient = share.recipient if share.recipient is defined else None %}
               {% if recipient and recipient.profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/profile_photos/' ~ recipient.profile_pic) }}"
+                <img src="{{ url_for('static', filename='uploads/' ~ recipient.profile_pic) }}"
                      alt="{{ recipient.username }}"
                      class="w-10 h-10 rounded-full object-cover mr-3">
               {% else %}
