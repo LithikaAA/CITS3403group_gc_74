@@ -18,12 +18,13 @@ upload_bp = Blueprint('upload', __name__)
 
 # ---------- Main Upload Page ----------
 @upload_bp.route('/upload', methods=['GET'])
+@login_required
 def upload():
     username = session.get('username', 'User')
     song_count = UserTrack.query.filter_by(user_id=current_user.id).count() if current_user.is_authenticated else 0
     # Generate CSRF token and add it to the template
     csrf_token = generate_csrf()
-    return render_template('upload.html', username=username, song_count=song_count, csrf_token=csrf_token)
+    return render_template('upload.html', username=username, song_count=song_count)
 
 
 # ---------- Search Songs (Spotify API + CSV metadata) ----------

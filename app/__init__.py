@@ -1,10 +1,10 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from config import Config
 from dotenv import load_dotenv
-from .models import db, User
+from .models import db, User, Friend
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 # Import all blueprints
@@ -21,26 +21,25 @@ load_dotenv()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
-def create_app():
+def create_app(config_class=Config):
     """
     Factory function to create and configure the Flask app.
     :return: Configured Flask app instance
     """
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
 
     # Load configuration
-    app.config.from_object(Config)
+    app.config.from_object(config_class)
 
-    # Initialize CSRF protection
+    # Initialise CSRF protection
     csrf.init_app(app)
-
     app.jinja_env.globals['csrf_token'] = generate_csrf
 
     # Optionally include Spotify credentials in config
-    app.config['SPOTIPY_CLIENT_ID'] = os.getenv("SPOTIPY_CLIENT_ID")
-    app.config['SPOTIPY_CLIENT_SECRET'] = os.getenv("SPOTIPY_CLIENT_SECRET")
-    app.config['SPOTIPY_REDIRECT_URI'] = os.getenv("SPOTIPY_REDIRECT_URI")
-
+    app.config.setdefault('SPOTIPY_CLIENT_ID', os.getenv("SPOTIPY_CLIENT_ID"))
+    app.config.setdefault('SPOTIPY_CLIENT_SECRET', os.getenv("SPOTIPY_CLIENT_SECRET"))
+    app.config.setdefault('SPOTIPY_REDIRECT_URI', os.getenv("SPOTIPY_REDIRECT_URI"))
+    
     # Initialise extensions
     db.init_app(app)
     Migrate(app, db)
@@ -50,7 +49,7 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -59,5 +58,11 @@ def create_app():
     app.register_blueprint(share_bp)
     app.register_blueprint(friends_bp)
     app.register_blueprint(index_bp)
-
+    
+    @app.context_processor
+    def inject_incoming_requests():
+        if current_user.is_authenticated:
+            requests = Friend.query.filter_by(friend_id=current_user.id, is_accepted=False).all()
+            return dict(incoming_requests=requests)
+        return dict(incoming_requests=[])
     return app

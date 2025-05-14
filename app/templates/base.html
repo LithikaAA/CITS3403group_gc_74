@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>{% block title %}VibeShare{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 
   {% block head %}{% endblock %}
 
@@ -28,14 +30,92 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100">
+<body class="min-h-screen bg-gradient-to-b from-blue-100 via-blue-200 to-pink-100 antialiased font-sans text-gray-800">
  
   <!-- Navigation Bar -->
   {% if current_user.is_authenticated and request.endpoint not in ['auth.login', 'auth.signup', 'index.home'] %}
     <div id="navbar-container"></div>
   {% endif %}
 
-  <script src="{{ url_for('static', filename='components/navbar.js') }}"></script>
+  <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const navHTML = `
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-md z-50 flex flex-col py-4 px-4 space-y-6 animate-fade-in hidden md:flex">
+      
+      <!-- Clickable Logo -->
+      <a href="/dashboard" class="mx-auto mb-4">
+        <img src="/static/img/side_logo.png" alt="VibeShare Logo" class="w-48" />
+      </a>
+
+      <!-- Top nav -->
+      <nav class="flex flex-col gap-4 text-sm">
+        <a href="/dashboard" class="nav-item" data-path="/dashboard">
+          <i data-feather="home"></i><span>Dashboard</span>
+        </a>
+        <a href="/upload" class="nav-item" data-path="/upload">
+          <i data-feather="plus-square"></i><span>Add Data</span>
+        </a>
+        <a href="/share/shared" class="nav-item" data-path="/share/shared">
+          <i data-feather="eye"></i><span>View Data</span>
+        </a>
+        <a href="/share" class="nav-item" data-path="/share">
+          <i data-feather="share-2"></i><span>Share</span>
+        </a>
+        <a href="/add-friend" class="nav-item relative flex items-center space-x-3" data-path="/add-friend">
+          <div class="relative">
+            <i data-feather="user-plus"></i>
+
+            {% if incoming_requests|length > 0 %}
+              <!-- Ping animation -->
+              <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-ping border-2 border-white"></span>
+              <!-- Static dot -->
+              <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            {% endif %}
+          </div>
+          <span>Add Friend</span>
+        </a>
+      </nav>
+
+      <!-- Bottom: Account -->
+      <div class="mt-auto border-t pt-4 border-gray-300">
+        <a href="{{ url_for('auth.account_setup') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 rounded-lg transition">
+          <img src="{{ url_for('static', filename='uploads/' ~ (current_user.profile_pic or 'default_profile.jpg')) }}" 
+              alt="Profile Picture" class="w-10 h-10 rounded-full object-cover border" />
+          <span class="text-gray-700 font-semibold text-sm">{{ current_user.username }}</span>
+        </a>
+      </div>
+    </aside>
+    <div class="pt-20 md:ml-72"></div>
+  `;
+
+  const navbarContainer = document.getElementById('navbar-container');
+  if (navbarContainer) {
+    navbarContainer.innerHTML = navHTML;
+    feather.replace();
+
+    navbarContainer.querySelectorAll('.nav-item').forEach(link => {
+      link.classList.add(
+        "flex", "items-center", "space-x-3", "text-gray-700",
+        "hover:text-indigo-600", "hover:bg-gradient-to-r",
+        "hover:from-indigo-400", "hover:to-pink-400",
+        "hover:text-white", "px-4", "py-2",
+        "rounded-full", "transition", "duration-200", "text-lg"
+      );
+    });
+
+    const path = window.location.pathname;
+    const items = Array.from(navbarContainer.querySelectorAll('.nav-item'));
+    items.sort((a, b) => b.getAttribute('data-path').length - a.getAttribute('data-path').length);
+    for (const link of items) {
+      if (path.startsWith(link.getAttribute('data-path'))) {
+        link.classList.add('nav-active');
+        break;
+      }
+    }
+  }
+});
+</script>
+
   <style>
     @keyframes slide-in-highlight {
       0% {
@@ -47,6 +127,33 @@
         opacity: 1;
       }
     }
+
+    .flash-container {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 1000;
+    }
+
+    .flash-message {
+      margin-top: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      animation: fade-in 0.5s ease-out forwards;
+    }
+
+    .flash-message.success {
+      background-color: #22c55e;
+      color: white;
+    }
+
+    .flash-message.error {
+      background-color: #ef4444;
+      color: white;
+    }
+
   
     .nav-active {
       background-image: linear-gradient(to right, #818cf8, #ec4899);
@@ -55,6 +162,16 @@
       animation: slide-in-highlight 0.3s ease-out forwards;
       margin-left: 0.5rem;
     }
+
+    .nav-item i {
+      width: 20px;
+      height: 20px;
+    }
+    .nav-active:hover {
+      filter: brightness(1.1);
+    }
+
+
   </style>
 
   <!-- Flash Messages -->
@@ -62,7 +179,7 @@
     {% if messages %}
       <div class="flash-container">
         {% for category, message in messages %}
-          <div class="flash-message {{ category }}">
+          <div class="flash-message {{ 'success' if category == 'success' else 'error' }}">
             {{ message }}
           </div>
         {% endfor %}
@@ -70,7 +187,7 @@
     {% endif %}
   {% endwith %}
 
-  <main class="flex flex-col items-center justify-center py-12 px-4 w-full">
+  <main class="flex flex-col items-center justify-center mt-16 mb-12 px-4 w-full min-h-screen">
     {% block content %}{% endblock %}
   </main>
 

@@ -1,0 +1,35 @@
+#center-bubble img {
+  transition: transform 0.3s ease;
+  transform-origin: center;
+}
+#center-bubble img:hover {
+  transform: scale(1.1);
+}
+.glow {
+box-shadow:
+  0 0 10px 2px rgba(129, 140, 248, 0.7),
+  0 0 15px 5px rgba(236, 72, 153, 0.5);
+}
+#friend-menu.hidden {
+display: none;
+}
+@keyframes idle-pulse {
+0%, 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1); }
+50%      { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1.05); }
+}
+.friend-bubble.idle {
+animation: idle-pulse 2s ease-in-out infinite alternate;
+}
+
+#friend-menu.hidden { display: none; }
+
+.tab-content {
+transition: opacity 0.3s ease-in-out;
+}
+
+#friend-menu {
+  border: 1.5px solid #e0e7ff; /* subtle indigo border */
+}
+#friend-menu button {
+  font-size: 1rem;
+}

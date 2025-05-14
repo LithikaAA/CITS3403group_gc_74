@@ -3,6 +3,10 @@
 
 {% block content %}
 <div class="flex max-w-4xl mx-auto bg-white shadow-lg rounded-2xl mt-10 overflow-hidden">
+  <form id="accountSetupForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="flex w-full">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="form_type" value="account" />
+
   <!-- Left Panel -->
   <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 p-10 flex flex-col items-center justify-center text-white">
     <div class="bg-white rounded-full p-1 mb-6">
@@ -12,22 +16,19 @@
         class="w-24 h-24 rounded-full object-cover"
       />
     </div>
-    <form id="picForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="mb-6 flex flex-col items-center">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="relative inline-block">
-        <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
-          <i data-feather="image" class="w-4 h-4 mr-2"></i>
-          Upload Profile Picture
-          <input
-            type="file"
-            name="profile_pic"
-            accept="image/*"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            onchange="document.getElementById('picForm').submit()"
-          />
-        </button>
-      </div>
-    </form>
+    <div class="relative inline-block mb-6">
+      <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
+        <i data-feather="image" class="w-4 h-4 mr-2"></i>
+        Upload Profile Picture
+        <input
+          type="file"
+          name="profile_pic"
+          accept="image/*"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          onchange="document.getElementById('accountSetupForm').submit()"
+        />
+      </button>
+    </div>
   </div>
 
   <!-- Right Panel -->
@@ -39,9 +40,7 @@
 
     <h1 class="text-3xl font-bold mb-8">Account Setup</h1>
 
-    <form method="POST" action="{{ url_for('auth.account_setup') }}" class="space-y-5">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="form_type" value="account" />
+    <div class="space-y-5">
       <div>
         <label class="block text-gray-600">Username</label>
         <input type="text" name="username" value="{{ current_user.username or '' }}" class="w-full border px-4 py-2 rounded-lg" required />
@@ -77,9 +76,10 @@
           Save Changes
         </button>
       </div>
-    </form>
+    </div>
   </div>
-</div>
+</form>
+
 
 <!-- Password Modal -->
 <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
