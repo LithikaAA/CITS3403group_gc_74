@@ -263,22 +263,23 @@
           const t      = diff / maxDiff;
           let minR, maxR;
           if (window.innerWidth >= 1600) {
-            minR = 180; maxR = 340;
+            minR = 100; maxR = 220;
           } else if (window.innerWidth >= 1024) {
-            minR = 150; maxR = 280;
+            minR = 100; maxR = 220;
           } else {
-            minR = 120; maxR = 220;
+            minR = 100; maxR = 220;
           }
 
           const radius = minR + t * (maxR - minR);
           let maxS, minS;
           if (window.innerWidth >= 1600) {
-            maxS = 120; minS = 60;
+            maxS = 130; minS = 80;
           } else if (window.innerWidth >= 1024) {
-            maxS = 100; minS = 50;
+            maxS = 130; minS = 80;
           } else {
-            maxS = 80; minS = 40;
+            maxS = 130; minS = 80;
           }
+
           const size   = maxS - t * (maxS - minS);
           bubble.style.width  = `${size}px`;
           bubble.style.height = `${size}px`;
