@@ -29,6 +29,7 @@ def upload():
 
 # ---------- Search Songs (Spotify API + CSV metadata) ----------
 @upload_bp.route("/api/search-tracks")
+@login_required
 def api_search_tracks():
     query = request.args.get("query")
     if not query:
