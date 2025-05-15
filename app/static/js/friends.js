@@ -42,7 +42,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       // Attach button events
       viewDataBtn.onclick = () => {
-        window.location.href = "{{ url_for('share.shared_dashboard') }}?friend=" + encodeURIComponent(username);
+        window.location.href = "/share/shared";
       };
 
       removeFriendBtn.onclick = () => {
