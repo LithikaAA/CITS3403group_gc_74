@@ -35,6 +35,7 @@ def load_sample_data():
 class FlaskAppTestCase(unittest.TestCase):
     
     def setUp(self):
+        self.maxDiff = None
         self.app = create_app(config_class=TestConfig)
         with self.app.app_context():
             db.drop_all()
@@ -133,7 +134,7 @@ class FlaskAppTestCase(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'user2 added successfully!', response.data)
+        self.assertIn(b'Friend request sent to user2!', response.data)
 
         with self.app.app_context():
             friendship = Friend.query.filter_by(user_id=user1_id, friend_id=user2_id).first()
@@ -187,7 +188,7 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertIn(b'Friend request accepted!', response.data)
 
         with self.app.app_context():
-            self.assertTrue(Friend.query.get(request_id).is_accepted)
+            self.assertTrue(db.session.get(Friend, request_id).is_accepted)
     
     def test_create_playlist_missing_data(self):
         with self.client.session_transaction() as session:
@@ -262,7 +263,6 @@ class FlaskAppTestCase(unittest.TestCase):
         data = {"playlist_name": "", "tracks": []}
         res = self.client.post('/upload/create-playlist', json=data)
         self.assertIn(b'No tracks provided', res.data)
-
-
+        
 if __name__ == '__main__':
     unittest.main()
