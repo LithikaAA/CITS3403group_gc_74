@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
+  // Global variables for playlist editor integration
+  window.uploadApp = {}; // Create namespace for sharing functions with playlist-editor.js
+  
   // Helper function to get cookie by name
   function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -84,6 +87,43 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("duration_ms").value = track.duration_ms ?? "";
   }
 
+  // NEW: Extract clear form fields functionality into a separate function
+  function clearFormFields() {
+    document.getElementById("title").value = "";
+    document.getElementById("artist").value = "";
+    document.getElementById("album").value = "";
+    document.getElementById("genre").value = "";
+    document.getElementById("danceability").value = "";
+    document.getElementById("energy").value = "";
+    document.getElementById("liveness").value = "";
+    document.getElementById("acousticness").value = "";
+    document.getElementById("valence").value = "";
+    document.getElementById("mode").value = "";
+    document.getElementById("tempo").value = "";
+    document.getElementById("duration_ms").value = "";
+    
+    // Clear the search query input
+    queryInput.value = "";
+  }
+  
+  // NEW: Get current form data as an object
+  function getFormData() {
+    return {
+      title: document.getElementById("title").value.trim(),
+      artist: document.getElementById("artist").value.trim(),
+      album: document.getElementById("album").value.trim(),
+      genre: document.getElementById("genre").value.trim(),
+      danceability: document.getElementById("danceability").value.trim(),
+      energy: document.getElementById("energy").value.trim(),
+      liveness: document.getElementById("liveness").value.trim(),
+      acousticness: document.getElementById("acousticness").value.trim(),
+      valence: document.getElementById("valence").value.trim(),
+      mode: document.getElementById("mode").value.trim(),
+      tempo: document.getElementById("tempo").value.trim(),
+      duration_ms: document.getElementById("duration_ms").value.trim() || "0"
+    };
+  }
+
   function displaySelectedSong(track) {
     if (document.getElementById(`song-${track.id}`)) return;
 
@@ -142,7 +182,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  document.getElementById("add-track-btn").addEventListener("click", function () {
+  // NEW: Extract the add track functionality for reuse
+  function handleAddTrack() {
     const title = document.getElementById("title").value.trim();
     const artist = document.getElementById("artist").value.trim();
     
@@ -176,21 +217,19 @@ document.addEventListener("DOMContentLoaded", function () {
     displaySelectedSong(track);
     
     // Clear the form fields after adding
-    document.getElementById("title").value = "";
-    document.getElementById("artist").value = "";
-    document.getElementById("album").value = "";
-    document.getElementById("genre").value = "";
-    document.getElementById("danceability").value = "";
-    document.getElementById("energy").value = "";
-    document.getElementById("liveness").value = "";
-    document.getElementById("acousticness").value = "";
-    document.getElementById("valence").value = "";
-    document.getElementById("mode").value = "";
-    document.getElementById("tempo").value = "";
-    document.getElementById("duration_ms").value = "";
+    clearFormFields();
+  }
+
+  // MODIFIED: Check if we're in playlist editing mode
+  document.getElementById("add-track-btn").addEventListener("click", function(e) {
+    // Check if we're editing a playlist - the playlist-editor.js will handle this case
+    if (window.playlistEditor && window.playlistEditor.isEditingPlaylist()) {
+      // Let playlist-editor.js handle this
+      return;
+    }
     
-    // Clear the search query input
-    queryInput.value = "";
+    // Otherwise, use the normal functionality for creating a new playlist
+    handleAddTrack();
   });
   
   document.getElementById("create-playlist-btn").addEventListener("click", function () {
@@ -315,10 +354,10 @@ document.addEventListener("DOMContentLoaded", function () {
         displaySimilarSongGroups(data.playlist);
         document.getElementById("playlist-name").value = "";
         
-        // Optionally clear the selected tracks after successful creation
-        // selectedTracks = [];
-        // songList.innerHTML = "";
-        // addedSongsSection.classList.add("hidden");
+        // Call createPlaylistCallback to update sidebar immediately
+        if (window.createPlaylistCallback) {
+          window.createPlaylistCallback(data.playlist);
+        }
         
         // Scroll to the playlist section
         document.getElementById("playlist-output").scrollIntoView({ behavior: 'smooth' });
@@ -458,6 +497,20 @@ document.addEventListener("DOMContentLoaded", function () {
       resultsBox.style.display = "none";
     }
   });
+  
+  // NEW: Function to hide playlist sections when editing a playlist
+  function hidePlaylistSections() {
+    if (addedSongsSection) addedSongsSection.classList.add('hidden');
+    if (playlistOutput) playlistOutput.classList.add('hidden');
+  }
+  
+  // NEW: Export functions to window.uploadApp for use by playlist-editor.js
+  window.uploadApp = {
+    clearFormFields: clearFormFields,
+    fillFormFields: fillFormFields,
+    getFormData: getFormData,
+    hidePlaylistSections: hidePlaylistSections
+  };
   
   // Call updatePlaylistButtonState initially to set the correct state
   updatePlaylistButtonState();

@@ -2,12 +2,157 @@
 {% block title %}Upload Dashboard | VibeShare{% endblock %}
 
 {% block head %}
+  {{ super() }}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
   <!-- Add CSRF token meta tag -->
-  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="csrf-token" content="{{ csrf_token()}}">
+  <!-- Added styles for playlist sidebar and typewriter animation -->
 {% endblock %}
 
 {% block content %}
+<!-- Added Playlist Sidebar Button -->
+<button id="view-playlists-btn" class="flex items-center">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+  </svg>
+  <span>My Playlists</span>
+</button>
+
+<!-- Added Playlist Sidebar with Modern UI -->
+<div id="playlists-sidebar">
+  <div class="sidebar-header">
+    <h3>Your Music Library</h3>
+    <button id="close-playlists-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+  
+  <div id="your-playlists-sidebar">
+    {% for pl in playlists %}
+      <div class="playlist-item" data-id="{{ pl.id }}">
+        <div class="playlist-name">{{ pl.name }} <span class="song-count">{{ pl.tracks|length }} songs</span></div>
+        
+        <div class="playlist-actions">
+          <button class="edit-playlist-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+          </button>
+          <button class="delete-playlist-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-playlists">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+        <h4>No playlists yet</h4>
+        <p>Create your first playlist by selecting songs and clicking "Create Playlist"</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Added Overlay for when sidebar is open -->
+<div id="sidebar-overlay" class="hidden"></div>
+
+<!-- Playlist Modal -->
+<div id="playlist-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Edit Playlist: <span id="modal-playlist-name">My Playlist</span></h2>
+      <button class="modal-close-btn" id="close-modal-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+        Songs in playlist
+      </h3>
+      <ul class="modal-song-list" id="modal-song-list">
+        <!-- Songs will be loaded dynamically -->
+        <!-- Sample song item structure -->
+        <li class="modal-song-item">
+          <div class="song-info">
+            <h4 class="song-title">Sample Song Title</h4>
+            <p class="song-artist">Artist Name</p>
+            <div class="song-meta">
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+                </svg>
+                Pop
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                3:45
+              </span>
+            </div>
+          </div>
+          <button class="song-remove-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+      
+      <div class="modal-search">
+        <h3>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add New Song
+        </h3>
+        
+        <div class="relative mb-4">
+          <input id="modal-search-query" type="text" placeholder="Type a song or artist..."
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-pink-400 focus:outline-none">
+          <div id="modal-search-results" class="absolute bg-white shadow-lg rounded-lg z-50 w-full mt-1" style="display: none;">
+            <ul id="modal-results-container" class="divide-y divide-gray-200"></ul>
+          </div>
+        </div>
+        
+        <!-- Hidden fields to store selected song details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <input id="modal-title" type="text" placeholder="Title" class="px-4 py-3 rounded-lg border border-gray-300 bg-white">
+          <input id="modal-artist" type="text" placeholder="Artist" class="px-4 py-3 rounded-lg border border-gray-300 bg-white">
+        </div>
+        
+        <button id="add-to-playlist-btn" class="add-to-playlist-btn w-full" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add to Playlist
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="save-playlist-changes-btn" class="add-to-playlist-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Your original content remains unchanged -->
 <div class="w-full max-w-7xl mx-auto px-8 py-8">
   <!-- Greeting -->
   <div class="lg:flex justify-between items-center mb-6 mt-10">
@@ -91,22 +236,11 @@
 </div>
 
 <!-- Hidden CSRF token input as an alternative -->
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
-<script>
-  // Initialize with CSRF token 
-  document.addEventListener('DOMContentLoaded', function() {
-    // Make sure the CSRF token is available for JavaScript
-    window.CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                        document.querySelector('input[name="csrf_token"]')?.value;
-    
-    if (!window.CSRF_TOKEN) {
-      console.warn('CSRF token not found. This may cause form submissions to fail.');
-    }
-  });
-</script>
+  <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/playlist-editor.js') }}"></script>
 {% endblock %}
