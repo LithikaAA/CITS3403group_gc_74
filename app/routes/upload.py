@@ -5,7 +5,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 from flask_wtf.csrf import generate_csrf
-from app.models import db, Track, UserTrack
+from app.models import db, Track, UserTrack, Playlist, PlaylistTrack
 from app.utils.spotify_auth import search_tracks
 from app.utils.track_feature_loader import get_track_features_by_id
 
@@ -24,11 +24,13 @@ def upload():
     song_count = UserTrack.query.filter_by(user_id=current_user.id).count() if current_user.is_authenticated else 0
     # Generate CSRF token and add it to the template
     csrf_token = generate_csrf()
-    return render_template('upload.html', username=username, song_count=song_count)
+    playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
+    return render_template('upload.html', username=username, song_count=song_count, csrf_token_value=csrf_token, playlists=playlists)
 
 
 # ---------- Search Songs (Spotify API + CSV metadata) ----------
 @upload_bp.route("/api/search-tracks")
+@login_required
 def api_search_tracks():
     query = request.args.get("query")
     if not query:
@@ -211,3 +213,206 @@ def create_playlist():
             "status": "error", 
             "message": f"Server error: {str(e)}"
         }), 500
+
+# ---------- Get Playlist Details ----------
+@upload_bp.route("/api/playlist/<int:playlist_id>", methods=["GET"])
+@login_required
+def get_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"status": "error", "message": "Playlist not found"}), 404
+    
+    tracks = []
+    for pt in PlaylistTrack.query.filter_by(playlist_id=playlist.id).all():
+        track = Track.query.get(pt.track_id)
+        if track:
+            tracks.append({
+                "id": track.id,
+                "title": track.title,
+                "artist": track.artist,
+                "genre": track.genre,
+                "danceability": track.danceability,
+                "energy": track.energy,
+                "liveness": track.liveness,
+                "acousticness": track.acousticness,
+                "valence": track.valence,
+                "tempo": track.tempo,
+                "mode": track.mode,
+                "duration_ms": track.duration_ms
+            })
+    
+    return jsonify({
+        "status": "success",
+        "playlist": {
+            "id": playlist.id,
+            "name": playlist.name,
+            "tracks": tracks
+        }
+    })
+
+# ---------- Add Track to Playlist ----------
+@upload_bp.route("/api/playlist/<int:playlist_id>/add-track", methods=["POST"])
+@login_required
+def add_track_to_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"status": "error", "message": "Playlist not found"}), 404
+    
+    data = request.get_json()
+    track_id = data.get("track_id")
+    
+    if not track_id:
+        # Extract track data and create a new track
+        title = data.get("title")
+        artist = data.get("artist")
+        
+        if not title or not artist:
+            return jsonify({"status": "error", "message": "Track title and artist required"}), 400
+        
+        # Check if track exists
+        track = Track.query.filter_by(title=title, artist=artist).first()
+        
+        if not track:
+            # Create new track with all available data
+            try:
+                duration = int(data.get("duration_ms", 0))
+                tempo = float(data.get("tempo")) if data.get("tempo") else None
+                danceability = float(data.get("danceability")) if data.get("danceability") else None
+                energy = float(data.get("energy")) if data.get("energy") else None
+                liveness = float(data.get("liveness")) if data.get("liveness") else None
+                acousticness = float(data.get("acousticness")) if data.get("acousticness") else None
+                valence = float(data.get("valence")) if data.get("valence") else None
+            except (ValueError, TypeError):
+                duration = 0
+                tempo = None
+                danceability = None
+                energy = None
+                liveness = None
+                acousticness = None
+                valence = None
+                
+            track = Track(
+                title=title,
+                artist=artist,
+                genre=data.get("genre"),
+                tempo=tempo,
+                valence=valence,
+                energy=energy,
+                acousticness=acousticness,
+                liveness=liveness,
+                danceability=danceability,
+                mode=data.get("mode"),
+                duration_ms=duration,
+                user_id=current_user.id
+            )
+            db.session.add(track)
+            db.session.flush()
+        
+        track_id = track.id
+    
+    # Check if track is already in playlist
+    existing = PlaylistTrack.query.filter_by(playlist_id=playlist_id, track_id=track_id).first()
+    if existing:
+        return jsonify({"status": "error", "message": "Track already in playlist"}), 400
+    
+    # Add track to playlist
+    playlist_track = PlaylistTrack(playlist_id=playlist_id, track_id=track_id)
+    db.session.add(playlist_track)
+    
+    # Add to user tracks if not already there
+    user_track = UserTrack.query.filter_by(user_id=current_user.id, track_id=track_id).first()
+    if not user_track:
+        track = Track.query.get(track_id)
+        user_track = UserTrack(
+            user_id=current_user.id,
+            track_id=track_id,
+            song=track.title,
+            artist=track.artist,
+            song_duration=track.duration_ms,
+            times_played=1,
+            total_ms_listened=track.duration_ms
+        )
+        db.session.add(user_track)
+    
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Track added to playlist"})
+
+# ---------- Remove Track from Playlist ----------
+@upload_bp.route("/api/playlist/<int:playlist_id>/remove-track/<int:track_id>", methods=["DELETE"])
+@login_required
+def remove_track_from_playlist(playlist_id, track_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"status": "error", "message": "Playlist not found"}), 404
+    
+    playlist_track = PlaylistTrack.query.filter_by(playlist_id=playlist_id, track_id=track_id).first()
+    
+    if not playlist_track:
+        return jsonify({"status": "error", "message": "Track not in playlist"}), 404
+    
+    db.session.delete(playlist_track)
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Track removed from playlist"})
+
+# ---------- Update Playlist ----------
+@upload_bp.route("/api/playlist/<int:playlist_id>", methods=["POST"])
+@login_required
+def update_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"status": "error", "message": "Playlist not found"}), 404
+    
+    data = request.get_json()
+    new_name = data.get("name")
+    
+    if new_name:
+        playlist.name = new_name
+        db.session.commit()
+    
+    return jsonify({
+        "status": "success",
+        "message": "Playlist updated",
+        "playlist": {
+            "id": playlist.id,
+            "name": playlist.name
+        }
+    })
+
+# ---------- Delete Playlist ----------
+@upload_bp.route("/api/playlist/<int:playlist_id>", methods=["DELETE"])
+@login_required
+def delete_playlist(playlist_id):
+    playlist = Playlist.query.filter_by(id=playlist_id, owner_id=current_user.id).first()
+    
+    if not playlist:
+        return jsonify({"status": "error", "message": "Playlist not found"}), 404
+    
+    # Remove all playlist tracks
+    PlaylistTrack.query.filter_by(playlist_id=playlist_id).delete()
+    
+    # Remove playlist
+    db.session.delete(playlist)
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Playlist deleted"})
+
+
+@upload_bp.route("/api/playlists", methods=["GET"])
+@login_required
+def get_playlists():
+    playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
+    return jsonify({
+        "status": "success",
+        "playlists": [
+            {
+                "id": playlist.id,
+                "name": playlist.name
+            } for playlist in playlists
+        ]
+    })

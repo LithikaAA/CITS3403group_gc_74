@@ -4,6 +4,10 @@ from werkzeug.utils import secure_filename
 from flask_login import login_user, logout_user, current_user, login_required
 from ..models import db, User
 from datetime import datetime
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -115,44 +119,86 @@ def terms():
 @login_required
 def account_setup():
     if request.method == 'POST':
-        new_username = request.form.get('username')
-        name = request.form.get('name')
-        gender = request.form.get('gender')
-        dob_str = request.form.get('dob')
-        email = request.form.get('email')
-        mobile = request.form.get('mobile')
-        profile_pic = request.files.get('profile_pic')
-
-        # Check if username is already taken (but only if changed)
-        if new_username != current_user.username and User.query.filter_by(username=new_username).first():
-            flash('That username is already taken.', 'error')
-            return render_template('account_setup.html')
-
-        # Update user info
-        current_user.username = new_username
-        current_user.name = name
-        current_user.gender = gender
-        current_user.email = email
-        current_user.mobile = mobile
-
-        # Handle date of birth properly
-        if dob_str:
-            try:
-                current_user.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
-            except ValueError:
-                flash('Invalid date format for Date of Birth.', 'error')
+        # Get form type to determine which form was submitted
+        form_type = request.form.get('form_type')
+        
+        # Handle profile picture upload (separate form)
+        if form_type == 'profile_pic' and 'profile_pic' in request.files:
+            profile_pic = request.files['profile_pic']
+            
+            if profile_pic and profile_pic.filename:
+                try:
+                    filename = secure_filename(profile_pic.filename)
+                    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
+                    os.makedirs(upload_folder, exist_ok=True)
+                    profile_pic.save(os.path.join(upload_folder, filename))
+                    
+                    # Only update the profile picture field
+                    current_user.profile_pic = filename
+                    db.session.commit()
+                    
+                    # Use session flash instead of multiple flash calls
+                    session['_flashes'] = [('success', 'Profile picture updated successfully!')]
+                except Exception as e:
+                    logger.error(f"Error uploading profile picture: {str(e)}")
+                    db.session.rollback()
+                    flash(f'Error uploading profile picture: {str(e)}', 'error')
+            
+            return redirect(url_for('auth.account_setup'))
+        
+        # Handle main account form
+        elif form_type == 'account':
+            new_username = request.form.get('username')
+            name = request.form.get('name')
+            gender = request.form.get('gender')
+            dob_str = request.form.get('dob')
+            email = request.form.get('email')
+            mobile = request.form.get('mobile')
+            
+            # Validate required fields
+            if not new_username:
+                flash('Username is required.', 'error')
                 return render_template('account_setup.html')
-
-        # Handle profile picture upload
-        if profile_pic and profile_pic.filename:
-            filename = secure_filename(profile_pic.filename)
-            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            profile_pic.save(os.path.join(upload_folder, filename))
-            current_user.profile_pic = filename
-
-        db.session.commit()
-        flash('Account updated successfully!', 'success')
+                
+            if not email:
+                flash('Email is required.', 'error')
+                return render_template('account_setup.html')
+            
+            # Check if username is already taken (but only if changed)
+            if new_username != current_user.username and User.query.filter_by(username=new_username).first():
+                flash('That username is already taken.', 'error')
+                return render_template('account_setup.html')
+            
+            try:
+                # Update user info
+                current_user.username = new_username
+                if name is not None:
+                    current_user.name = name
+                current_user.gender = gender
+                current_user.email = email
+                current_user.mobile = mobile
+                
+                # Handle date of birth properly
+                if dob_str:
+                    try:
+                        current_user.dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        flash('Invalid date format for Date of Birth.', 'error')
+                        return render_template('account_setup.html')
+                
+                db.session.commit()
+                
+                # Use session flash instead of multiple flash calls
+                session['_flashes'] = [('success', 'Account updated successfully!')]
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Error updating account: {str(e)}")
+                flash(f'Error updating account information: {str(e)}', 'error')
+            
+            return redirect(url_for('auth.account_setup'))
+        
+        # If we get here, something went wrong with the form submission
+        flash('Invalid form submission.', 'error')
         return redirect(url_for('auth.account_setup'))
 
     return render_template('account_setup.html')

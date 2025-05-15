@@ -1,35 +1,122 @@
+/* Center bubble styling */
+#center-bubble {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.2);
+}
+
 #center-bubble img {
   transition: transform 0.3s ease;
   transform-origin: center;
 }
-#center-bubble img:hover {
+
+#center-bubble:hover img {
   transform: scale(1.1);
 }
+
+/* Friend bubble glow effect for new connections */
 .glow {
-box-shadow:
-  0 0 10px 2px rgba(129, 140, 248, 0.7),
-  0 0 15px 5px rgba(236, 72, 153, 0.5);
-}
-#friend-menu.hidden {
-display: none;
-}
-@keyframes idle-pulse {
-0%, 100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1); }
-50%      { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1.05); }
-}
-.friend-bubble.idle {
-animation: idle-pulse 2s ease-in-out infinite alternate;
+  box-shadow:
+    0 0 10px 2px rgba(207, 113, 205, 0.7),
+    0 0 15px 5px rgba(165, 188, 231, 0.5);
 }
 
-#friend-menu.hidden { display: none; }
+/* Friend bubble animations - NO JUMPING, just sizing */
+.friend-bubble {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.8s ease;
+}
+
+/* Remove the pulse animation that causes jumping */
+@keyframes static-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(147, 51, 234, 0.3); }
+  50%      { box-shadow: 0 0 10px rgba(147, 51, 234, 0.5); }
+}
+
+.friend-bubble.idle {
+  animation: static-glow 3s ease-in-out infinite;
+}
+
+/* Username overlay for bubbles */
+.friend-bubble div.absolute,
+#center-bubble div.absolute {
+  transition: opacity 0.3s ease;
+}
+
+/* Show remove button on bubble hover */
+.friend-bubble:hover .remove-friend-btn {
+  opacity: 1 !important;
+}
+
+/* Remove button styling */
+.remove-friend-btn {
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.remove-friend-btn:hover {
+  background-color: #7e22ce; /* Darker purple */
+}
+
+/* Friends panel styling */
+#friends-panel {
+  transition: transform 0.3s ease-in-out;
+}
+
+#friends-panel.hidden {
+  display: none;
+}
+
+/* Tab styling to match the screenshot */
+.tab-btn {
+  transition: all 0.2s ease;
+}
 
 .tab-content {
-transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.3s ease;
 }
 
-#friend-menu {
-  border: 1.5px solid #e0e7ff; /* subtle indigo border */
+/* Make active tab button match the screenshot */
+.tab-btn.active {
+  background-color: white;
+  color: #9333ea; /* Purple-600 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-#friend-menu button {
-  font-size: 1rem;
+
+/* Flash messages */
+.flash-message {
+  animation: fade-in 0.3s ease forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add some extra styling to the Top BPM Matches label */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Add some subtle animation to the BPM matches text */
+@keyframes subtle-glow {
+  0%, 100% { 
+    text-shadow: 0 0 1px rgba(147, 51, 234, 0.2);
+  }
+  50% { 
+    text-shadow: 0 0 4px rgba(147, 51, 234, 0.3);
+  }
+}
+
+.absolute.bottom-8 .text-purple-600 {
+  animation: subtle-glow 3s ease-in-out infinite;
+  letter-spacing: 0.03em;
+}
+
+/* Form styling */
+input.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.25);
+}
+
+/* Button hover effects */
+button.bg-purple-600:hover,
+input[type="submit"].bg-purple-600:hover {
+  box-shadow: 0 4px 6px -1px rgba(147, 51, 234, 0.1), 0 2px 4px -1px rgba(147, 51, 234, 0.06);
 }

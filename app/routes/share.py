@@ -12,22 +12,26 @@ ALLOWED_EXTENSIONS = {'csv', 'json'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 #################################################
-# Route handlers
+# Helpers
 #################################################
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+#################################################
+# Route handlers
+#################################################
 
 # ---------- Share Playlist ----------
 @share_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def share():
     playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
-    friends = User.query.filter(User.id != current_user.id).all()
+    friends = current_user.all_friends
 
     if request.method == 'POST':
         playlist_ids = request.form.getlist('playlist_ids')
-        friend_ids = request.form.getlist('friend_ids')
+        friend_ids   = request.form.getlist('friend_ids')
 
         if not playlist_ids or not friend_ids:
             flash('Please select at least one playlist and one friend.', 'error')
@@ -35,18 +39,34 @@ def share():
 
         for friend_id in friend_ids:
             for playlist_id in playlist_ids:
-                new_share = Share(
+                # avoid duplicate shares
+                exists = Share.query.filter_by(
                     playlist_id=int(playlist_id),
                     recipient_id=int(friend_id),
                     owner_id=current_user.id
-                )
-                db.session.add(new_share)
-        
+                ).first()
+                if not exists:
+                    new_share = Share(
+                        playlist_id   = int(playlist_id),
+                        recipient_id  = int(friend_id),
+                        owner_id      = current_user.id
+                    )
+                    db.session.add(new_share)
+
         db.session.commit()
-        flash(f'Shared {len(playlist_ids)} playlist(s) with {len(friend_ids)} friend(s)!', 'success')
         return redirect(url_for('share.share'))
 
-    return render_template('share.html', playlists=playlists, friends=friends)
+    # on GET, fetch both sent and received shares for the template
+    received_shares = Share.query.filter_by(recipient_id=current_user.id).all()
+    sent_shares     = Share.query.filter_by(owner_id=current_user.id).all()
+
+    return render_template(
+        'share.html',
+        playlists       = playlists,
+        friends         = friends,
+        received_shares = received_shares,
+        sent_shares     = sent_shares
+    )
 
 
 # ---------- Upload Shared Data ----------
@@ -71,10 +91,10 @@ def upload_shared_data():
             file.save(file_path)
 
             new_shared_data = SharedData(
-                user_id=current_user.id,
-                file_path=file_path,
-                file_name=filename,
-                file_type=filename.rsplit('.', 1)[1].lower()
+                user_id   = current_user.id,
+                file_path = file_path,
+                file_name = filename,
+                file_type = filename.rsplit('.', 1)[1].lower()
             )
             db.session.add(new_shared_data)
             db.session.commit()
@@ -83,6 +103,7 @@ def upload_shared_data():
 
     shared_data = SharedData.query.filter_by(user_id=current_user.id).all()
     return render_template('share_upload.html', shared_data=shared_data)
+
 
 # ---------- Delete Shared File ----------
 @share_bp.route('/upload/delete/<int:data_id>', methods=['POST'])
@@ -99,6 +120,7 @@ def delete_shared_data(data_id):
     db.session.commit()
     flash('File deleted successfully!')
     return redirect(url_for('share.upload_shared_data'))
+
 
 # ---------- View Shared Dashboard ----------
 @share_bp.route('/shared')
@@ -117,14 +139,14 @@ def shared_dashboard():
     if not shared_playlists:
         return render_template(
             'shared_dashboard.html',
-            shared_playlists=[],
-            playlists=playlists,
-            shared_summary=None,
-            top_popular_songs={"you": [], "friend": []},
-            comparison_minutes={"labels": [], "your_data": [], "friend_data": []},
-            comparison_bubble={"you": [], "friend": []},
-            comparison_mood={"you": [], "friend": []},
-            comparison_mode={"you": [], "friend": []}
+            shared_playlists    = [],
+            playlists           = playlists,
+            shared_summary      = None,
+            top_popular_songs   = {"you": [], "friend": []},
+            comparison_minutes  = {"labels": [], "your_data": [], "friend_data": []},
+            comparison_bubble   = {"you": [], "friend": []},
+            comparison_mood     = {"you": [], "friend": []},
+            comparison_mode     = {"you": [], "friend": []}
         )
 
     # Provide dummy placeholders until AJAX fills real data
@@ -140,15 +162,16 @@ def shared_dashboard():
 
     return render_template(
         'shared_dashboard.html',
-        playlists=playlists,
-        shared_playlists=shared_playlists,
-        shared_summary=placeholder_summary,
-        top_popular_songs={"you": [], "friend": []},
-        comparison_minutes={"labels": [], "your_data": [], "friend_data": []},
-        comparison_bubble={"you": [], "friend": []},
-        comparison_mood={"you": [], "friend": []},
-        comparison_mode={"you": [], "friend": []}
+        playlists           = playlists,
+        shared_playlists    = shared_playlists,
+        shared_summary      = placeholder_summary,
+        top_popular_songs   = {"you": [], "friend": []},
+        comparison_minutes  = {"labels": [], "your_data": [], "friend_data": []},
+        comparison_bubble   = {"you": [], "friend": []},
+        comparison_mood     = {"you": [], "friend": []},
+        comparison_mode     = {"you": [], "friend": []}
     )
+
 
 @share_bp.route('/compare-playlists')
 @login_required
@@ -157,7 +180,7 @@ def compare_playlists():
     Enhanced endpoint for comparing two playlists (yours and a friend's)
     Returns JSON data for updating the charts based on the actual playlist data
     """
-    your_id = request.args.get('your_id', type=int)
+    your_id   = request.args.get('your_id', type=int)
     friend_id = request.args.get('friend_id', type=int)
     
     if not your_id or not friend_id:
@@ -170,9 +193,10 @@ def compare_playlists():
     
     # Get friend's playlist
     friend_playlist = Playlist.query.get_or_404(friend_id)
+    # Ensure it was shared with you
     share = Share.query.filter_by(
-        playlist_id=friend_id, 
-        recipient_id=current_user.id
+        playlist_id   = friend_id, 
+        recipient_id  = current_user.id
     ).first()
     
     if not share:

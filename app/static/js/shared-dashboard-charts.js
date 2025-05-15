@@ -6,98 +6,124 @@
 // Global chart objects
 let valenceChart, danceabilityChart, moodChart, modeChart, minutesChart;
 
+// Utility function to safely destroy charts
+function safeDestroyChart(chartInstance) {
+  if (chartInstance && typeof chartInstance.destroy === 'function') {
+    chartInstance.destroy();
+    return true;
+  }
+  return false;
+}
+
 // Initialize all charts once the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize the charts
-  initializeMinutesByTrackChart();
+  // Set up dropdown event listeners first
+  setupDropdownListeners();
+  
+  // Set up top songs tabs
+  setupTopSongsTabs();
+  
+  // Initialize error message handling
+  setupErrorHandling();
+  
+  // Initialize the charts with placeholder data
+  initializeCharts();
+});
+
+// Handle top songs tabs
+function setupTopSongsTabs() {
+  const yourTab = document.getElementById('yourTopSongsTab');
+  const friendTab = document.getElementById('friendTopSongsTab');
+  const yourSongs = document.querySelector('.your-top-songs');
+  const friendSongs = document.querySelector('.friend-top-songs');
+  
+  if (!yourTab || !friendTab) return;
+  
+  yourTab.addEventListener('click', function(e) {
+    e.preventDefault();
+    yourSongs.classList.remove('hidden');
+    friendSongs.classList.add('hidden');
+    yourTab.classList.add('text-indigo-600');
+    yourTab.classList.remove('text-gray-500');
+    friendTab.classList.add('text-gray-500');
+    friendTab.classList.remove('text-pink-600');
+  });
+  
+  friendTab.addEventListener('click', function(e) {
+    e.preventDefault();
+    friendSongs.classList.remove('hidden');
+    yourSongs.classList.add('hidden');
+    friendTab.classList.add('text-pink-600');
+    friendTab.classList.remove('text-gray-500');
+    yourTab.classList.add('text-gray-500');
+    yourTab.classList.remove('text-indigo-600');
+  });
+}
+
+// Set up error handling
+function setupErrorHandling() {
+  const errorMessage = document.getElementById('errorMessage');
+  const closeError = document.getElementById('closeError');
+  
+  if (closeError) {
+    closeError.addEventListener('click', function() {
+      errorMessage.classList.add('hidden');
+    });
+  }
+}
+
+// Initialize charts with placeholder or initial data
+function initializeCharts() {
   initializeValenceAcousticnessChart();
   initializeDanceabilityEnergyChart();
   initializeMoodProfileChart();
   initializeModeChart();
-  
-  // Set up dropdown event listeners
-  setupDropdownListeners();
-});
-
-function initializeMinutesByTrackChart() {
-  const canvas = document.getElementById('minutesByTrack');
-  if (!canvas) return;
-
-  const ctx = canvas.getContext('2d');
-  minutesChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: window.initialMinutesData ? window.initialMinutesData.labels : [],
-      datasets: [
-        {
-          label: 'Your Minutes',
-          data: window.initialMinutesData ? window.initialMinutesData.yourData : [],
-          backgroundColor: '#6366F1'
-        },
-        {
-          label: "Friend's Minutes",
-          data: window.initialMinutesData ? window.initialMinutesData.friendData : [],
-          backgroundColor: '#F472B6'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Minutes Played',
-            color: '#718096'
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          }
-        },
-        x: {
-          grid: {
-            display: false
-          }
-        }
-      }
-    }
-  });
 }
 
-// Initialize Valence vs Acousticness scatter chart
+// Initialize Valence vs Acousticness chart
 function initializeValenceAcousticnessChart() {
   const canvas = document.getElementById('valenceAcousticness');
   if (!canvas) return;
   
+  // Safely destroy existing chart first
+  if (valenceChart) {
+    safeDestroyChart(valenceChart);
+    valenceChart = null;
+  }
+  
   const ctx = canvas.getContext('2d');
+  
+  // Check if we have any initial data
+  const hasInitialData = window.initialBubbleData && 
+                        window.initialBubbleData.you && 
+                        window.initialBubbleData.you.length > 0;
+  
+  // Placeholder data if no initial data is available
+  const placeholderData = [
+    { x: 0.25, y: 0.5, title: "Your Song", artist: "Artist" }
+  ];
+  
   valenceChart = new Chart(ctx, {
     type: 'scatter',
     data: {
       datasets: [
         {
           label: 'Your Songs',
-          data: [
-            { x: 0.1, y: 0.5 },
-            { x: 0.2, y: 0.3 }
-          ],
-          backgroundColor: 'rgba(99, 102, 241, 0.7)',
+          data: hasInitialData ? window.initialBubbleData.you : placeholderData,
+          backgroundColor: 'rgba(99, 102, 241, 0.8)',
           pointRadius: 8,
-          pointHoverRadius: 10
+          pointHoverRadius: 10,
+          borderColor: '#6366F1',
+          borderWidth: 1
         },
         {
           label: 'Friend\'s Songs',
-          data: [
-            { x: 0.6, y: 0.2 },
-            { x: 0.7, y: 0.4 }
-          ],
-          backgroundColor: 'rgba(244, 114, 182, 0.7)',
+          data: hasInitialData ? window.initialBubbleData.friend : [],
+          backgroundColor: 'rgba(236, 72, 153, 0.8)',
           pointRadius: 8,
-          pointHoverRadius: 10
+          pointHoverRadius: 10,
+          borderColor: '#EC4899',
+          borderWidth: 1
         }
       ]
     },
@@ -105,13 +131,38 @@ function initializeValenceAcousticnessChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
+        legend: {
+          position: 'top',
+          align: 'center',
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            boxWidth: 8,
+            font: { 
+              size: 11
+            }
+          }
+        },
         tooltip: {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          titleColor: '#1F2937',
+          bodyColor: '#4B5563',
+          borderColor: '#E5E7EB',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
+          titleFont: {
+            size: 12,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 12
+          },
           callbacks: {
             label: function(context) {
               const point = context.raw;
               return [
-                `${point.title || 'Song'} - ${point.artist || 'Artist'}`,
+                `${point.title || 'Unknown'} - ${point.artist || 'Unknown'}`,
                 `Valence: ${point.y.toFixed(2)}`,
                 `Acousticness: ${point.x.toFixed(2)}`
               ];
@@ -124,53 +175,88 @@ function initializeValenceAcousticnessChart() {
           title: { 
             display: true, 
             text: 'Acousticness',
-            color: '#718096'
+            color: '#9CA3AF',
+            font: {
+              size: 10
+            }
           },
           min: 0,
           max: 1,
           grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
+            color: 'rgba(243, 244, 246, 0.6)',
+            borderColor: 'rgba(243, 244, 246, 0.9)'
+          },
+          ticks: {
+            color: '#9CA3AF',
+            font: {
+              size: 9
+            }
           }
         },
         y: {
           title: { 
             display: true, 
             text: 'Valence',
-            color: '#718096'
+            color: '#9CA3AF',
+            font: {
+              size: 10
+            }
           },
           min: 0,
           max: 1,
           grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          }
-        }
-      },
-      annotation: {
-        annotations: {
-          quadrants: {
-            type: 'line',
-            xMin: 0.5,
-            xMax: 0.5,
-            yMin: 0,
-            yMax: 1,
-            borderColor: 'rgba(0, 0, 0, 0.1)',
-            borderWidth: 1,
-            borderDash: [5, 5]
+            color: 'rgba(243, 244, 246, 0.6)',
+            borderColor: 'rgba(243, 244, 246, 0.9)'
           },
-          horizontalCenter: {
-            type: 'line',
-            yMin: 0.5,
-            yMax: 0.5,
-            xMin: 0,
-            xMax: 1,
-            borderColor: 'rgba(0, 0, 0, 0.1)',
-            borderWidth: 1,
-            borderDash: [5, 5]
+          ticks: {
+            color: '#9CA3AF',
+            font: {
+              size: 9
+            }
           }
         }
       }
     }
   });
+  
+  // Create divider lines
+  drawChartDividers(ctx, valenceChart);
+}
+
+// Draw chart divider lines
+function drawChartDividers(ctx, chart) {
+  const originalDraw = chart.draw;
+  
+  chart.draw = function() {
+    originalDraw.apply(this, arguments);
+    
+    const chartArea = this.chartArea;
+    const xAxis = this.scales.x;
+    const yAxis = this.scales.y;
+    
+    // Convert data value 0.5 to pixel value for both axes
+    const xMid = xAxis.getPixelForValue(0.5);
+    const yMid = yAxis.getPixelForValue(0.5);
+    
+    ctx.save();
+    ctx.strokeStyle = 'rgba(203, 213, 225, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    
+    // Draw vertical line at x=0.5
+    ctx.beginPath();
+    ctx.moveTo(xMid, chartArea.top);
+    ctx.lineTo(xMid, chartArea.bottom);
+    ctx.stroke();
+    
+    // Draw horizontal line at y=0.5
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, yMid);
+    ctx.lineTo(chartArea.right, yMid);
+    ctx.stroke();
+    
+    ctx.restore();
+  };
 }
 
 // Initialize Danceability vs Energy bubble chart
@@ -178,26 +264,41 @@ function initializeDanceabilityEnergyChart() {
   const canvas = document.getElementById('danceabilityEnergy');
   if (!canvas) return;
   
+  // Safely destroy existing chart first
+  if (danceabilityChart) {
+    safeDestroyChart(danceabilityChart);
+    danceabilityChart = null;
+  }
+  
   const ctx = canvas.getContext('2d');
+  
+  // Check if we have any initial data
+  const hasInitialData = window.initialBubbleData && 
+                        window.initialBubbleData.you && 
+                        window.initialBubbleData.you.length > 0;
+  
+  // Placeholder data if no initial data is available
+  const placeholderData = [
+    { x: 0.75, y: 0.75, r: 15, title: "Your Song", artist: "Artist" }
+  ];
+  
   danceabilityChart = new Chart(ctx, {
     type: 'bubble',
     data: {
       datasets: [
         {
           label: 'Your Songs',
-          data: window.initialBubbleData ? window.initialBubbleData.you : [
-            { x: 0.7, y: 0.9, r: 15 }
-          ],
-          backgroundColor: 'rgba(99, 102, 241, 0.7)',
-          borderColor: '#6366F1'
+          data: hasInitialData ? window.initialBubbleData.you : placeholderData,
+          backgroundColor: 'rgba(129, 140, 248, 0.7)',
+          borderColor: '#6366F1',
+          borderWidth: 1
         },
         {
           label: 'Friend\'s Songs',
-          data: window.initialBubbleData ? window.initialBubbleData.friend : [
-            { x: 0.55, y: 0.65, r: 15 }
-          ],
+          data: hasInitialData ? window.initialBubbleData.friend : [],
           backgroundColor: 'rgba(244, 114, 182, 0.7)',
-          borderColor: '#F472B6'
+          borderColor: '#EC4899',
+          borderWidth: 1
         }
       ]
     },
@@ -205,13 +306,31 @@ function initializeDanceabilityEnergyChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
+        legend: {
+          position: 'top',
+          align: 'center',
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            boxWidth: 8,
+            font: { 
+              size: 11
+            }
+          }
+        },
         tooltip: {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          titleColor: '#1F2937',
+          bodyColor: '#4B5563',
+          borderColor: '#E5E7EB',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
           callbacks: {
             label: function(context) {
               const point = context.raw;
               return [
-                `${point.title || 'Song'} - ${point.artist || 'Artist'}`, 
+                `${point.title || 'Unknown'} - ${point.artist || 'Unknown'}`, 
                 `Danceability: ${point.x.toFixed(2)}`, 
                 `Energy: ${point.y.toFixed(2)}`,
                 `Minutes: ${(point.r/5).toFixed(1)}`
@@ -225,24 +344,44 @@ function initializeDanceabilityEnergyChart() {
           title: { 
             display: true, 
             text: 'Danceability',
-            color: '#718096'
+            color: '#9CA3AF',
+            font: {
+              size: 10
+            }
           },
           min: 0.4,
           max: 0.9,
           grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
+            color: 'rgba(243, 244, 246, 0.6)',
+            borderColor: 'rgba(243, 244, 246, 0.9)'
+          },
+          ticks: {
+            color: '#9CA3AF',
+            font: {
+              size: 9
+            }
           }
         },
         y: {
           title: { 
             display: true, 
             text: 'Energy',
-            color: '#718096'
+            color: '#9CA3AF',
+            font: {
+              size: 10
+            }
           },
-          min: 0.4,
+          min: 0.5,
           max: 0.9,
           grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
+            color: 'rgba(243, 244, 246, 0.6)',
+            borderColor: 'rgba(243, 244, 246, 0.9)'
+          },
+          ticks: {
+            color: '#9CA3AF',
+            font: {
+              size: 9
+            }
           }
         }
       }
@@ -255,7 +394,22 @@ function initializeMoodProfileChart() {
   const canvas = document.getElementById('moodProfile');
   if (!canvas) return;
   
+  // Safely destroy existing chart first
+  if (moodChart) {
+    safeDestroyChart(moodChart);
+    moodChart = null;
+  }
+  
   const ctx = canvas.getContext('2d');
+  
+  // Check if we have any initial data
+  const hasInitialData = window.initialMoodData && 
+                        window.initialMoodData.you && 
+                        window.initialMoodData.you.length > 0;
+  
+  // Placeholder data if no initial data is available
+  const placeholderData = [0.7, 0.6, 0.5, 0.4, 0.6];
+  
   moodChart = new Chart(ctx, {
     type: 'radar',
     data: {
@@ -263,29 +417,71 @@ function initializeMoodProfileChart() {
       datasets: [
         {
           label: 'Your Profile',
-          data: window.initialMoodData ? window.initialMoodData.you : [0.7, 0.6, 0.8, 0.3, 0.5],
+          data: hasInitialData ? window.initialMoodData.you : placeholderData,
           backgroundColor: 'rgba(99, 102, 241, 0.2)',
           borderColor: '#6366F1',
-          pointBackgroundColor: '#6366F1'
+          pointBackgroundColor: '#6366F1',
+          pointBorderColor: '#fff',
+          borderWidth: 2,
+          pointRadius: 3
         },
         {
           label: 'Friend\'s Profile',
-          data: window.initialMoodData ? window.initialMoodData.friend : [0.5, 0.7, 0.6, 0.4, 0.6],
-          backgroundColor: 'rgba(244, 114, 182, 0.2)',
-          borderColor: '#F472B6',
-          pointBackgroundColor: '#F472B6'
+          data: hasInitialData ? window.initialMoodData.friend : [],
+          backgroundColor: 'rgba(236, 72, 153, 0.2)',
+          borderColor: '#EC4899',
+          pointBackgroundColor: '#EC4899',
+          pointBorderColor: '#fff',
+          borderWidth: 2,
+          pointRadius: 3
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'center',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 8,
+            padding: 15,
+            font: { 
+              size: 11
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          titleColor: '#1F2937',
+          bodyColor: '#4B5563',
+          borderColor: '#E5E7EB',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8
+        }
+      },
       scales: {
         r: {
+          angleLines: {
+            color: 'rgba(203, 213, 225, 0.3)'
+          },
+          grid: {
+            color: 'rgba(203, 213, 225, 0.3)'
+          },
+          pointLabels: {
+            color: '#6B7280',
+            font: {
+              size: 9
+            }
+          },
           beginAtZero: true,
           max: 1,
           ticks: {
-            display: false
+            display: false,
+            stepSize: 0.2
           }
         }
       }
@@ -298,7 +494,39 @@ function initializeModeChart() {
   const canvas = document.getElementById('modeChart');
   if (!canvas) return;
   
+  // Safely destroy existing chart first
+  if (modeChart) {
+    safeDestroyChart(modeChart);
+    modeChart = null;
+  }
+  
   const ctx = canvas.getContext('2d');
+  
+  // Check if we have any initial data
+  const hasInitialData = window.initialModeData && 
+                         window.initialModeData.you && 
+                         window.initialModeData.you.length > 0;
+  
+  console.log('Initial mode data:', hasInitialData ? window.initialModeData : 'No data');
+  
+  // IMPORTANT: Force the data to have exactly 2 values [major, minor]
+  let yourData = [0, 0];
+  let friendData = [0, 0];
+  
+  if (hasInitialData) {
+    if (Array.isArray(window.initialModeData.you)) {
+      yourData[0] = window.initialModeData.you[0] || 0;  // Major
+      yourData[1] = window.initialModeData.you[1] || 0;  // Minor
+    }
+    
+    if (Array.isArray(window.initialModeData.friend)) {
+      friendData[0] = window.initialModeData.friend[0] || 0;  // Major
+      friendData[1] = window.initialModeData.friend[1] || 0;  // Minor
+    }
+  }
+  
+  console.log('Mode chart data used:', { yourData, friendData });
+  
   modeChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -306,13 +534,17 @@ function initializeModeChart() {
       datasets: [
         {
           label: 'Your Songs',
-          data: window.initialModeData ? window.initialModeData.you : [5, 3],
-          backgroundColor: '#6366F1'
+          data: yourData,
+          backgroundColor: '#6366F1',
+          borderRadius: 6,
+          maxBarThickness: 40
         },
         {
           label: 'Friend\'s Songs',
-          data: window.initialModeData ? window.initialModeData.friend : [2, 7],
-          backgroundColor: '#F472B6'
+          data: friendData,
+          backgroundColor: '#EC4899',
+          borderRadius: 6,
+          maxBarThickness: 40
         }
       ]
     },
@@ -320,23 +552,60 @@ function initializeModeChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' }
+        legend: {
+          position: 'top',
+          align: 'center',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 8,
+            padding: 15,
+            font: { 
+              size: 11
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          titleColor: '#1F2937',
+          bodyColor: '#4B5563',
+          borderColor: '#E5E7EB',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.parsed.y + ' songs';
+            }
+          }
+        }
       },
       scales: {
         y: {
           beginAtZero: true,
-          title: { 
-            display: true, 
-            text: 'Number of Songs',
-            color: '#718096'
-          },
+          min: 0, // Ensure minimum is 0
+          suggestedMax: 5, // Add some headroom 
           grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
+            color: 'rgba(243, 244, 246, 0.6)',
+            borderColor: 'rgba(243, 244, 246, 0.9)'
+          },
+          ticks: {
+            color: '#9CA3AF',
+            font: {
+              size: 9
+            },
+            precision: 0, // No decimal places
+            stepSize: 1    // Integer steps
           }
         },
         x: {
           grid: {
             display: false
+          },
+          ticks: {
+            color: '#6B7280',
+            font: {
+              size: 10
+            }
           }
         }
       }
@@ -348,179 +617,404 @@ function initializeModeChart() {
 function setupDropdownListeners() {
   const yourPlaylistSelect = document.getElementById('yourPlaylistSelect');
   const friendPlaylistSelect = document.getElementById('friendPlaylistSelect');
+  const selectedPlaylists = document.getElementById('selectedPlaylists');
   
   if (yourPlaylistSelect && friendPlaylistSelect) {
-    yourPlaylistSelect.addEventListener('change', updateCharts);
-    friendPlaylistSelect.addEventListener('change', updateCharts);
+    yourPlaylistSelect.addEventListener('change', updateSelectedPlaylist);
+    friendPlaylistSelect.addEventListener('change', updateSelectedPlaylist);
+  }
+  
+  function updateSelectedPlaylist() {
+    const yourPlaylistId = yourPlaylistSelect.value;
+    const friendPlaylistId = friendPlaylistSelect.value;
+    
+    if (yourPlaylistId && friendPlaylistId) {
+      // Update selected playlist display
+      if (selectedPlaylists) {
+        const yourPlaylistName = yourPlaylistSelect.options[yourPlaylistSelect.selectedIndex].text;
+        const friendOption = friendPlaylistSelect.options[friendPlaylistSelect.selectedIndex];
+        const friendPlaylistFullName = friendOption.text;
+        const friendUsername = friendOption.getAttribute('data-username') || 'Friend';
+        
+        document.getElementById('yourPlaylistName').textContent = yourPlaylistName;
+        document.getElementById('friendPlaylistName').textContent = friendPlaylistFullName;
+        
+        // Set friend's initial
+        const friendInitial = document.getElementById('friendInitial');
+        if (friendInitial && friendUsername) {
+          friendInitial.textContent = friendUsername.charAt(0).toUpperCase();
+        }
+        
+        selectedPlaylists.classList.remove('hidden');
+      }
+      
+      // Fetch comparison data
+      fetchComparisonData(yourPlaylistId, friendPlaylistId);
+    }
   }
 }
 
-// Function to update all charts when playlist selection changes
-function updateCharts() {
-  const yourPlaylistId = document.getElementById('yourPlaylistSelect').value;
-  const friendPlaylistId = document.getElementById('friendPlaylistSelect').value;
-  
-  if (!yourPlaylistId || !friendPlaylistId) return;
+// Function to fetch comparison data
+function fetchComparisonData(yourPlaylistId, friendPlaylistId) {
+  const errorMessage = document.getElementById('errorMessage');
   
   // Show loading state on charts
-  document.querySelectorAll('.chart-container').forEach(container => {
-    container.classList.add('loading');
+  document.querySelectorAll('canvas').forEach(canvas => {
+    if (canvas && canvas.parentNode) {
+      canvas.parentNode.classList.add('opacity-50');
+    }
   });
   
-  // Make AJAX request to get comparison data
-  fetch(`/share/compare-playlists?your_id=${yourPlaylistId}&friend_id=${friendPlaylistId}`)
+  // Fetch with timeout to abort long requests
+  const fetchPromise = fetch(`/share/compare-playlists?your_id=${yourPlaylistId}&friend_id=${friendPlaylistId}`);
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Request timed out')), 10000)
+  );
+  
+  Promise.race([fetchPromise, timeoutPromise])
     .then(response => {
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error(`Network response was not ok: ${response.status}`);
       }
       return response.json();
     })
     .then(data => {
-      // Update all charts with the new data
-      updateMinutesByTrackChart(data.comparison_minutes);
-      //updateValenceAcousticnessChart(data.valence_acousticness);
-      updateDanceabilityEnergyChart(data.comparison_bubble);
-      updateMoodProfileChart(data.comparison_mood);
-      updateModeChart(data.comparison_mode);
+      console.log('Received data:', data);
+      
+      // Remove loading state
+      document.querySelectorAll('canvas').forEach(canvas => {
+        if (canvas && canvas.parentNode) {
+          canvas.parentNode.classList.remove('opacity-50');
+        }
+      });
+      
+      // Hide error message if shown
+      if (errorMessage) {
+        errorMessage.classList.add('hidden');
+      }
+      
+      // Log mode data specifically
+      if (data.comparison_mode) {
+        console.log('Mode data received:', data.comparison_mode);
+      }
+      
+      // Update summary first as it doesn't depend on charts
       updateSummary(data.shared_summary);
       updatePopularSongs(data.top_popular_songs);
       
-      // Remove loading state
-      document.querySelectorAll('.chart-container').forEach(container => {
-        container.classList.remove('loading');
-      });
+      // Wait for a little bit to ensure DOM is ready
+      setTimeout(() => {
+        try {
+          // Update charts one at a time with delay to prevent race conditions
+          setTimeout(() => updateValenceAcousticnessChart(data.valence_acousticness), 0);
+          setTimeout(() => updateDanceabilityEnergyChart(data.comparison_bubble), 200);
+          setTimeout(() => updateMoodProfileChart(data.comparison_mood), 400);
+          setTimeout(() => updateModeChart(data.comparison_mode), 600);
+          
+          console.log('Charts update sequence initiated');
+        } catch (error) {
+          console.error('Error updating charts:', error);
+        }
+      }, 100);
     })
     .catch(error => {
       console.error('Error fetching comparison data:', error);
+      
       // Remove loading state
-      document.querySelectorAll('.chart-container').forEach(container => {
-        container.classList.remove('loading');
+      document.querySelectorAll('canvas').forEach(canvas => {
+        if (canvas && canvas.parentNode) {
+          canvas.parentNode.classList.remove('opacity-50');
+        }
       });
       
       // Show error message
-      alert('Error loading comparison data. Please try again.');
+      if (errorMessage) {
+        errorMessage.textContent = `Error: ${error.message}`;
+        errorMessage.classList.remove('hidden');
+      }
     });
 }
 
 // Function to update the Valence vs Acousticness chart
 function updateValenceAcousticnessChart(data) {
-  if (!valenceChart) return;
-  valenceChart.data.datasets[0].data = data.you;
-  valenceChart.data.datasets[1].data = data.friend;
-  valenceChart.update();
+  if (!data) return;
+  
+  // Check if canvas still exists
+  const canvas = document.getElementById('valenceAcousticness');
+  if (!canvas) {
+    console.warn('Valence chart canvas no longer exists in DOM');
+    return;
+  }
+  
+  try {
+    // If chart doesn't exist, initialize it
+    if (!valenceChart) {
+      console.log('Valence chart not found, initializing');
+      initializeValenceAcousticnessChart();
+      return;
+    }
+    
+    // Ensure data has the expected properties
+    const yourData = data.you || [];
+    const friendData = data.friend || [];
+    
+    valenceChart.data.datasets[0].data = yourData;
+    valenceChart.data.datasets[1].data = friendData;
+    valenceChart.update('none'); // Use 'none' animation for better performance
+  } catch (error) {
+    console.error('Error updating valence chart:', error);
+    // If update fails, try reinitializing
+    setTimeout(() => initializeValenceAcousticnessChart(), 100);
+  }
 }
 
 // Function to update the Danceability vs Energy chart
 function updateDanceabilityEnergyChart(data) {
-  if (
-    !danceabilityChart ||
-    !danceabilityChart.canvas ||
-    !document.body.contains(danceabilityChart.canvas)
-  ) {
-    console.warn("Danceability chart or canvas is missing or detached. Skipping update.");
+  if (!data) return;
+  
+  // Check if canvas still exists
+  const canvas = document.getElementById('danceabilityEnergy');
+  if (!canvas) {
+    console.warn('Danceability chart canvas no longer exists in DOM');
     return;
   }
-
-  danceabilityChart.data.datasets[0].data = data.you;
-  danceabilityChart.data.datasets[1].data = data.friend;
-  danceabilityChart.update();
+  
+  try {
+    // If chart doesn't exist, initialize it
+    if (!danceabilityChart) {
+      console.log('Danceability chart not found, initializing');
+      initializeDanceabilityEnergyChart();
+      return;
+    }
+    
+    // Ensure data has the expected properties
+    const yourData = data.you || [];
+    const friendData = data.friend || [];
+    
+    danceabilityChart.data.datasets[0].data = yourData;
+    danceabilityChart.data.datasets[1].data = friendData;
+    danceabilityChart.update('none');
+  } catch (error) {
+    console.error('Error updating danceability chart:', error);
+    setTimeout(() => initializeDanceabilityEnergyChart(), 100);
+  }
 }
 
 // Function to update the Mood Profile chart
 function updateMoodProfileChart(data) {
-  if (
-    !moodChart ||
-    !moodChart.canvas ||
-    !document.body.contains(moodChart.canvas)
-  ) {
-    console.warn("Mood chart or canvas is missing or detached. Skipping update.");
+  if (!data) return;
+  
+  // Check if canvas still exists
+  const canvas = document.getElementById('moodProfile');
+  if (!canvas) {
+    console.warn('Mood profile chart canvas no longer exists in DOM');
     return;
   }
-
-  moodChart.data.datasets[0].data = data.you;
-  moodChart.data.datasets[1].data = data.friend;
-  moodChart.update();
+  
+  try {
+    // If chart doesn't exist, initialize it
+    if (!moodChart) {
+      console.log('Mood chart not found, initializing');
+      initializeMoodProfileChart();
+      return;
+    }
+    
+    // Ensure data has the expected properties
+    const yourData = data.you || [];
+    const friendData = data.friend || [];
+    
+    moodChart.data.datasets[0].data = yourData;
+    moodChart.data.datasets[1].data = friendData;
+    moodChart.update('none');
+  } catch (error) {
+    console.error('Error updating mood chart:', error);
+    setTimeout(() => initializeMoodProfileChart(), 100);
+  }
 }
 
 // Function to update the Mode chart
 function updateModeChart(data) {
-  if (
-    !modeChart ||
-    !modeChart.canvas ||
-    !document.body.contains(modeChart.canvas)
-  ) {
-    console.warn("Mode chart or its canvas is missing or detached. Skipping update.");
+  if (!data) return;
+  
+  // Check if canvas still exists
+  const canvas = document.getElementById('modeChart');
+  if (!canvas) {
+    console.warn('Mode chart canvas no longer exists in DOM');
     return;
   }
-
-  modeChart.data.datasets[0].data = data.you;
-  modeChart.data.datasets[1].data = data.friend;
-  modeChart.update();
-}
-
-function updateMinutesByTrackChart(data) {
-  if (
-    !minutesChart ||
-    !minutesChart.canvas ||
-    !document.body.contains(minutesChart.canvas)
-  ) {
-    console.warn("Minutes chart or its canvas is missing or detached. Skipping update.");
-    return;
+  
+  try {
+    console.log('Updating mode chart with data:', data);
+    // IMPORTANT: Force exactly 2 values [major, minor]
+    const yourData = [0, 0];
+    const friendData = [0, 0];
+    if (data.you && Array.isArray(data.you)) {
+      yourData[0] = data.you[0] || 0;  // Major
+      yourData[1] = data.you[1] || 0;  // Minor
+    }
+    if (data.friend && Array.isArray(data.friend)) {
+      friendData[0] = data.friend[0] || 0;  // Major
+      friendData[1] = data.friend[1] || 0;  // Minor
+    }
+    console.log('Mode chart data after processing:', { yourData, friendData });
+    // Always destroy and recreate the chart to avoid canvas reuse errors
+    if (modeChart) {
+      safeDestroyChart(modeChart);
+      modeChart = null;
+    }
+    const ctx = canvas.getContext('2d');
+    modeChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Major', 'Minor'],
+        datasets: [
+          {
+            label: 'Your Songs',
+            data: yourData,
+            backgroundColor: '#6366F1',
+            borderRadius: 6,
+            maxBarThickness: 40
+          },
+          {
+            label: 'Friend\'s Songs',
+            data: friendData,
+            backgroundColor: '#EC4899',
+            borderRadius: 6,
+            maxBarThickness: 40
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            align: 'center',
+            labels: {
+              usePointStyle: true,
+              boxWidth: 8,
+              padding: 15,
+              font: { 
+                size: 11
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            titleColor: '#1F2937',
+            bodyColor: '#4B5563',
+            borderColor: '#E5E7EB',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.y + ' songs';
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            min: 0, // Ensure minimum is 0
+            suggestedMax: Math.max(...yourData, ...friendData, 1) + Math.ceil(Math.max(...yourData, ...friendData, 1) * 0.2), // Add 20% headroom
+            grid: {
+              color: 'rgba(243, 244, 246, 0.6)',
+              borderColor: 'rgba(243, 244, 246, 0.9)'
+            },
+            ticks: {
+              color: '#9CA3AF',
+              font: {
+                size: 9
+              },
+              precision: 0, // No decimal places
+              stepSize: 1    // Integer steps
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: '#6B7280',
+              font: {
+                size: 10
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error updating mode chart:', error);
+    // If updating fails, try reinitializing
+    setTimeout(() => initializeModeChart(), 100);
   }
-
-  minutesChart.data.labels = data.labels;
-  minutesChart.data.datasets[0].data = data.your_data;
-  minutesChart.data.datasets[1].data = data.friend_data;
-  minutesChart.update();
 }
 
 // Function to update the summary section
 function updateSummary(data) {
-  const topSong = document.querySelector('[data-summary="common-track"]');
-  const yourAvgTempo = document.querySelector('[data-summary="your-avg-tempo"]');
-  const friendAvgTempo = document.querySelector('[data-summary="friend-avg-tempo"]');
-  const yourTotal = document.querySelector('[data-summary="your-total-minutes"]');
-  const friendTotal = document.querySelector('[data-summary="friend-total-minutes"]');
-  const yourMood = document.querySelector('[data-summary="your-mood"]');
-  const friendMood = document.querySelector('[data-summary="friend-mood"]');
+  if (!data) return;
+  
+  try {
+    const yourAvgTempo = document.querySelector('[data-summary="your-avg-tempo"]');
+    const friendAvgTempo = document.querySelector('[data-summary="friend-avg-tempo"]');
+    const yourMood = document.querySelector('[data-summary="your-mood"]');
+    const friendMood = document.querySelector('[data-summary="friend-mood"]');
 
-  if (topSong) topSong.textContent = data.common_track;
-  if (yourAvgTempo) yourAvgTempo.textContent = `${data.your_avg_tempo} BPM`;
-  if (friendAvgTempo) friendAvgTempo.textContent = `${data.friend_avg_tempo} BPM`;
-  if (yourTotal) yourTotal.textContent = data.your_total_minutes;
-  if (friendTotal) friendTotal.textContent = data.friend_total_minutes;
-  if (yourMood) yourMood.textContent = data.your_mood;
-  if (friendMood) friendMood.textContent = data.friend_mood;
+    if (yourAvgTempo) yourAvgTempo.textContent = `${data.your_avg_tempo || 0} BPM`;
+    if (friendAvgTempo) friendAvgTempo.textContent = `${data.friend_avg_tempo || 0} BPM`;
+    if (yourMood) yourMood.textContent = data.your_mood || 'N/A';
+    if (friendMood) friendMood.textContent = data.friend_mood || 'N/A';
+  } catch (error) {
+    console.error('Error updating summary:', error);
+  }
 }
-
 
 // Function to update popular songs list
 function updatePopularSongs(data) {
-  const yourList = document.querySelector('.your-top-songs');
-  const friendList = document.querySelector('.friend-top-songs');
+  if (!data) return;
+  
+  try {
+    const yourList = document.querySelector('.your-top-songs');
+    const friendList = document.querySelector('.friend-top-songs');
 
-  if (!yourList || !friendList) return;
+    if (!yourList || !friendList) return;
 
-  yourList.innerHTML = '';
-  friendList.innerHTML = '';
+    // Update your top songs
+    updateSongsList(yourList, data.you || [], 'indigo');
+    
+    // Update friend's top songs
+    updateSongsList(friendList, data.friend || [], 'pink');
+  } catch (error) {
+    console.error('Error updating song lists:', error);
+  }
+}
 
-  data.you.forEach((song, index) => {
-    const li = document.createElement('li');
-    li.className = 'flex items-center py-1';
-    li.innerHTML = `
-      <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#${index + 1}</span>
-      <span class="truncate">${song.title} - ${song.artist}</span>
-    `;
-    yourList.appendChild(li);
-  });
-
-  data.friend.forEach((song, index) => {
-    const li = document.createElement('li');
-    li.className = 'flex items-center py-1';
-    li.innerHTML = `
-      <span class="w-6 h-6 rounded-full bg-pink-100 text-pink-800 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0">#${index + 1}</span>
-      <span class="truncate">${song.title} - ${song.artist}</span>
-    `;
-    friendList.appendChild(li);
-  });
+// Helper function to update a songs list
+function updateSongsList(container, songs, color) {
+  if (!container) return;
+  
+  try {
+    container.innerHTML = '';
+    
+    songs.forEach((song, index) => {
+      const songElement = document.createElement('div');
+      songElement.className = `flex items-center space-x-3 p-2 ${index === 0 ? `bg-${color}-50 rounded-lg` : ''}`;
+      
+      songElement.innerHTML = `
+        <div class="w-6 h-6 bg-${color}-100 rounded-full flex items-center justify-center text-xs font-bold text-${color}-700">#${index + 1}</div>
+        <div class="overflow-hidden">
+          <p class="text-sm font-medium text-gray-800 truncate">${song.title || 'Unknown'}</p>
+          <p class="text-xs text-gray-500 truncate">${song.artist || 'Unknown'}</p>
+        </div>
+      `;
+      
+      container.appendChild(songElement);
+    });
+  } catch (error) {
+    console.error('Error updating songs list:', error);
+  }
 }

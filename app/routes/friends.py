@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from app.models import db, User, Track, UserTrack, Friend
 from flask_login import login_required, current_user
-from sqlalchemy.sql import func
-from ..models import db, User, Friend, Track
-from ..forms import AddFriendForm
+from sqlalchemy import func
 import sqlalchemy as sa
-from ..forms import AddFriendForm, AcceptFriendForm
+
+from app.models     import db, User, Friend, Track, UserTrack
+from app.forms      import AddFriendForm, AcceptFriendForm
 
 friends_bp = Blueprint('friends', __name__)
 
@@ -15,60 +14,109 @@ def add_friend():
     form = AddFriendForm()
     if form.validate_on_submit():
         username = form.friend_username.data.strip()
+        # 1) Does that user exist?
         friend = User.query.filter_by(username=username).first()
-
         if not friend:
-            flash(f'No user found with username "{username}"', 'error')
-        elif friend.id == current_user.id:
-            flash("You can't add yourself as a friend.", 'error')
-        else:
-            existing = Friend.query.filter_by(
-                user_id=current_user.id,
-                friend_id=friend.id
-            ).first()
-            if existing:
-                flash(f'{friend.username} is already your friend.', 'info')
+            flash(f'No user found with username “{username}”.', 'error')
+            return redirect(url_for('friends.add_friend'))
+        # 2) No self-adds
+        if friend.id == current_user.id:
+            flash("You can’t add yourself as a friend.", 'error')
+            return redirect(url_for('friends.add_friend'))
+        # 3) No duplicate requests
+        existing = Friend.query.filter_by(
+            user_id=current_user.id,
+            friend_id=friend.id
+        ).first()
+        if existing:
+            if existing.is_accepted:
+                flash(f'You’re already friends with {friend.username}.', 'info')
             else:
-                db.session.add(Friend(user_id=current_user.id, friend_id=friend.id))
-                db.session.commit()
-                flash(f'{friend.username} added successfully!', 'success')
-        return redirect(url_for('friends.add_friend'))  
+                flash(f'Friend request already pending to {friend.username}.', 'info')
+        else:
+            # create a 1-way request; they’ll accept to make it mutual
+            db.session.add(Friend(
+                user_id=current_user.id,
+                friend_id=friend.id,
+                is_accepted=False
+            ))
+            db.session.commit()
+            flash(f'Friend request sent to {friend.username}!', 'success')
+        return redirect(url_for('friends.add_friend'))
 
-    # Compute current user's average BPM using UserTrack
-    my_bpm = db.session.query(sa.func.avg(Track.tempo)) \
+    # ----- on GET: build “top_friends” list ----- #
+    # your avg BPM
+    my_bpm = db.session.query(func.avg(Track.tempo)) \
         .join(UserTrack, UserTrack.track_id == Track.id) \
         .filter(UserTrack.user_id == current_user.id) \
         .scalar() or 0
 
-    # Fetch friends and order by BPM similarity
-    top_friends = (
-        db.session.query(User)
-        .join(Friend, Friend.friend_id == User.id)
-        .join(UserTrack, UserTrack.user_id == User.id)
-        .join(Track, Track.id == UserTrack.track_id)
-        .filter(Friend.user_id == current_user.id, Friend.is_accepted == True)
-        .group_by(User.id)
-        .order_by(sa.func.abs(sa.func.avg(Track.tempo) - my_bpm))
+    # helper to project id, username, pic, avg_bpm
+    def base_friend_q(filter_clause):
+        return (
+            db.session.query(
+                User.id.label("id"),
+                User.username.label("username"),
+                User.profile_pic.label("profile_pic"),
+                func.avg(Track.tempo).label("avg_bpm")
+            )
+            .join(Friend, filter_clause)
+            .join(UserTrack, UserTrack.user_id == User.id)
+            .join(Track, Track.id == UserTrack.track_id)
+            .filter(Friend.is_accepted == True)
+            .group_by(User.id)
+        )
+
+    # outgoing = me ➞ them
+    outgoing = base_friend_q(Friend.friend_id == User.id) \
+        .filter(Friend.user_id == current_user.id)
+    # incoming = them ➞ me
+    incoming = base_friend_q(Friend.user_id == User.id) \
+        .filter(Friend.friend_id == current_user.id)
+
+    # union them, then compute |avg_bpm – my_bpm|, sort & limit
+    union_sq = outgoing.union_all(incoming).subquery()
+    friends_with_diff = (
+        db.session.query(
+            union_sq.c.id,
+            union_sq.c.username,
+            union_sq.c.profile_pic,
+            sa.func.abs(union_sq.c.avg_bpm - my_bpm).label("bpm_diff")
+        )
+        .order_by("bpm_diff")
         .limit(20)
         .all()
     )
 
+    seen = set()
+    unique = []
+    for row in friends_with_diff:
+        if row.id not in seen:
+            seen.add(row.id)
+            unique.append(row)
+
+    friends_with_diff = unique
+
+    top_friends = []
+    for row in friends_with_diff:
+        u = User(id=row.id, username=row.username, profile_pic=row.profile_pic)
+        # attach the difference so you can show it if you like
+        u.bpm_diff = row.bpm_diff
+        top_friends.append(u)
+
+    # outstanding friend-requests
     incoming_requests = current_user.incoming_friend_requests()
-    sent_requests = current_user.sent_friend_requests()
-    new_friend_usernames = [r.user.username for r in incoming_requests]
+    sent_requests     = current_user.sent_friend_requests()
+    accept_form       = AcceptFriendForm()
 
-    accept_form = AcceptFriendForm()
-
-    return render_template (
+    return render_template(
         'add_friends.html',
         form=form,
         top_friends=top_friends,
         incoming_requests=incoming_requests,
         sent_requests=sent_requests,
-        new_friend_usernames=new_friend_usernames,
         accept_form=accept_form
     )
-
     
 @friends_bp.route('/friends/remove/<username>', methods=['POST'])
 @login_required

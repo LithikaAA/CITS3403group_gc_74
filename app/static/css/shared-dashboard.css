@@ -1,279 +1,270 @@
 /* shared-dashboard.css */
 
-/* Base layout and containers */
-.dashboard-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  }
-  
-  .chart-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .small-cards-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-  }
-  
-  @media (max-width: 1024px) {
-    .small-cards-row {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .chart-row {
-      grid-template-columns: 1fr;
-    }
-    
-    .small-cards-row {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  /* Chart cards styling */
-  .chart-card {
-    background-color: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .chart-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  .chart-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 5px;
-    color: #1a202c;
-  }
-  
-  .chart-subtitle {
-    font-size: 14px;
-    color: #718096;
-    margin-bottom: 15px;
-  }
-  
-  /* Chart containers */
-  .chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-  }
-  
-  /* Loading state */
-  .loading {
-    opacity: 0.6;
-    position: relative;
-  }
-  
-  .loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 30px;
-    height: 30px;
-    border: 3px solid rgba(99, 102, 241, 0.3);
-    border-radius: 50%;
-    border-top-color: #6366F1;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-  }
-  
-  /* Playlist selection dropdowns */
-  .playlist-selection {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 30px;
-    gap: 20px;
+/* Base layout and styling */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: #1f2937;
+}
+
+/* Global transitions */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Card and container styling */
+.bg-white {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.bg-white:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Chart containers */
+canvas {
+  transition: opacity 0.3s ease;
+}
+
+/* Loading states */
+.opacity-50 {
+  position: relative;
+}
+
+.opacity-50::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(99, 102, 241, 0.3);
+  border-radius: 50%;
+  border-top-color: #6366F1;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Dropdown styling */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+/* Style for the selected playlist info */
+#selectedPlaylists {
+  transition: all 0.3s ease;
+}
+
+/* Error message styling */
+#errorMessage {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Song item styling */
+.your-top-songs, .friend-top-songs {
+  transition: all 0.3s ease;
+}
+
+/* Chart quadrant labels */
+.valence-chart-container {
+  position: relative;
+}
+
+.quadrant-label {
+  position: absolute;
+  font-size: 10px;
+  color: #6366F1;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Ensure charts stay the same height */
+.h-[200px] {
+  height: 200px;
+  min-height: 200px;
+}
+
+.h-[280px] {
+  height: 280px;
+  min-height: 280px;
+}
+
+/* Better styles for top song tabs */
+#yourTopSongsTab, #friendTopSongsTab {
+  position: relative;
+  padding-bottom: 4px;
+}
+
+#yourTopSongsTab::after, #friendTopSongsTab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+#yourTopSongsTab:hover::after, #friendTopSongsTab:hover::after {
+  transform: scaleX(1);
+}
+
+/* Active state for tabs */
+.text-indigo-600 #yourTopSongsTab::after,
+.text-pink-600 #friendTopSongsTab::after {
+  transform: scaleX(1);
+}
+
+/* Profile pictures styling */
+.profile-pic {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+}
+
+.your-profile {
+  background: linear-gradient(45deg, #6366F1, #8B5CF6);
+}
+
+.friend-profile {
+  background: linear-gradient(45deg, #EC4899, #8B5CF6);
+}
+
+/* Animation for song items */
+.your-top-songs > div, .friend-top-songs > div {
+  transition: transform 0.15s ease;
+}
+
+.your-top-songs > div:hover, .friend-top-songs > div:hover {
+  transform: translateX(4px);
+}
+
+/* Better default color for charts */
+.chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9CA3AF;
+  font-size: 14px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .md\:flex-nowrap {
     flex-wrap: wrap;
   }
   
-  .playlist-dropdown {
-    position: relative;
-    min-width: 200px;
+  .md\:justify-between {
+    justify-content: flex-start;
   }
   
-  .playlist-dropdown select {
-    width: 100%;
-    padding: 10px 15px;
-    background-color: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    appearance: none;
-    font-size: 16px;
-    color: #4a5568;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
+  .gap-4 {
+    gap: 1rem;
   }
   
-  .playlist-dropdown select:hover {
-    border-color: #cbd5e0;
+  .h-[280px] {
+    height: 250px;
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 640px) {
+  .h-[280px] {
+    height: 220px;
+    min-height: 220px;
   }
   
-  .playlist-dropdown select:focus {
-    outline: none;
-    border-color: #6366F1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  .h-[200px] {
+    height: 180px;
+    min-height: 180px;
   }
-  
-  .playlist-dropdown::after {
-    content: '';
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid #4a5568;
-    pointer-events: none;
-  }
-  
-  .dropdown-label {
-    font-weight: 500;
-    color: #4a5568;
-  }
-  
-  /* Summary items */
-  .summary-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-  
-  .summary-icon {
-    width: 32px;
-    height: 32px;
-    background-color: #EBF4FF;
-    color: #6366F1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    margin-right: 12px;
-    font-size: 16px;
-  }
-  
-  .summary-label {
-    color: #718096;
-    font-size: 14px;
-  }
-  
-  .summary-value {
-    margin-left: auto;
-    font-weight: 600;
-    color: #1a202c;
-  }
-  
-  /* Popular songs list */
-  .popular-songs-list {
-    margin-top: 15px;
-  }
-  
-  .song-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .song-item:last-child {
-    border-bottom: none;
-  }
-  
-  .song-rank {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: #6366F1;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    margin-right: 10px;
-  }
-  
-  .song-title {
-    font-weight: 500;
-    margin-right: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-  }
-  
-  .song-artist {
-    color: #718096;
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  /* No friends message */
-  .no-friends-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 50px 20px;
-    text-align: center;
-  }
-  
-  .no-friends-icon {
-    width: 60px;
-    height: 60px;
-    color: #6366F1;
-    margin-bottom: 20px;
-  }
-  
-  .no-friends-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: #1a202c;
-  }
-  
-  .no-friends-description {
-    color: #718096;
-    max-width: 500px;
-    margin-bottom: 25px;
-  }
-  
-  .friends-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    background-color: #6366F1;
-    color: white;
-    font-weight: 500;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background-color 0.2s ease;
-  }
-  
-  .friends-button:hover {
-    background-color: #4F46E5;
-  }
+}
+
+/* Fix Chart.js legend styles */
+.chartjs-tooltip {
+  background-color: white !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
+/* Better summary display */
+[data-summary] {
+  background: linear-gradient(90deg, currentColor, rgba(255,255,255,0));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+[data-summary="your-avg-tempo"],
+[data-summary="your-mood"] {
+  color: #6366F1;
+}
+
+[data-summary="friend-avg-tempo"],
+[data-summary="friend-mood"] {
+  color: #EC4899;
+}
+
+.select-wrapper select {
+  /* remove the browser’s built-in arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* also drop any background-image fallback */
+  background-image: none !important;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #fff;
+  pointer-events: none;
+}
+
+.select-wrapper select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background: none !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+}
+/* IE10+ fix */
+.select-wrapper select::-ms-expand {
+  display: none !important;
+}

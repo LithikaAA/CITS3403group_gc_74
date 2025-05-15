@@ -1,139 +1,177 @@
 {% extends "base.html" %}
 {% block title %}Account Setup | VibeShare{% endblock %}
 
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="flex max-w-4xl mx-auto bg-white shadow-lg rounded-2xl mt-10 overflow-hidden">
-  <form id="accountSetupForm" method="POST" action="{{ url_for('auth.account_setup') }}" enctype="multipart/form-data" class="flex w-full">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <input type="hidden" name="form_type" value="account" />
-
-  <!-- Left Panel -->
-  <div class="w-1/2 bg-gradient-to-b from-indigo-400 to-pink-300 p-10 flex flex-col items-center justify-center text-white">
-    <div class="bg-white rounded-full p-1 mb-6">
-      <img
-        src="{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) if current_user.profile_pic else url_for('static', filename='img/default_profile.jpg') }}"
-        alt="Profile Picture"
-        class="w-24 h-24 rounded-full object-cover"
-      />
-    </div>
-    <div class="relative inline-block mb-6">
-      <button type="button" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg hover:bg-gray-100 flex items-center">
-        <i data-feather="image" class="w-4 h-4 mr-2"></i>
-        Upload Profile Picture
-        <input
-          type="file"
-          name="profile_pic"
-          accept="image/*"
-          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          onchange="document.getElementById('accountSetupForm').submit()"
-        />
-      </button>
-    </div>
+  <!-- Flash Messages -->
+  <div id="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }} animate-fade-in">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
   </div>
 
-  <!-- Right Panel -->
-  <div class="w-1/2 p-10 relative">
-    <a href="{{ url_for('auth.logout') }}" class="absolute top-4 right-4 inline-flex items-center text-sm text-red-500 transition p-1 rounded-full hover:bg-red-100 hover:text-red-600">
-      <i data-feather="log-out" class="w-4 h-4 mr-1"></i>
-      Log Out
-    </a>
+  <div class="container-wide">
+    <div class="card-container">
 
-    <h1 class="text-3xl font-bold mb-8">Account Setup</h1>
-
-    <div class="space-y-5">
-      <div>
-        <label class="block text-gray-600">Username</label>
-        <input type="text" name="username" value="{{ current_user.username or '' }}" class="w-full border px-4 py-2 rounded-lg" required />
-      </div>
-      <div>
-        <label class="block text-gray-600">Gender</label>
-        <div class="flex space-x-6 mt-1">
-          {% for opt in ['Male', 'Female', 'Other'] %}
-            <label class="inline-flex items-center">
-              <input type="radio" name="gender" value="{{ opt }}" {% if current_user.gender == opt %}checked{% endif %} class="mr-2" />
-              <span>{{ opt }}</span>
-            </label>
-          {% endfor %}
+      <!-- Left Panel: Profile Picture Upload -->
+      <div class="left-panel">
+        <div class="profile-picture-container">
+          <img
+            src="{% if current_user.profile_pic %}
+                    {{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}
+                  {% else %}
+                    {{ url_for('static', filename='img/default_profile.jpg') }}
+                  {% endif %}"
+            alt="Profile Picture"
+            class="profile-picture"
+          />
         </div>
+        <form id="picForm"
+              method="POST"
+              action="{{ url_for('auth.account_setup') }}"
+              enctype="multipart/form-data"
+              class="mb-6 flex flex-col items-center">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="form_type" value="profile_pic">
+          <input type="hidden" name="username" value="{{ current_user.username }}">
+          <input type="hidden" name="email" value="{{ current_user.email }}">
+          <button type="button" class="upload-btn">
+            <i data-feather="image" class="w-4 h-4 mr-2"></i>
+            Upload Profile Picture
+            <input
+              type="file"
+              name="profile_pic"
+              accept="image/*"
+              class="file-input"
+              onchange="document.getElementById('picForm').submit()"
+            />
+          </button>
+        </form>
       </div>
-      <div>
-        <label class="block text-gray-600">Date of Birth</label>
-        <input type="date" name="dob" value="{{ current_user.dob|default('', true) }}" class="w-full border px-4 py-2 rounded-lg" />
+
+      <!-- Right Panel: Account Details -->
+      <div class="right-panel">
+        <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+          <i data-feather="log-out" class="w-4 h-4 mr-1"></i>
+          Log Out
+        </a>
+
+        <h1 class="page-title">Account Setup</h1>
+
+        <form method="POST" action="{{ url_for('auth.account_setup') }}" class="account-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="form_type" value="account" />
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text"
+                     name="username"
+                     value="{{ current_user.username or '' }}"
+                     class="text-input"
+                     required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email"
+                     name="email"
+                     value="{{ current_user.email or '' }}"
+                     class="text-input"
+                     required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date"
+                     name="dob"
+                     value="{{ current_user.dob|default('', true) }}"
+                     class="text-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mobile</label>
+              <input type="text"
+                     name="mobile"
+                     value="{{ current_user.mobile or '' }}"
+                     class="text-input" />
+            </div>
+          </div>
+
+          <div class="form-group mt-4">
+            <label class="form-label">Gender</label>
+            <div class="gender-options">
+              {% for opt in ['Male', 'Female', 'Other'] %}
+                <label class="gender-option {% if current_user.gender == opt %}selected{% endif %}">
+                  <input type="radio"
+                         name="gender"
+                         value="{{ opt }}"
+                         {% if current_user.gender == opt %}checked{% endif %}
+                         class="sr-only" />
+                  <span>{{ opt }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="openChangePassword" type="button" class="secondary-btn">
+              Change Password
+            </button>
+            <button type="submit" class="primary-btn">
+              Save Changes
+            </button>
+          </div>
+        </form>
       </div>
-      <div>
-        <label class="block text-gray-600">Email</label>
-        <input type="email" name="email" value="{{ current_user.email or '' }}" class="w-full border px-4 py-2 rounded-lg" required />
-      </div>
-      <div>
-        <label class="block text-gray-600">Mobile</label>
-        <input type="text" name="mobile" value="{{ current_user.mobile or '' }}" class="w-full border px-4 py-2 rounded-lg" />
-      </div>
-      <div class="flex justify-end mt-6 space-x-4">
-        <button id="openChangePassword" type="button" class="bg-gradient-to-r from-indigo-400 to-pink-300 text-white font-semibold px-6 py-2 rounded-lg hover:from-indigo-500 hover:to-pink-400 transition">
-          Change Password
-        </button>
-        <button type="submit" class="bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold px-6 py-2 rounded-lg hover:from-indigo-700 hover:to-pink-600 transition">
-          Save Changes
-        </button>
-      </div>
+
     </div>
   </div>
-</form>
 
-
-<!-- Password Modal -->
-<div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
-<div id="changePasswordModal" class="fixed top-0 right-0 h-full w-96 bg-white shadow-lg transform translate-x-full transition-transform z-50">
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-semibold">Change Password</h2>
-      <button id="closeChangePassword" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+  <!-- Password Modal -->
+  <div id="modalOverlay" class="modal-overlay"></div>
+  <div id="changePasswordModal" class="password-modal">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold">Change Password</h2>
+        <button id="closeChangePassword" class="close-btn">&times;</button>
+      </div>
+      <form method="POST" action="{{ url_for('auth.change_password') }}" class="space-y-5">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="form_type" value="password" />
+        <div>
+          <label class="form-label">Current Password</label>
+          <input type="password" name="current_password" class="text-input" required />
+        </div>
+        <div>
+          <label class="form-label">New Password</label>
+          <input type="password" name="new_password" class="text-input" required />
+        </div>
+        <div>
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" name="confirm_password" class="text-input" required />
+        </div>
+        <div class="flex justify-end">
+          <button type="submit" class="update-password-btn">
+            Update Password
+          </button>
+        </div>
+      </form>
     </div>
-    <form method="POST" action="{{ url_for('auth.change_password') }}" class="space-y-5">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="form_type" value="password" />
-      <div>
-        <label class="block text-gray-600">Current Password</label>
-        <input type="password" name="current_password" class="w-full border px-4 py-2 rounded-lg" required />
-      </div>
-      <div>
-        <label class="block text-gray-600">New Password</label>
-        <input type="password" name="new_password" class="w-full border px-4 py-2 rounded-lg" required />
-      </div>
-      <div>
-        <label class="block text-gray-600">Confirm New Password</label>
-        <input type="password" name="confirm_password" class="w-full border px-4 py-2 rounded-lg" required />
-      </div>
-      <div class="flex justify-end">
-        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-          Update Password
-        </button>
-      </div>
-    </form>
   </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-  feather.replace();
-  const openBtn = document.getElementById('openChangePassword');
-  const closeBtn = document.getElementById('closeChangePassword');
-  const overlay = document.getElementById('modalOverlay');
-  const modal = document.getElementById('changePasswordModal');
-
-  function openModal() {
-    overlay.classList.remove('hidden');
-    modal.classList.remove('translate-x-full');
-  }
-
-  function closeModal() {
-    overlay.classList.add('hidden');
-    modal.classList.add('translate-x-full');
-  }
-
-  openBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-  overlay.addEventListener('click', closeModal);
-</script>
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/account.js') }}"></script>
 {% endblock %}

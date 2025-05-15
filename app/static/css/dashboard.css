@@ -360,3 +360,48 @@
   box-shadow: 0 10px 24px rgba(99, 102, 241, 0.10), 0 4px 8px rgba(0, 0, 0, 0.06);
   z-index: 10;
 }
+
+/* Rounded gradient dropdown styling - UPDATED to match image exactly */
+#playlist-display, 
+.gradient-dropdown {
+  appearance: none;
+  padding: 0.5rem 1.5rem;
+  width: 100%;
+  border-radius: 9999px; /* Fully rounded pill shape */
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: white; /* White text */
+  border: none;
+  background: linear-gradient(to right, #8B5CF6, #EC4899); /* Purple to pink gradient */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  text-align: center; /* Center text */
+}
+
+/* Remove the dropdown arrow completely */
+.relative::after,
+.select-wrapper::after {
+  display: none; /* Hide the dropdown arrow */
+}
+
+/* Remove outline on focus */
+#playlist-display:focus,
+.gradient-dropdown:focus {
+  outline: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* For Firefox - hide the default arrow */
+#playlist-display::-ms-expand,
+.gradient-dropdown::-ms-expand {
+  display: none;
+}
+
+/* Fix for dropdown options */
+#playlist-display option,
+.gradient-dropdown option {
+  background-color: white;
+  color: #1F2937;
+  font-weight: normal;
+  text-align: left;
+}
