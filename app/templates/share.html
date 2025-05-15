@@ -196,127 +196,99 @@
     </button>
   </div>
 
-  <!-- Bottom Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    <!-- Playlists Shared With You -->
-    <div id="shared-playlists" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-      <div class="flex items-center mb-6">
-        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
-               viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0
-                     01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2
-                     2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-semibold text-gray-800">Playlists Shared With You</h2>
+<!-- Bottom Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+  <!-- Playlists Shared With You -->
+  <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+    <div class="flex items-center mb-6">
+      <!-- Icon container with background and rounded corners -->
+      <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+        <!-- SVG for the document/file icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z" />
+        </svg>
       </div>
-      {% if received_shares %}
-        <div class="space-y-2">
-          {% for share in received_shares %}
-          <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
-            <div class="flex items-center">
-              {% set owner = share.owner if share.owner is defined else None %}
-              {% if owner and owner.profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/' ~ owner.profile_pic) }}"
-                     alt="{{ owner.username }}"
-                     class="w-10 h-10 rounded-full object-cover mr-3">
-              {% else %}
-                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
-                            text-white font-bold text-lg mr-3">
-                  {% if owner and owner.username %}
-                    {{ owner.username[0] | upper }}
-                  {% else %}
-                    U
-                  {% endif %}
-                </div>
-              {% endif %}
-              <div>
-                <div class="font-medium">
-                  {% if share.playlist is defined and share.playlist %}
-                    {{ share.playlist.name }}
-                  {% else %}
-                    Playlist
-                  {% endif %}
-                </div>
-                <div class="text-sm text-gray-500">
-                  Shared by {{ owner.username if owner and owner.username is defined else 'Unknown' }}
-                </div>
-              </div>
-            </div>
-            <!-- Close button will be added by JavaScript -->
-          </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div id="empty-shared-with-you"
-             class="flex items-center justify-center h-32">
-          <p class="text-gray-500 text-lg">
-            No playlists have been shared with you yet.
-          </p>
-        </div>
-      {% endif %}
+      <!-- Section heading -->
+      <h2 class="text-xl font-semibold text-gray-800">
+        Playlists Shared With You
+      </h2>
     </div>
 
-    <!-- Your Sharing History -->
-    <div id="sharing-history" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-      <div class="flex items-center mb-6">
-        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
-               viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-semibold text-gray-800">Your Sharing History</h2>
-      </div>
-      {% if sent_shares %}
-        <div class="space-y-2">
-          {% for share in sent_shares %}
+    {% set grouped_received = received_shares|groupby('playlist.id') %}
+    {% if grouped_received %}
+      <div class="space-y-4">
+        {% for playlist_id, shares in grouped_received %}
+          {% set share = shares[0] %}
           <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
             <div class="flex items-center">
-              {% set recipient = share.recipient if share.recipient is defined else None %}
-              {% if recipient and recipient.profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/' ~ recipient.profile_pic) }}"
-                     alt="{{ recipient.username }}"
+              <!-- Owner’s avatar -->
+              {% if share.owner.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/' ~ share.owner.profile_pic) }}"
+                     alt="{{ share.owner.username }}"
                      class="w-10 h-10 rounded-full object-cover mr-3">
               {% else %}
                 <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
                             text-white font-bold text-lg mr-3">
-                  {% if recipient and recipient.username %}
-                    {{ recipient.username[0] | upper }}
-                  {% else %}
-                    U
-                  {% endif %}
+                  {{ share.owner.username[0] | upper }}
                 </div>
               {% endif %}
               <div>
-                <div class="font-medium">
-                  {% if share.playlist is defined and share.playlist %}
-                    {{ share.playlist.name }}
-                  {% else %}
-                    Playlist
-                  {% endif %}
-                </div>
-                <div class="text-sm text-gray-500">
-                  Shared with {{ recipient.username if recipient and recipient.username is defined else 'Unknown' }}
-                </div>
+                <div class="font-medium text-gray-800">{{ share.playlist.name }}</div>
+                <div class="text-sm text-gray-500">Shared by {{ share.owner.username }}</div>
               </div>
             </div>
-            <!-- Close button will be added by JavaScript -->
           </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div id="empty-sharing-history"
-             class="flex items-center justify-center h-32">
-          <p class="text-gray-500 text-lg">
-            You haven't shared any playlists yet.
-          </p>
-        </div>
-      {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div id="empty-shared-with-you" class="flex items-center justify-center h-32">
+        <p class="text-gray-500 text-lg">No playlists have been shared with you yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Your Sharing History -->
+  <div id="sharing-history" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+    <div class="flex items-center mb-6">
+      <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800">Your Sharing History</h2>
     </div>
+
+    {% set grouped_sent = sent_shares|groupby('playlist.id') %}
+    {% if grouped_sent %}
+      <div class="space-y-4">
+        {% for playlist_id, shares in grouped_sent %}
+          {% set share = shares[0] %}
+          <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
+            <div class="flex items-center">
+              <!-- Current user's avatar -->
+              {% if current_user.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}"
+                     alt="{{ current_user.username }}"
+                     class="w-10 h-10 rounded-full object-cover mr-3">
+              {% else %}
+                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
+                            text-white font-bold text-lg mr-3">
+                  {{ current_user.username[0] | upper }}
+                </div>
+              {% endif %}
+              <div>
+                <div class="font-medium text-gray-800">{{ share.playlist.name }}</div>
+                <div class="text-sm text-gray-500">Shared with {{ share.recipient.username }}</div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div id="empty-sharing-history" class="flex items-center justify-center h-32">
+        <p class="text-gray-500 text-lg">You haven’t shared any playlists yet.</p>
+      </div>
+    {% endif %}
   </div>
 </div>
 

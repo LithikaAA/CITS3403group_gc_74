@@ -27,7 +27,7 @@ def allowed_file(filename):
 @login_required
 def share():
     playlists = Playlist.query.filter_by(owner_id=current_user.id).all()
-    friends = User.query.filter(User.id != current_user.id).all()
+    friends = current_user.all_friends
 
     if request.method == 'POST':
         playlist_ids = request.form.getlist('playlist_ids')

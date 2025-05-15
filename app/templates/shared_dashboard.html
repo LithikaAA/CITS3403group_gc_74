@@ -221,6 +221,21 @@ canvas {
   height: 200px;
   position: relative;
 }
+
+/* ——— OVERRIDES ——— */
+.select-wrapper select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background: none !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+}
+    
+/* IE10+ */
+.select-wrapper select::-ms-expand {
+  display: none !important;
+}
 </style>
 {% endblock %}
 

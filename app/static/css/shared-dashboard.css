@@ -53,6 +53,8 @@ canvas {
 /* Dropdown styling */
 select {
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
@@ -228,4 +230,41 @@ select {
 [data-summary="friend-avg-tempo"],
 [data-summary="friend-mood"] {
   color: #EC4899;
+}
+
+.select-wrapper select {
+  /* remove the browser’s built-in arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* also drop any background-image fallback */
+  background-image: none !important;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #fff;
+  pointer-events: none;
+}
+
+.select-wrapper select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background: none !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+}
+/* IE10+ fix */
+.select-wrapper select::-ms-expand {
+  display: none !important;
 }

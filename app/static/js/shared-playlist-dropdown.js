@@ -248,16 +248,15 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
       }
       
-      // Get the existing chart
-      const existingChart = Chart.getChart(canvas);
-      if (existingChart) {
-          // Destroy the existing chart first
-          existingChart.destroy();
+      // Destroy old chart if it exists
+      if (valenceChart) {
+          safeDestroyChart(valenceChart);
+          valenceChart = null;
       }
       
       // Create new chart
       const ctx = canvas.getContext('2d');
-      const newChart = new Chart(ctx, {
+      valenceChart = new Chart(ctx, {
           type: 'scatter',
           data: {
               datasets: [
@@ -356,8 +355,8 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       
       // Add divider lines via the chart's draw function
-      const originalDraw = newChart.draw;
-      newChart.draw = function() {
+      const originalDraw = valenceChart.draw;
+      valenceChart.draw = function() {
           originalDraw.apply(this, arguments);
           
           const chartArea = this.chartArea;
