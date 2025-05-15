@@ -54,7 +54,6 @@ def share():
                     db.session.add(new_share)
 
         db.session.commit()
-        flash(f'Shared {len(playlist_ids)} playlist(s) with {len(friend_ids)} friend(s)!', 'success')
         return redirect(url_for('share.share'))
 
     # on GET, fetch both sent and received shares for the template
