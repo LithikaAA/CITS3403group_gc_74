@@ -1,10 +1,43 @@
 from app import create_app, db
-from app.models import User, Playlist, Track, PlaylistTrack, Friend, Share
+from app.models import User, Playlist, Track, PlaylistTrack, Friend, UserTrack, Share
 from werkzeug.security import generate_password_hash
 from datetime import datetime
+import pandas as pd
+import random
+
+spotify_df = pd.read_csv("spotify.csv")
+spotify_df.rename(columns={"artists": "artist", "track_genre": "genre"}, inplace=True)
+spotify_df = spotify_df.dropna(subset=["track_name", "artist", "genre", "tempo"])
+
+def create_track_from_row(row, user_id):
+    return Track(
+        title=row["track_name"],
+        artist=row["artist"],
+        genre=row["genre"],
+        tempo=row["tempo"],
+        valence=row.get("valence", 0.5),
+        energy=row.get("energy", 0.5),
+        acousticness=row.get("acousticness", 0.3),
+        danceability=row.get("danceability", 0.7),
+        liveness=row.get("liveness", 0.1),
+        mode="Major" if row.get("mode", 1) == 1 else "Minor",
+        duration_ms=int(row.get("duration_ms", 200000)),
+        user_id=user_id
+    )
+
+def link_usertrack(user, track):
+    return UserTrack(
+        user_id=user.id,
+        track_id=track.id,
+        song=track.title,
+        artist=track.artist,
+        song_duration=track.duration_ms,
+        times_played=1,
+        total_ms_listened=track.duration_ms
+    )
 
 def seed_users():
-    users = [
+    user_data = [
         {"username": "vmontes", "email": "hallen@hotmail.com"},
         {"username": "steven12", "email": "hammondjacob@yahoo.com"},
         {"username": "cmartinez", "email": "gellis@clark.com"},
@@ -13,134 +46,139 @@ def seed_users():
         {"username": "cruzdenise", "email": "wscott@johnson.com"},
         {"username": "pagetamara", "email": "jeffreysmith@hotmail.com"},
         {"username": "connie96", "email": "nathanmay@yahoo.com"},
-        {"username": "ashley91", "email": "jeremybell@mckinney.com"},
         {"username": "hobbsmatthew", "email": "lauralove@gmail.com"},
     ]
 
-    count = 0
-    for u in users:
-        if not User.query.filter(
-            (User.username == u["username"]) | (User.email == u["email"])
-        ).first():
-            user = User(
-                username=u["username"],
-                email=u["email"],
-                password_hash=generate_password_hash("password123")
-            )
-            db.session.add(user)
-            count += 1
-
-    db.session.commit()
-    print(f" Seeded {count} new users (out of {len(users)}).")
-
-
-def seed_marker_account():
-    if User.query.filter_by(username="marker123").first():
-        print("Marker account already exists.")
-        return
-    
-     # --- Marker User ---
-    marker = User(
-        username="marker123",
-        email="marker@example.com",
-        name="Marker User",
-        password_hash=generate_password_hash("testmarker"),
-        dob=datetime(1990, 1, 1),
-        gender="Other",
-        mobile="0000000000",
-        profile_pic="default_profile.jpg"
-    )
-    db.session.add(marker)
-    db.session.commit()
-
-    # --- Marker Playlists with 8 Songs Each ---
-    def create_track(title, artist, genre, tempo, user_id):
-        return Track(
-            title=title, artist=artist, genre=genre,
-            tempo=tempo, valence=0.6, energy=0.7,
-            acousticness=0.3, danceability=0.8, liveness=0.1,
-            mode="Major", duration_ms=200000, user_id=user_id
+    created_users = []
+    for u in user_data:
+        user = User(
+            username=u["username"],
+            email=u["email"],
+            password_hash=generate_password_hash("password123")
         )
+        db.session.add(user)
+        db.session.flush()
 
-     # --- Marker Playlists with Tracks ---
+        for j in range(2):
+            playlist = Playlist(name=f"{user.username.title()} Playlist {j+1}", owner_id=user.id)
+            db.session.add(playlist)
+            db.session.flush()
+
+            track_rows = spotify_df.sample(n=8)
+            for _, row in track_rows.iterrows():
+                track = create_track_from_row(row, user.id)
+                db.session.add(track)
+                db.session.flush()
+                db.session.add(PlaylistTrack(playlist_id=playlist.id, track_id=track.id))
+                db.session.add(link_usertrack(user, track))
+
+        created_users.append(user)
+
+    db.session.commit()
+    print(f"✅ Seeded {len(created_users)} users with playlists and tracks.")
+    return created_users
+
+def seed_marker_account(users):
+    marker = User.query.filter_by(username="marker123").first()
+    if not marker:
+        marker = User(
+            username="marker123",
+            email="marker@example.com",
+            name="Marker User",
+            password_hash=generate_password_hash("testmarker"),
+            dob=datetime(1990, 1, 1),
+            gender="Other",
+            mobile="0000000000",
+            profile_pic="default_profile.jpg"
+        )
+        db.session.add(marker)
+        db.session.commit()
+
+    mellow_rows = spotify_df[spotify_df["valence"] < 0.4].sample(n=8)
+    hype_rows = spotify_df[spotify_df["energy"] > 0.7].sample(n=8)
+
     playlist1 = Playlist(name="Marker's Mood Mix", owner_id=marker.id)
     playlist2 = Playlist(name="Marker's Energy Set", owner_id=marker.id)
     db.session.add_all([playlist1, playlist2])
     db.session.commit()
 
-    tracks1 = [create_track(f"Chill Track {i}", f"Artist {i}", "Indie", 100 + i, marker.id) for i in range(8)]
-    tracks2 = [create_track(f"Hype Track {i}", f"DJ {i}", "EDM", 120 + i, marker.id) for i in range(8)]
-    db.session.add_all(tracks1 + tracks2)
+    for row in mellow_rows.itertuples():
+        t = create_track_from_row(row._asdict(), marker.id)
+        db.session.add(t)
+        db.session.flush()
+        db.session.add(PlaylistTrack(playlist_id=playlist1.id, track_id=t.id))
+        db.session.add(link_usertrack(marker, t))
+
+    for row in hype_rows.itertuples():
+        t = create_track_from_row(row._asdict(), marker.id)
+        db.session.add(t)
+        db.session.flush()
+        db.session.add(PlaylistTrack(playlist_id=playlist2.id, track_id=t.id))
+        db.session.add(link_usertrack(marker, t))
+
     db.session.commit()
 
-    db.session.add_all([PlaylistTrack(playlist_id=playlist1.id, track_id=track.id) for track in tracks1])
-    db.session.add_all([PlaylistTrack(playlist_id=playlist2.id, track_id=track.id) for track in tracks2])
+    for user in users:
+        if user.username in ["vmontes", "steven12", "cmartinez", "raymond89"]:
+                    db.session.add(Friend(user_id=user.id, friend_id=marker.id, is_accepted=True))
+
+        # Create and share two playlists for this friend
+        for i in range(2):
+            playlist = Playlist(name=f"{user.username.title()}'s Shared Playlist {i+1}", owner_id=user.id)
+            db.session.add(playlist)
+            db.session.flush()
+
+            # Select 8 real tracks with full data
+            sample_tracks = spotify_df.dropna(subset=[
+                "track_name", "artist", "album_name", "genre", "danceability",
+                "energy", "liveness", "acousticness", "valence", "mode", "tempo", "duration_ms"
+            ]).sample(n=8)
+
+            for _, row in sample_tracks.iterrows():
+                track = Track(
+                    title=row["track_name"],
+                    artist=row["artist"],
+                    genre=row["genre"],
+                    tempo=row["tempo"],
+                    valence=row["valence"],
+                    energy=row["energy"],
+                    acousticness=row["acousticness"],
+                    danceability=row["danceability"],
+                    liveness=row["liveness"],
+                    mode="Major" if row["mode"] == 1 else "Minor",
+                    duration_ms=int(row["duration_ms"]),
+                    user_id=user.id
+                )
+                db.session.add(track)
+                db.session.flush()
+
+                db.session.add(PlaylistTrack(playlist_id=playlist.id, track_id=track.id))
+                db.session.add(link_usertrack(user, track))
+
+            # Share with marker
+            share = Share(
+                playlist_id=playlist.id,
+                recipient_id=marker.id,
+                owner_id=user.id
+            )
+            db.session.add(share)
+
+        if user.username in ["vmiller", "cruzdenise", "pagetamara", "connie96"]:
+            db.session.add(Friend(user_id=user.id, friend_id=marker.id, is_accepted=False))
+        elif user.username == "hobbsmatthew":
+            db.session.add(Friend(user_id=marker.id, friend_id=user.id, is_accepted=False))
+
     db.session.commit()
-
-    # --- Friends with Their Own Data ---
-    def add_friend_user(username, email):
-        u = User(username=username, email=email, password_hash=generate_password_hash("password123"))
-        db.session.add(u)
-        db.session.commit()
-        p = Playlist(name=f"{username}'s Picks", owner_id=u.id)
-        db.session.add(p)
-        db.session.commit()
-        friend_tracks = [create_track(f"{username} Track {i}", f"F-{i}", "Rock", 110 + i, u.id) for i in range(6)]
-        db.session.add_all(friend_tracks)
-        db.session.commit()
-        db.session.add_all([PlaylistTrack(playlist_id=p.id, track_id=t.id) for t in friend_tracks])
-        db.session.commit()
-        return u, p
-
-    friend_a, _ = add_friend_user("friend_a", "fa@example.com")
-    friend_b, friend_b_playlist = add_friend_user("friend_b", "fb@example.com")
-    friend_c, _ = add_friend_user("friend_c", "fc@example.com")
-
-    # --- Accepted Friendships ---
-    db.session.add_all([
-        Friend(user_id=marker.id, friend_id=friend_a.id, is_accepted=True),
-        Friend(user_id=friend_a.id, friend_id=marker.id, is_accepted=True),
-        Friend(user_id=friend_b.id, friend_id=marker.id, is_accepted=True),
-        Friend(user_id=marker.id, friend_id=friend_b.id, is_accepted=True),
-    ])
-
-    # --- Incoming Friend Requests ---
-    incoming1 = User(username="incoming1", email="in1@example.com", password_hash=generate_password_hash("pass"))
-    incoming2 = User(username="incoming2", email="in2@example.com", password_hash=generate_password_hash("pass"))
-    db.session.add_all([incoming1, incoming2])
-    db.session.commit()
-
-    db.session.add_all([
-        Friend(user_id=incoming1.id, friend_id=marker.id, is_accepted=False),
-        Friend(user_id=incoming2.id, friend_id=marker.id, is_accepted=False)
-    ])
-
-    # --- Outgoing Friend Request from Marker ---
-    db.session.add(Friend(user_id=marker.id, friend_id=friend_c.id, is_accepted=False))
-
-    # --- Share Friend B's Playlist with Marker ---
-    shared = Share(playlist_id=friend_b_playlist.id, owner_id=friend_b.id, recipient_id=marker.id)
-    db.session.add(shared)
-    db.session.commit()
-
-    print(" Marker account with playlists, friends, and shared data seeded.")
-    print(f" marker@example.com has:")
-    print("- 2 playlists with 8 tracks each")
-    print("- 2 accepted friends (friend_a, friend_b)")
-    print("- 1 outgoing request to friend_c")
-    print("- 2 incoming requests from incoming1 and incoming2")
-    print("- 1 playlist shared with them from friend_b")
-
+    print("✅ Marker seeded with playlists, shared data, and friends.")
 
 def main():
     app = create_app()
     with app.app_context():
         db.drop_all()
         db.create_all()
-        seed_users()
-        seed_marker_account()
-        print(" All data seeded successfully.")
-
+        users = seed_users()
+        seed_marker_account(users)
+        print("🎉 All data seeded and ready.")
 
 if __name__ == "__main__":
     main()
