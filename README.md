@@ -33,13 +33,13 @@
 
 ## Tech Stack
 
-| Layer         | Technology                             |
-|--------------|-----------------------------------------|
-| Frontend     | HTML, CSS, TailwindCSS, JavaScript        |
-| Backend      | Python (Flask)                          |
-| Database     | SQLite with SQLAlchemy ORM              |
-| Authentication | Flask-Login                           |
-| Visualisation | Chart.js / JavaScript-based libraries  |
+| Layer           | Technology                             |
+|-----------------|----------------------------------------|
+| Frontend        | HTML, CSS, TailwindCSS, JavaScript    |
+| Backend         | Python (Flask)                         |
+| Database        | SQLite with SQLAlchemy ORM             |
+| Authentication  | Flask-Login                           |
+| Visualisation   | Chart.js / JavaScript-based libraries  |
 
 ## Project Structure
 
@@ -70,7 +70,7 @@ app/
 
 ## Setup Instructions
 
-1. **Clone the repository**
+1. Clone the repository
 2. Install dependencies:
 ```bash
 pip install -r requirements.txt
@@ -87,6 +87,59 @@ flask run
 ```
 
 > **Note**: Markers should use the test account provided for login. Spotify API client credentials are required to enable the search functionality.
+
+## Testing
+
+VibeShare includes both backend unit tests and frontend Selenium UI tests to verify key functionality across the platform.
+
+### Unit Tests (`test_app.py`)
+Tests core backend features using Flask’s test client, including:
+
+*   Signup and login flows
+
+*    Dashboard and upload route access
+
+* Friend request system
+
+* Playlist creation, validation, and removal
+
+To run unit tests:
+bash
+```
+`$env:PYTHONPATH = "." 
+python tests/test_app.py`
+```
+> These tests use an in-memory SQLite test database defined in `TestConfig`.
+
+* * *
+
+### Selenium UI Tests (`test_selenium_ui.py`)
+
+Simulate browser-based interactions using Selenium:
+
+* Signup success and duplicate user handling
+* Login with valid and invalid credentials
+* UI redirects and flash message visibility
+
+**Step 1: Start the Flask server**
+
+bash
+```
+`flask run`
+```
+**Step 2: In another terminal**
+
+bash
+```
+`pip install selenium webdriver-manager $env:PYTHONPATH = "." python tests/test_selenium_ui.py`
+```
+> ChromeDriver is auto-installed via `webdriver-manager` — no manual setup required.
+* * *
+### Notes
+
+* Tests rely on the app running at `http://localhost:5000`.
+* Uncomment the `--headless` option in `test_selenium_ui.py` for browser-less runs.
+
 
 ## Team Members
 
