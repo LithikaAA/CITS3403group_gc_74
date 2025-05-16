@@ -97,49 +97,66 @@ Tests core backend features using Flask’s test client, including:
 
 *   Signup and login flows
 
-*    Dashboard and upload route access
+*   Dashboard and upload route access
 
-* Friend request system
+*   Friend request system
 
-* Playlist creation, validation, and removal
+*   Playlist creation, validation, and removal
 
-To run unit tests:
-bash
+How to run:
+(In Terminal) Ensure you're in the project root and the virtual environment is activated.
+
+```bash
+# Windows PowerShell
+$env:PYTHONPATH = "."
+python tests/test_app.py
 ```
-`$env:PYTHONPATH = "." 
-python tests/test_app.py`
+> Uses an in-memory SQLite database (TestConfig) — no setup required.
+
+Selenium UI Tests – tests/test_selenium_ui.py
+*  These simulate user interactions in a real browser:
+
+*  Signup success and duplicate error handling
+
+*  Login with valid/invalid credentials
+
+*  Redirects and flash message visibility
+
+*  Logout flow
+
+Prerequisites:
+*  Flask server must be running in another terminal.
+
+*  Chrome browser is required.
+
+Step-by-step:
+1. In Terminal 1, start the Flask server:
+
+```bash
+flask run
 ```
-> These tests use an in-memory SQLite test database defined in `TestConfig`.
+2. In Terminal 2, run the tests:
 
-* * *
-
-### Selenium UI Tests (`test_selenium_ui.py`)
-
-Simulate browser-based interactions using Selenium:
-
-* Signup success and duplicate user handling
-* Login with valid and invalid credentials
-* UI redirects and flash message visibility
-
-**Step 1: Start the Flask server**
-
-bash
+```bash
+pip install selenium webdriver-manager
+$env:PYTHONPATH = "."
+python tests/test_selenium_ui.py
 ```
-`flask run`
-```
-**Step 2: In another terminal**
+> webdriver-manager auto-downloads the ChromeDriver — no manual setup needed.
 
-bash
-```
-`pip install selenium webdriver-manager $env:PYTHONPATH = "." python tests/test_selenium_ui.py`
-```
-> ChromeDriver is auto-installed via `webdriver-manager` — no manual setup required.
-* * *
-### Notes
+Optional:
+To run in headless mode (no browser pop-up), open tests/test_selenium_ui.py and uncomment the --headless Chrome option.
 
-* Tests rely on the app running at `http://localhost:5000`.
-* Uncomment the `--headless` option in `test_selenium_ui.py` for browser-less runs.
+Notes:
+The app must run on: http://localhost:5000
 
+Test accounts are seeded via seed_data.py
+
+You can reseed the test data by running:
+
+```bash
+python seed_data.py
+```
 
 ## Team Members
 
