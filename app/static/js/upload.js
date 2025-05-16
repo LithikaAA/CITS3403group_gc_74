@@ -9,6 +9,17 @@ document.addEventListener("DOMContentLoaded", function () {
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null;
   }
+
+  function showLoader() {
+    const loader = document.getElementById("loading-indicator");
+    if (loader) loader.classList.remove("hidden");
+  }
+
+  function hideLoader() {
+    const loader = document.getElementById("loading-indicator");
+    if (loader) loader.classList.add("hidden");
+  }
+
   
   const queryInput = document.getElementById("search-query");
   const resultsBox = document.getElementById("searchResults");
@@ -34,6 +45,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     debounceTimer = setTimeout(() => {
+      showLoader();
+
       fetch(`/api/search-tracks?query=${encodeURIComponent(query)}`)
         .then(res => res.json())
         .then(data => {
@@ -68,7 +81,10 @@ document.addEventListener("DOMContentLoaded", function () {
           console.error("Error searching tracks:", error);
           resultsContainer.innerHTML = '<li class="result-item text-center text-gray-500">Error searching tracks</li>';
           resultsBox.style.display = "block";
-        });
+        })
+      .finally(() => {
+        hideLoader();
+      });
     }, 300);
   });
 
