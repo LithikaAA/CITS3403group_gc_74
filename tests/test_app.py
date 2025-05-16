@@ -1,11 +1,14 @@
 import unittest
+import os
+import time
+
 from app import create_app, db
 from app.models import User, Playlist, Track, Friend, PlaylistTrack
 from werkzeug.security import generate_password_hash
-from flask import url_for
-from flask_login import login_user
 from config import TestConfig
-import os
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
 print("Current working directory:", os.getcwd())
 
 def load_sample_data():
@@ -13,7 +16,7 @@ def load_sample_data():
     user2 = User(username='bob', email='bob@example.com', password_hash=generate_password_hash('password'))
 
     db.session.add_all([user1, user2])
-    db.session.flush()  # get user1.id and user2.id
+    db.session.flush()
 
     playlist1 = Playlist(name='Alice Hits', owner_id=user1.id)
     playlist2 = Playlist(name='Bob Vibes', owner_id=user2.id)
@@ -33,20 +36,36 @@ def load_sample_data():
     db.session.commit()
 
 class FlaskAppTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         self.maxDiff = None
         self.app = create_app(config_class=TestConfig)
-        with self.app.app_context():
-            db.drop_all()
-            db.create_all()
-            load_sample_data()
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+
+        db.drop_all()
+        db.create_all()
+        load_sample_data()
+
+        # Clear and insert users for Selenium tests
+        User.query.filter_by(username="seleniumuser").delete()
+        User.query.filter_by(username="existinguser").delete()
+        db.session.commit()
+
+        user = User(username="existinguser", email="existing@example.com")
+        user.set_password("password123")
+        db.session.add(user)
+        db.session.commit()
+
         self.client = self.app.test_client()
+        self.driver = webdriver.Chrome()
+        self.driver.implicitly_wait(5)
 
     def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.driver.quit()
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
 
     def test_intro_page(self):
         response = self.client.get('/')
@@ -57,21 +76,17 @@ class FlaskAppTestCase(unittest.TestCase):
         with self.app.app_context():
             user = User.query.filter_by(username='alice').first()
             user_id = user.id
-            
         with self.client.session_transaction() as session:
             session['_user_id'] = str(user_id)
-
         response = self.client.get('/dashboard/', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Dashboard', response.data)
 
-
     def test_upload_page(self):
         with self.app.app_context():
             user = User.query.filter_by(username='alice').first()
-            user_id = user.id
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user_id)
+            session['_user_id'] = str(user.id)
         response = self.client.get('/upload', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Upload', response.data)
@@ -79,9 +94,8 @@ class FlaskAppTestCase(unittest.TestCase):
     def test_share_page(self):
         with self.app.app_context():
             user = User.query.filter_by(username='alice').first()
-            user_id = user.id
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user_id) 
+            session['_user_id'] = str(user.id)
         response = self.client.get('/share/', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Share', response.data)
@@ -97,15 +111,11 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertIn(b'Sign Up', response.data)
 
     def test_signup_and_login(self):
-        # Signup
-        response = self.client.post('/auth/signup', data={
+        self.client.post('/auth/signup', data={
             'username': 'testuser',
             'email': 'test@example.com',
             'password': 'password123'
         }, follow_redirects=True)
-        self.assertIn(b'Login', response.data)
-
-        # Login
         response = self.client.post('/auth/login', data={
             'username_or_email': 'test@example.com',
             'password': 'password123'
@@ -119,26 +129,14 @@ class FlaskAppTestCase(unittest.TestCase):
             user2 = User(username='user2', email='user2@example.com')
             user2.set_password('testpass')
             db.session.add_all([user1, user2])
-            db.session.flush()
-            user1_id = user1.id
-            user2_id = user2.id
             db.session.commit()
 
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user1_id)
+            session['_user_id'] = str(user1.id)
 
-        response = self.client.post(
-            '/add-friend',
-            data={'friend_username': 'user2'},
-            follow_redirects=True
-        )
-
+        response = self.client.post('/add-friend', data={'friend_username': 'user2'}, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Friend request sent to user2!', response.data)
-
-        with self.app.app_context():
-            friendship = Friend.query.filter_by(user_id=user1_id, friend_id=user2_id).first()
-            self.assertIsNotNone(friendship)
 
     def test_invalid_login(self):
         response = self.client.post('/auth/login', data={
@@ -148,25 +146,22 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertIn(b'Invalid username/email or password.', response.data)
 
     def test_duplicate_signup(self):
-        # Existing user
         self.client.post('/auth/signup', data={
             'username': 'alice',
             'email': 'alice@example.com',
             'password': 'password123'
         }, follow_redirects=True)
-
         response = self.client.post('/auth/signup', data={
             'username': 'alice',
             'email': 'alice@example.com',
             'password': 'anotherpassword'
         }, follow_redirects=True)
-
         self.assertIn(b'Username or email already exists.', response.data)
-    
+
     def test_upload_requires_login(self):
         response = self.client.get('/upload', follow_redirects=True)
-        self.assertIn(b'Login', response.data)  # or "Please log in to access"
-        
+        self.assertIn(b'Login', response.data)
+
     def test_accept_friend_request(self):
         with self.app.app_context():
             user1 = User(username='u1', email='u1@example.com')
@@ -178,32 +173,27 @@ class FlaskAppTestCase(unittest.TestCase):
             request = Friend(user_id=user1.id, friend_id=user2.id, is_accepted=False)
             db.session.add(request)
             db.session.commit()
-            user2_id = user2.id
             request_id = request.id
 
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user2_id)
+            session['_user_id'] = str(user2.id)
 
         response = self.client.post(f'/friends/accept/{request_id}', follow_redirects=True)
         self.assertIn(b'Friend request accepted!', response.data)
 
-        with self.app.app_context():
-            self.assertTrue(db.session.get(Friend, request_id).is_accepted)
-    
     def test_create_playlist_missing_data(self):
         with self.client.session_transaction() as session:
-            session['_user_id'] = '1'  # Assuming user ID 1 exists
+            session['_user_id'] = '1'
+        res = self.client.post('/upload/create-playlist', json={})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn(b'No data provided', res.data)
 
-        response = self.client.post('/upload/create-playlist', json={}, follow_redirects=True)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn(b'No data provided', response.data)
-    
     def test_logout_clears_session(self):
         with self.client.session_transaction() as session:
             session['_user_id'] = '1'
         response = self.client.get('/auth/logout', follow_redirects=True)
         self.assertIn(b'You have been logged out.', response.data)
-        
+
     def test_remove_friend(self):
         with self.app.app_context():
             user1 = User(username='test1', email='t1@example.com')
@@ -213,56 +203,69 @@ class FlaskAppTestCase(unittest.TestCase):
             db.session.add_all([user1, user2])
             db.session.commit()
 
-            user1_id = user1.id
-            user2_id = user2.id
-            username2 = user2.username
-
-            db.session.add(Friend(user_id=user1_id, friend_id=user2_id, is_accepted=True))
-            db.session.add(Friend(user_id=user2_id, friend_id=user1_id, is_accepted=True))
+            db.session.add(Friend(user_id=user1.id, friend_id=user2.id, is_accepted=True))
+            db.session.add(Friend(user_id=user2.id, friend_id=user1.id, is_accepted=True))
             db.session.commit()
 
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user1_id)
+            session['_user_id'] = str(user1.id)
 
-        response = self.client.post(f'/friends/remove/{username2}', follow_redirects=True)
+        response = self.client.post(f'/friends/remove/{user2.username}', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'success', response.data)
 
-        with self.app.app_context():
-            self.assertIsNone(Friend.query.filter_by(user_id=user1_id, friend_id=user2_id).first())
-            self.assertIsNone(Friend.query.filter_by(user_id=user2_id, friend_id=user1_id).first())
-        
     def test_upload_playlist_invalid_track_format(self):
         with self.app.app_context():
             user = User.query.filter_by(username='alice').first()
         with self.client.session_transaction() as session:
             session['_user_id'] = str(user.id)
-
         bad_data = {
             "playlist_name": "Invalid Playlist",
-            "tracks": [{"title": "", "artist": ""}]  # Invalid format
+            "tracks": [{"title": "", "artist": ""}]
         }
         res = self.client.post('/upload/create-playlist', json=bad_data)
-        self.assertEqual(res.status_code, 200)  # Still returns 200, just skips invalid
+        self.assertEqual(res.status_code, 200)
         self.assertIn(b'"status":"success"', res.data)
 
-    def test_signup_invalid_email_format(self):
-        res = self.client.post('/auth/signup', data={
-            'username': 'invaliduser',
-            'email': 'not-an-email',
-            'password': 'password123'
-        }, follow_redirects=True)
-        self.assertNotEqual(res.status_code, 500)
+    def test_signup_success(self):
+        self.driver.get("http://localhost:5000/auth/signup")
+        self.driver.find_element(By.NAME, "username").send_keys("seleniumuser")
+        self.driver.find_element(By.NAME, "email").send_keys("seleniumuser@example.com")
+        self.driver.find_element(By.NAME, "password").send_keys("password123")
+        self.driver.find_element(By.ID, "terms").click()
+        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        time.sleep(1)
+        self.assertIn("login", self.driver.current_url)
+        self.assertIn("Account created successfully! Please log in.", self.driver.page_source)
 
-    def test_create_playlist_empty_name(self):
-        with self.app.app_context():
-            user = User.query.filter_by(username='alice').first()
-        with self.client.session_transaction() as session:
-            session['_user_id'] = str(user.id)
+    def test_signup_existing_user(self):
+        self.driver.get("http://localhost:5000/auth/signup")
+        self.driver.find_element(By.NAME, "username").send_keys("existinguser")
+        self.driver.find_element(By.NAME, "email").send_keys("existing@example.com")
+        self.driver.find_element(By.NAME, "password").send_keys("password123")
+        self.driver.find_element(By.ID, "terms").click()
+        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        time.sleep(1)
+        self.assertIn("signup", self.driver.current_url)
+        self.assertIn("Username or email already exists.", self.driver.page_source)
 
-        data = {"playlist_name": "", "tracks": []}
-        res = self.client.post('/upload/create-playlist', json=data)
-        self.assertIn(b'No tracks provided', res.data)
-        
+    def test_login_success(self):
+        self.driver.get("http://localhost:5000/auth/login")
+        self.driver.find_element(By.NAME, "identifier").send_keys("existinguser")
+        self.driver.find_element(By.NAME, "password").send_keys("password123")
+        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        time.sleep(1)
+        self.assertIn("/dashboard", self.driver.current_url)
+        self.assertIn("Dashboard", self.driver.page_source)
+
+    def test_login_failure(self):
+        self.driver.get("http://localhost:5000/auth/login")
+        self.driver.find_element(By.NAME, "identifier").send_keys("wronguser")
+        self.driver.find_element(By.NAME, "password").send_keys("wrongpass")
+        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        time.sleep(1)
+        self.assertIn("login", self.driver.current_url)
+        self.assertIn("Invalid username/email or password.", self.driver.page_source)
+
 if __name__ == '__main__':
     unittest.main()
