@@ -1,6 +1,6 @@
-# VibeShare
+# 📀 VibeShare
 
-**VibeShare** is a music insight platform that lets users search for songs via the Spotify API, create playlists, and visualise their listening patterns. This project was developed as part of the CITS3403 Web Application Development unit at UWA.
+**VibeShare** is a music insight platform that lets users search for songs via the Spotify API, create playlists, and visualise their listening patterns. This project was developed for the **CITS3403 Web Application Development** unit at the **University of Western Australia**.
 
 ---
 
@@ -8,33 +8,33 @@
 
 ### 🎵 Song Search
 
-- Search for songs using the Spotify API
-- Enriched metadata from a local CSV for robustness and fallback
+* Search for songs via the Spotify API
+* Enriched metadata from a local CSV for robustness and fallback
 
 ### 🎧 Playlist Creation
 
-- Select and add songs to create named playlists
-- Playlists and tracks are persisted in the database using a many-to-many relationship
-- Collapsible containers display track lists for each playlist
+* Search and select songs to build named playlists
+* Playlists are saved in the database using a many-to-many join (`PlaylistTrack`)
+* Collapsible UI shows included songs under each playlist
 
 ### 📊 Visualisation Dashboard
 
-- Interactive charts powered by Chart.js
-- Filter by your playlists from a dropdown menu (`/upload/my-playlists`)
-- Dynamically visualise playlist data via `/upload/playlist/<playlist_id>/tracks`
-- Chart types include:
-  - Mood radar
-  - Tempo distribution
-  - Danceability vs Energy
-  - Mode comparison (Major/Minor)
-  - Valence vs Acousticness (Quadrant plot)
-  - Top artists and summary statistics
+* Explore moods, tempo, energy, and more via interactive Chart.js graphs
+* Select your playlist to fetch data from `/upload/playlist/<playlist_id>/tracks`
+* Charts include:
+
+  * Mood radar
+  * Tempo distribution
+  * Danceability vs Energy
+  * Mode (Major/Minor) comparison
+  * Valence vs Acousticness (quadrant plot)
+  * Top artists and summary statistics
 
 ### 🔁 Data Sharing (Secure)
 
-- Compare your data with accepted friends
-- Only shows playlists that friends have explicitly shared with you
-- Friend playlist comparison dropdown dynamically loads from shared data
+* Friend-based sharing: compare your data with accepted friends
+* Only shows playlists from users who’ve shared with you
+* Friend dropdown dynamically loads available shared data
 
 ---
 
@@ -54,122 +54,128 @@
 
 ```
 app/
-├── models.py             # SQLAlchemy models (User, Track, Playlist, PlaylistTrack, Share, etc.)
-├── routes/               # Modular blueprint routes (auth, index, upload, share)
-├── templates/            # Jinja2 templates (upload, dashboard, shared_dashboard, etc.)
-├── static/               # TailwindCSS, JavaScript, assets (components/, css/, img/, js/)
-├── utils/                # Spotify API wrappers and feature-loading utilities
-├── migrations/           # Alembic migration files
-├── app.db                # SQLite database file (instance/app.db)
-├── config.py             # App configuration
-├── run.py                # Flask entry point
-├── requirements.txt      # Python dependencies
-├── .env / .env.example   # Environment configuration
-└── seed_data.py          # Script to seed test data
+├── models.py             # SQLAlchemy models
+├── routes/               # Flask Blueprints
+├── templates/            # Jinja2 templates
+├── static/               # Tailwind, JS, images
+├── utils/                # API wrappers & helpers
+├── migrations/           # Alembic files
+├── config.py             # Flask config
+├── run.py                # App entry
+├── requirements.txt      # Dependencies
+├── .env / .env.example   # Environment config
+└── seed_data.py          # Seed script for test data
 ```
-
 
 ---
 
-## 🧪 Running the App Locally
+## 🛠️ Setup Instructions
 
-### 1. **Clone the Repository**
+### 1. Clone the repository
 
 ```bash
-git clone <https://github.com/LithikaAA/CITS3403group_gc_74.git>
+git clone https://github.com/LithikaAA/CITS3403group_gc_74.git
+cd CITS3403group_gc_74
 ```
-2. Create Virtual Environment and Install Dependencies
+
+### 2. Create virtual environment and install dependencies
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Set Up Environment Variables
-Create a .env file and include your Spotify credentials:
+### 3. Set environment variables
 
-```dotenv
-SPOTIPY_CLIENT_ID=a95e54c4b93e4ed58bae1b52415d2aa5
-SPOTIPY_CLIENT_SECRET=7c8d35896baf4693b48a8d4665c236b6
+Create a `.env` file and include:
+
+```env
+SPOTIPY_CLIENT_ID=your_client_id
+SPOTIPY_CLIENT_SECRET=your_client_secret
 SPOTIPY_REDIRECT_URI=http://127.0.0.1:5000/callback
+SECRET_KEY=your_flask_secret
 ```
-You can use .env.example as a template.
 
-### ⚠️ Security Notice
+> You can use `.env.example` as a template.
 
-The `.env` file contains **sensitive credentials** (Spotify client ID/secret, Flask `SECRET_KEY`, etc.). **These values are for educational use only**—never commit your real credentials to version control or share them publicly. In production, use a secure secrets manager (e.g. AWS Secrets Manager, HashiCorp Vault) or environment-specific configuration that isn’t stored in your Git repository.
+⚠️ **Security Note:** Never commit your `.env` or real credentials to GitHub. Use this file for development only.
 
+---
 
-4. Set Up the Database
+### 4. Initialise the database
+
 ```bash
 flask db init
 flask db migrate -m "Initial migration"
 flask db upgrade
 ```
 
-**⚠️ Fallback**  
-If you encounter errors like “no such table” or the migrations seem out of sync, you can remove the existing SQLite file and start fresh:
+#### ↺ Fallback if migration errors occur:
+
 ```bash
 rm -f instance/app.db
 flask db stamp head
 flask db upgrade
 ```
-This will drop the old DB, re-stamp the migration version, and recreate all tables from your models/migrations.  
 
+---
 
-5. Seed the App with Demo/Test Data
+### 5. Seed with demo/test data
+
 ```bash
 python seed_data.py
 ```
-Or from Flask shell:
+
+Or via Flask shell:
 
 ```bash
-
 flask shell
 >>> from seed_data import main
 >>> main()
-
 ```
 
-6. Run the Flask App
+---
+
+### 6. Run the Flask app
+
 ```bash
 flask run
 ```
 
+---
 
-## 👤 Test Account (Marker)
-To assist with testing, use the following test account:
+## 👤 Test Account (For Markers)
 
-```makefile
+```
 Username: marker123
 Password: testmarker
 ```
 
-### Marker Account Setup
-* Friends (shared playlists): vmontes, steven12, cmartinez, raymond89
+### State of marker123 account:
 
-* Incoming Requests: vmiller, cruzdenise, pagetamara, connie96
+* **Friends (shared playlists):** `vmontes`, `steven12`, `cmartinez`, `raymond89`
+* **Incoming requests:** `vmiller`, `cruzdenise`, `pagetamara`, `connie96`
+* **Outgoing request:** `hobbsmatthew`
+* **Marker playlists:**
 
-* Outgoing Request: hobbsmatthew
+  * `Marker's Mood Mix` (low valence)
+  * `Marker's Energy Set` (high energy)
+* Each accepted friend has shared 2 playlists (8 songs each)
 
-* Marker Playlists:
- 
- * Marker's Mood Mix (low valence)
- 
- * Marker's Energy Set (high energy)
+---
 
-* Each friend has shared 2 playlists of 8 songs each with the marker
-
-## 🧪 Testing Guide
+## 🧰 Testing Guide
 
 ### ✅ Unit Tests
-Location: tests/test_app.py
 
-Covers:
-* Signup, login, logout
-* Playlist creation & deletion
-* Friend requests
-* Route access & validation
+* Location: `tests/test_app.py`
+* Covers:
+
+  * Signup, login, logout
+  * Playlist creation & deletion
+  * Friend requests
+  * Access control and route validation
 
 Run with:
 
@@ -177,67 +183,59 @@ Run with:
 python tests/test_app.py
 ```
 
-### 🖱️ Selenium UI Tests (Basic)
-Location: tests/test_selenium_ui.py
+---
 
-Covers:
-* User signup
-* Login/logout flow
-* Error handling (duplicate accounts, invalid login)
+### 👡️ Selenium UI Tests (Basic)
 
-Run in two terminals:
+* Location: `tests/test_selenium_ui.py`
+* Simulates:
 
-Terminal 1 (run the app):
+  * User signup
+  * Login/logout flow
+  * Flash messages for invalid inputs
+
+Run in **two terminals**:
 
 ```bash
+# Terminal 1:
 flask run
-```
 
-Terminal 2 (run Selenium tests):
-
-```bash
-pip install selenium webdriver-manager
+# Terminal 2:
 python tests/test_selenium_ui.py
 ```
-> Chrome must be installed. For headless mode, uncomment the --headless config in the test file.
 
-### 🧪 Selenium Flow Tests (Advanced)
-Location: tests/selenium_tests/test_selenium_flows.py
+> ✅ Chrome browser is required. Enable `--headless` in the file for headless mode.
 
-Covers:
- *Playlist creation via UI
- *Song search and validation feedback
- *Sending friend requests
- *Accepting friend requests
- *Navigation between pages
- *Flash messages and error prompts
+---
 
-Steps to run:
+### 🥰 Selenium Flow Tests (Advanced)
 
-1. Start the app in one terminal:
+* Location: `tests/selenium_tests/test_selenium_flows.py`
+* Tests:
 
-```bash
-flask run
-```
+  * Playlist creation with validations
+  * Sending/receiving friend requests
+  * Navigation, flash messages, and state updates
 
-2. Run the Selenium flow tests in another:
+Run via:
 
 ```bash
 python tests/selenium_tests/test_selenium_flows.py
 ```
-> If you encounter any browser interaction issues, make sure Chrome is updated and that you're not blocking popups or alerts.
 
-## Team Members
+---
+
+## 👨‍💻 Team Members
 
 | Name             | GitHub Username |
 | ---------------- | --------------- |
-| Zi Qian Tan      | Squirtl3-Nee    |
+| Zi Qian Tan      | Squirtl3-Nee    |
 | Lithika          | LithikaAA       |
-| Kylan Gillmore   | KylanGillmore   |
-| Adrian Gonsalves | Adundo123       |
+| Kylan Gillmore   | KylanGillmore   |
+| Adrian Gonsalves | Adundo123       |
 
-## 📜 License
-This project is for educational purposes only. Developed for CITS3403 Web Application Development at the University of Western Australia.
+---
 
+## 📌 License
 
-
+This project is for **educational purposes only**. Built for **CITS3403 Web Application Development** at the **University of Western Australia**.
