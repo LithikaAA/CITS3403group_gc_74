@@ -95,12 +95,12 @@ select {
 }
 
 /* Ensure charts stay the same height */
-.h-[200px] {
+.h-200px {
   height: 200px;
   min-height: 200px;
 }
 
-.h-[280px] {
+.h-280px {
   height: 280px;
   min-height: 280px;
 }
@@ -187,19 +187,19 @@ select {
     gap: 1rem;
   }
   
-  .h-[280px] {
+  .h-280px {
     height: 250px;
     min-height: 250px;
   }
 }
 
 @media (max-width: 640px) {
-  .h-[280px] {
+  .h-280px {
     height: 220px;
     min-height: 220px;
   }
   
-  .h-[200px] {
+  .h-200px {
     height: 180px;
     min-height: 180px;
   }
