@@ -110,6 +110,14 @@ flask db init
 flask db migrate -m "Initial migration"
 flask db upgrade
 ```
+or 
+```bash
+mkdir instance
+```
+then run the database migrations
+```bash
+flask db upgrade
+```
 
 #### ↺ Fallback if migration errors occur:
 
@@ -118,6 +126,7 @@ rm -f instance/app.db
 flask db stamp head
 flask db upgrade
 ```
+This creates the SQLite database at instance/app.db.
 
 ---
 
@@ -184,6 +193,11 @@ python tests/test_app.py
 ```
 
 ---
+Or run all tests both Unit and Selenium using:
+
+```bash
+python -m unittest discover -s tests
+```
 
 ### 👡️ Selenium UI Tests (Basic)
 
