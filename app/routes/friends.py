@@ -171,3 +171,17 @@ def accept_friend(request_id):
 
     flash("Friend request accepted!", "success")
     return redirect(url_for('friends.add_friend'))
+
+@friends_bp.route('/friends/decline/<int:request_id>', methods=['POST'])
+@login_required
+def decline_friend(request_id):
+    request = Friend.query.get_or_404(request_id)
+
+    if request.friend_id != current_user.id:
+        return "Unauthorized", 403
+
+    db.session.delete(request)
+    db.session.commit()
+
+    flash("Friend request declined.", "info")
+    return redirect(url_for('friends.add_friend'))
