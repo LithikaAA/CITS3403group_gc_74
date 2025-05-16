@@ -241,6 +241,32 @@ Run via:
 python tests/selenium_tests/test_selenium_flows.py
 ```
 
+🧪 Running Tests (Windows)
+Before running tests in PowerShell, set the Python path so that modules can be found:
+
+```powershell
+$env:PYTHONPATH = "."
+```
+Then run:
+```powershell
+
+python -m unittest discover tests
+```
+Or a specific test file:
+
+```powershell
+
+python tests/selenium_tests/test_selenium_flows.py
+```
+
+>💡 This ensures the app/ module is discoverable during testing.
+
+For macOS/Linux users, you can include the equivalent:
+
+```bash
+
+export PYTHONPATH=.
+```
 ---
 
 ## 👨‍💻 Team Members
