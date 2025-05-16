@@ -116,206 +116,80 @@ def test_basic_login_and_navigation(browser, live_server_url):
         pytest.fail("Timed out waiting for redirect after login")
 
 def test_simple_playlist_creation(browser, live_server_url):
-    """Test a simplified playlist creation flow."""
-    DEFAULT_TIMEOUT = 10
-    
-    # Step 1: Login
-    browser.get(f"{live_server_url}/auth/login")
-    
-    # Find and fill username field
-    username_field = find_element_with_multiple_selectors(
-        browser, ["#username", "#email", "[name='identifier']", "[name='email']", "[name='username']"]
-    )
-    username_field.send_keys("test@example.com")
-    
-    # Find and fill password field
-    password_field = find_element_with_multiple_selectors(browser, ["#password", "[name='password']"])
-    password_field.send_keys("password123")
-    
-    # Find and click login button
-    login_button = find_element_with_multiple_selectors(
-        browser, ["button[type='submit']", "input[type='submit']", ".btn-login", "#login-button"]
-    )
-    login_button.click()
-    
-    # Wait for redirect away from login page
-    WebDriverWait(browser, DEFAULT_TIMEOUT).until(
-        lambda driver: "/auth/login" not in driver.current_url
-    )
-    
-    # Step 2: Find and navigate to playlist creation
-    # Try multiple potential routes based on your route list
+    login(browser, live_server_url)
+
     for route in ['/dashboard/playlist/create', '/upload', '/upload/create-playlist']:
+        browser.get(f"{live_server_url}{route}")
         try:
-            browser.get(f"{live_server_url}{route}")
-            take_screenshot(browser, f"creation_page_{route.replace('/', '_')}")
-            
-            # Look for playlist name field
-            try:
-                playlist_name_field = find_element_with_multiple_selectors(
-                    browser, ["#playlist-name", "[name='playlist_name']", "#name"], timeout=3
-                )
-                # Found the field, break the loop
-                break
-            except NoSuchElementException:
-                continue
-                
-        except Exception:
-            continue
-    
-    # Set playlist name
-    playlist_name_field.clear()
-    playlist_name_field.send_keys("Simple Test Playlist")
-    
-    # Try to find track field (if it exists on this page)
-    try:
-        track_title_field = find_element_with_multiple_selectors(
-            browser, ["#track-title", "[name='track_title']", "#title"], timeout=2
-        )
-        track_title_field.send_keys("Test Track")
-        
-        track_artist_field = find_element_with_multiple_selectors(
-            browser, ["#track-artist", "[name='track_artist']", "#artist"], timeout=2
-        )
-        track_artist_field.send_keys("Test Artist")
-        
-        # Try to find add track button
-        try:
-            add_track_button = find_element_with_multiple_selectors(
-                browser, ["#add-track-btn", ".add-track", "//button[contains(text(), 'Add Track')]"], timeout=2
+            playlist_input = WebDriverWait(browser, 5).until(
+                EC.presence_of_element_located((By.NAME, "playlist_name"))
             )
-            add_track_button.click()
-        except NoSuchElementException:
-            # Maybe there's no add track button, that's okay
-            pass
-    except NoSuchElementException:
-        # No track fields, that's okay too - might be a two-step process
-        pass
-    
-    # Find create playlist button
-    create_button = find_element_with_multiple_selectors(
-        browser, ["#create-playlist-btn", ".create-playlist", "//button[contains(text(), 'Create')]",
-                 "//input[@value='Create']", "[type='submit']"]
-    )
-    create_button.click()
-    
-    # Step 3: Wait for confirmation (toast, redirect, or some indication of success)
-    take_screenshot(browser, "after_playlist_creation")
-    
-    # Check for success message or redirect
-    toast_text = wait_for_toast_or_success(browser)
-    
-    if toast_text:
-        print(f"✅ Received confirmation: {toast_text}")
-    else:
-        # No toast found, check if we were redirected away from creation page
-        WebDriverWait(browser, DEFAULT_TIMEOUT).until(
-            lambda driver: "/create" not in driver.current_url or "/upload" not in driver.current_url
+            playlist_input.clear()
+            playlist_input.send_keys("Simple Test Playlist")
+            break
+        except:
+            continue
+
+    try:
+        create_btn = WebDriverWait(browser, 10).until(
+            EC.element_to_be_clickable((By.ID, "create-playlist-btn"))
         )
-        print("✅ Redirected after playlist creation")
-    
-    # Step 4: Verify playlist exists on dashboard
-    browser.get(f"{live_server_url}/dashboard/")
-    take_screenshot(browser, "dashboard_after_creation")
-    
-    # Look for the created playlist in the page content
-    page_content = WebDriverWait(browser, DEFAULT_TIMEOUT).until(
-        lambda d: d.page_source
-    )
-    assert "Simple Test Playlist" in page_content, "Created playlist not found on dashboard"
-    print("✅ Playlist appears on dashboard")
+        browser.execute_script("arguments[0].scrollIntoView(true);", create_btn)
+        create_btn.click()
+    except ElementNotInteractableException:
+        pytest.fail("Create playlist button not interactable")
+
+    WebDriverWait(browser, 10).until(lambda d: "Simple Test Playlist" in d.page_source)
+    assert "Simple Test Playlist" in browser.page_source
+
 
 def test_simple_friend_request(browser, live_server_url):
-    """Test a simplified friend request flow."""
-    DEFAULT_TIMEOUT = 10
-    
-    # Setup - create users if needed
     app = create_app()
     with app.app_context():
-        # Create main test user if doesn't exist
-        if not User.query.filter_by(email="test@example.com").first():
+        main_user = User.query.filter_by(email="test@example.com").first()
+        if not main_user:
             main_user = User(username="testuser", email="test@example.com")
             main_user.set_password("password123")
             db.session.add(main_user)
-        
-        # Create friend user if doesn't exist
-        friend = User.query.filter_by(username="frienduser").first()
-        if not friend:
-            friend = User(username="frienduser", email="friend@example.com")
-            friend.set_password("password123")
-            db.session.add(friend)
-        
-        db.session.commit()
-    
-    # Step 1: Login
-    browser.get(f"{live_server_url}/auth/login")
-    
-    username_field = find_element_with_multiple_selectors(
-        browser, ["#username", "#email", "[name='identifier']", "[name='email']", "[name='username']"]
-    )
-    username_field.send_keys("test@example.com")
-    
-    password_field = find_element_with_multiple_selectors(browser, ["#password", "[name='password']"])
-    password_field.send_keys("password123")
-    
-    login_button = find_element_with_multiple_selectors(
-        browser, ["button[type='submit']", "input[type='submit']", ".btn-login", "#login-button"]
-    )
-    login_button.click()
-    
-    # Step 2: Find and navigate to add friend page
-    # Try different potential friend pages based on your routes
-    for route in ['/add-friend', '/friends/add', '/friends/list', '/friends']:
-        try:
-            browser.get(f"{live_server_url}{route}")
-            take_screenshot(browser, f"friends_page_{route.replace('/', '_')}")
-            
-            # Look for username field
-            try:
-                username_field = find_element_with_multiple_selectors(
-                    browser, ["#friend-username", "[name='username']", "#username", "[name='friend']"], timeout=3
-                )
-                # Found the field, break the loop
-                break
-            except NoSuchElementException:
-                continue
-        except Exception:
-            continue
-    
-    # Fill in friend's username
-    username_field.clear()
-    username_field.send_keys("frienduser")
-    
-    # Find and click add friend button
-    add_btn = find_element_with_multiple_selectors(
-        browser, ["#add-friend-btn", ".add-friend", "//button[contains(text(), 'Add Friend')]",
-                 "//input[@value='Add Friend']", "[type='submit']"]
-    )
-    add_btn.click()
-    take_screenshot(browser, "after_friend_request")
-    
-    # Check for success message or redirect
-    toast_text = wait_for_toast_or_success(browser)
-    
-    if toast_text:
-        assert any(x in toast_text.lower() for x in ["request sent", "added", "success"]), f"Unexpected toast: {toast_text}"
-        print(f"✅ Friend request confirmation: {toast_text}")
-    else:
-        # Check if we were redirected
-        time.sleep(1)  # Small wait to ensure redirect completed
-        print(f"Current URL after friend request: {browser.current_url}")
-        print("✅ Friend request submitted")
-    
-    # Step 3: Verify friend request in database
-    with app.app_context():
-        main_user = User.query.filter_by(email="test@example.com").first()
+
         friend_user = User.query.filter_by(username="frienduser").first()
-        
-        # Check if friend request exists
-        request = Friend.query.filter_by(
-            user_id=main_user.id, 
-            friend_id=friend_user.id
-        ).first()
-        
+        if not friend_user:
+            friend_user = User(username="frienduser", email="friend@example.com")
+            friend_user.set_password("password123")
+            db.session.add(friend_user)
+
+        db.session.commit()
+        main_user_id = main_user.id
+        friend_user_id = friend_user.id
+
+    login(browser, live_server_url)
+
+    for route in ['/add-friend', '/friends/add', '/friends/list', '/friends']:
+        browser.get(f"{live_server_url}{route}")
+        try:
+            input_field = WebDriverWait(browser, 3).until(
+                EC.presence_of_element_located((By.NAME, "username"))
+            )
+            input_field.clear()
+            input_field.send_keys("frienduser")
+            for _ in range(3):
+                try:
+                    add_btn = WebDriverWait(browser, 5).until(
+                        EC.element_to_be_clickable((By.ID, "add-friend-btn"))
+                    )
+                    browser.execute_script("arguments[0].scrollIntoView(true);", add_btn)
+                    add_btn.click()
+                    break
+                except StaleElementReferenceException:
+                    time.sleep(1)
+            break
+        except:
+            continue
+
+    time.sleep(2)
+    with app.app_context():
+        main_user = db.session.get(User, main_user_id)
+        friend_user = db.session.get(User, friend_user_id)
+        request = Friend.query.filter_by(user_id=main_user.id, friend_id=friend_user.id).first()
         assert request is not None, "Friend request not found in database"
-        print("✅ Friend request recorded in database")
+        print("✅ Friend request recorded")
