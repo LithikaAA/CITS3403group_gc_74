@@ -224,3 +224,6 @@ python tests/selenium_tests/test_selenium_flows.py
 
 ##📜 License
 This project is for educational purposes only. Developed for CITS3403 Web Application Development at the University of Western Australia.
+
+
+
