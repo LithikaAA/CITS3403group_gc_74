@@ -94,10 +94,20 @@
         <!-- All Friends -->
         <div id="tab-all" class="tab-content">
           {% for f in current_user.all_friends %}
-            <div class="flex items-center gap-4 bg-gray-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
-              <img src="{{ url_for('static', filename='uploads/' ~ (f.profile_pic or 'default_profile.jpg')) }}"
-                  alt="{{ f.username }}" class="w-10 h-10 rounded-full object-cover border">
-              <span class="font-medium text-gray-800">{{ f.username }}</span>
+            <div class="flex items-center justify-between bg-gray-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
+              <div class="flex items-center gap-4">
+                <img src="{{ url_for('static', filename='uploads/' ~ (f.profile_pic or 'default_profile.jpg')) }}"
+                    alt="{{ f.username }}" class="w-10 h-10 rounded-full object-cover border">
+                <span class="font-medium text-gray-800">{{ f.username }}</span>
+              </div>
+              <form method="POST" action="{{ url_for('friends.remove_friend', username=f.username) }}">
+                <button
+                  class="bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full hover:bg-red-600 transition"
+                  onclick="return confirm('Are you sure you want to remove {{ f.username }} as a friend?');"
+                >
+                  Remove
+                </button>
+              </form>
             </div>
           {% else %}
             <p class="text-sm text-gray-400">No friends yet.</p>
