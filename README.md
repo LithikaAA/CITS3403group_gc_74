@@ -33,13 +33,13 @@
 
 ## Tech Stack
 
-| Layer         | Technology                             |
-|--------------|-----------------------------------------|
-| Frontend     | HTML, CSS, TailwindCSS, JavaScript        |
-| Backend      | Python (Flask)                          |
-| Database     | SQLite with SQLAlchemy ORM              |
-| Authentication | Flask-Login                           |
-| Visualisation | Chart.js / JavaScript-based libraries  |
+| Layer           | Technology                             |
+|-----------------|----------------------------------------|
+| Frontend        | HTML, CSS, TailwindCSS, JavaScript    |
+| Backend         | Python (Flask)                         |
+| Database        | SQLite with SQLAlchemy ORM             |
+| Authentication  | Flask-Login                           |
+| Visualisation   | Chart.js / JavaScript-based libraries  |
 
 ## Project Structure
 
@@ -70,7 +70,7 @@ app/
 
 ## Setup Instructions
 
-1. **Clone the repository**
+1. Clone the repository
 2. Install dependencies:
 ```bash
 pip install -r requirements.txt
@@ -87,6 +87,76 @@ flask run
 ```
 
 > **Note**: Markers should use the test account provided for login. Spotify API client credentials are required to enable the search functionality.
+
+## Testing
+
+VibeShare includes both backend unit tests and frontend Selenium UI tests to verify key functionality across the platform.
+
+### Unit Tests (`test_app.py`)
+Tests core backend features using Flask’s test client, including:
+
+*   Signup and login flows
+
+*   Dashboard and upload route access
+
+*   Friend request system
+
+*   Playlist creation, validation, and removal
+
+How to run:
+(In Terminal) Ensure you're in the project root and the virtual environment is activated.
+
+```bash
+# Windows PowerShell
+$env:PYTHONPATH = "."
+python tests/test_app.py
+```
+> Uses an in-memory SQLite database (TestConfig) — no setup required.
+
+Selenium UI Tests – tests/test_selenium_ui.py
+*  These simulate user interactions in a real browser:
+
+*  Signup success and duplicate error handling
+
+*  Login with valid/invalid credentials
+
+*  Redirects and flash message visibility
+
+*  Logout flow
+
+Prerequisites:
+*  Flask server must be running in another terminal.
+
+*  Chrome browser is required.
+
+Step-by-step:
+1. In Terminal 1, start the Flask server:
+
+```bash
+flask run
+```
+2. In Terminal 2, run the tests:
+
+```bash
+pip install selenium webdriver-manager
+$env:PYTHONPATH = "."
+python tests/test_selenium_ui.py
+```
+> webdriver-manager auto-downloads the ChromeDriver — no manual setup needed.
+
+Optional:
+To run in headless mode (no browser pop-up), open tests/test_selenium_ui.py and uncomment the --headless Chrome option.
+
+Notes:
+The app must run on: http://localhost:5000
+
+Test accounts are seeded via seed_data.py
+
+You can reseed the test data by running:
+
+```bash
+python seed_data.py
+```
 
 ## Team Members
 
