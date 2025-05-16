@@ -75,8 +75,8 @@
   .bg-gray-50:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
-  
-  /* Optional: better looking scrollbars */
+
+  /* better looking scrollbars */
   #shared-playlists::-webkit-scrollbar,
   #sharing-history::-webkit-scrollbar {
     width: 6px;
@@ -90,6 +90,19 @@
   #sharing-history:hover::-webkit-scrollbar-thumb {
     background-color: rgba(0, 0, 0, 0.3);
   }
+
+  /* Scrollbar styles for friends list */
+  .friends-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  .friends-list::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  .friends-list:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
 
 </style>
 {% endblock %}
@@ -151,7 +164,7 @@
     </div>
 
     <!-- Share with Friends -->
-    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 max-h-[400px] overflow-y-auto flex-1 min-w-[300px] friends-list">
       <div class="flex items-center mb-6">
         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
