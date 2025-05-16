@@ -115,12 +115,21 @@
           {% endif %}
 
           {% for req in incoming_requests %}
-            <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}"
-                  class="flex items-center justify-between bg-blue-50 rounded-xl p-3 shadow-sm hover:shadow-md transition">
-              {{ accept_form.hidden_tag() }}
+            <div class="flex items-center justify-between bg-blue-50 rounded-xl p-3 shadow-sm hover:shadow-md transition gap-2">
               <span class="font-medium text-blue-800">{{ req.user.username }}</span>
-              {{ accept_form.submit(class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-600 transition") }}
-            </form>
+              <form method="POST" action="{{ url_for('friends.accept_friend', request_id=req.id) }}">
+                {{ accept_form.hidden_tag() }}
+                <button class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-600 transition" type="submit">
+                  Accept
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('friends.decline_friend', request_id=req.id) }}">
+                {{ accept_form.hidden_tag() }}
+                <button class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-600 transition" type="submit">
+                  Decline
+                </button>
+              </form>
+            </div>
           {% else %}
             <p class="text-sm text-gray-400">No incoming friend requests.</p>
           {% endfor %}
