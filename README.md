@@ -198,6 +198,10 @@ Or run all tests both Unit and Selenium using:
 ```bash
 python -m unittest discover -s tests
 ```
+to run specific files:
+```bash
+python -m unittest tests.test_app
+```
 
 ### 👡️ Selenium UI Tests (Basic)
 
