@@ -52,19 +52,22 @@
 
 ## 📁 Project Structure
 
+```
 app/
-├── models.py # SQLAlchemy models
-├── routes/ # Flask Blueprints
-├── templates/ # Jinja2 templates
-├── static/ # CSS/JS/Images
-├── utils/ # Helper functions
-├── migrations/ # Alembic files
-├── app.db # Local SQLite DB
-├── config.py # Environment config
-├── run.py # App entry point
-├── requirements.txt # Python dependencies
-├── .env / .env.example # Environment variables
-└── seed_data.py # Seeds database with test data
+├── models.py             # SQLAlchemy models (User, Track, Playlist, PlaylistTrack, Share, etc.)
+├── routes/               # Modular blueprint routes (auth, index, upload, share)
+├── templates/            # Jinja2 templates (upload, dashboard, shared_dashboard, etc.)
+├── static/               # TailwindCSS, JavaScript, assets (components/, css/, img/, js/)
+├── utils/                # Spotify API wrappers and feature-loading utilities
+├── migrations/           # Alembic migration files
+├── app.db                # SQLite database file (instance/app.db)
+├── config.py             # App configuration
+├── run.py                # Flask entry point
+├── requirements.txt      # Python dependencies
+├── .env / .env.example   # Environment configuration
+└── seed_data.py          # Script to seed test data
+```
+
 
 ---
 
