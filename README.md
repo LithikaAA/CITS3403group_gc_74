@@ -77,7 +77,6 @@ app/
 
 ```bash
 git clone <https://github.com/LithikaAA/CITS3403group_gc_74.git>
-cd VibeShare
 ```
 2. Create Virtual Environment and Install Dependencies
 ```bash
@@ -90,11 +89,16 @@ pip install -r requirements.txt
 Create a .env file and include your Spotify credentials:
 
 ```dotenv
-SPOTIPY_CLIENT_ID=your_client_id
-SPOTIPY_CLIENT_SECRET=your_client_secret
-SECRET_KEY=your_flask_secret
+SPOTIPY_CLIENT_ID=a95e54c4b93e4ed58bae1b52415d2aa5
+SPOTIPY_CLIENT_SECRET=7c8d35896baf4693b48a8d4665c236b6
+SPOTIPY_REDIRECT_URI=http://127.0.0.1:5000/callback
 ```
 You can use .env.example as a template.
+
+### ⚠️ Security Notice
+
+The `.env` file contains **sensitive credentials** (Spotify client ID/secret, Flask `SECRET_KEY`, etc.). **These values are for educational use only**—never commit your real credentials to version control or share them publicly. In production, use a secure secrets manager (e.g. AWS Secrets Manager, HashiCorp Vault) or environment-specific configuration that isn’t stored in your Git repository.
+
 
 4. Set Up the Database
 ```bash
@@ -102,6 +106,16 @@ flask db init
 flask db migrate -m "Initial migration"
 flask db upgrade
 ```
+
+**⚠️ Fallback**  
+If you encounter errors like “no such table” or the migrations seem out of sync, you can remove the existing SQLite file and start fresh:
+```bash
+rm -f instance/app.db
+flask db stamp head
+flask db upgrade
+```
+This will drop the old DB, re-stamp the migration version, and recreate all tables from your models/migrations.  
+
 
 5. Seed the App with Demo/Test Data
 ```bash
