@@ -140,9 +140,11 @@ def remove_friend(username):
 
     if deleted:
         db.session.commit()
-        return jsonify({'status': 'success', 'message': f'Removed {username} from friends'})
+        flash(f'Removed {username} from friends.', 'info')
+        return redirect(url_for('friends.add_friend'))
     else:
-        return jsonify({'status': 'error', 'message': 'Friendship not found'}), 400
+        flash('Friendship not found.', 'error')
+        return redirect(url_for('friends.add_friend'))
 
 @friends_bp.route('/friends/list')
 @login_required
