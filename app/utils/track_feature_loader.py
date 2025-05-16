@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load the full CSV just once at import
-df = pd.read_csv("spotify.csv")
+df = pd.read_csv("data/spotify.csv")
 
 # Ensure clean column names and types
 df.columns = df.columns.str.strip()

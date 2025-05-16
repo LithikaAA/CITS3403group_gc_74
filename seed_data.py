@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import random
 
-spotify_df = pd.read_csv("spotify.csv")
+spotify_df = pd.read_csv("data/spotify.csv")
 spotify_df.rename(columns={"artists": "artist", "track_genre": "genre"}, inplace=True)
 spotify_df = spotify_df.dropna(subset=["track_name", "artist", "genre", "tempo"])
 
