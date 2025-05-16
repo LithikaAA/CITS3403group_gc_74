@@ -75,6 +75,35 @@
   .bg-gray-50:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
+
+  /* better looking scrollbars */
+  #shared-playlists::-webkit-scrollbar,
+  #sharing-history::-webkit-scrollbar {
+    width: 6px;
+  }
+  #shared-playlists::-webkit-scrollbar-thumb,
+  #sharing-history::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  #shared-playlists:hover::-webkit-scrollbar-thumb,
+  #sharing-history:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Scrollbar styles for friends list */
+  .friends-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  .friends-list::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  .friends-list:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+
 </style>
 {% endblock %}
 
@@ -135,7 +164,7 @@
     </div>
 
     <!-- Share with Friends -->
-    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+    <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 max-h-[400px] overflow-y-auto flex-1 min-w-[300px] friends-list">
       <div class="flex items-center mb-6">
         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none"
@@ -196,24 +225,11 @@
     </button>
   </div>
 
-<!-- Bottom Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Shared Playlists Section -->
+<div class="flex flex-wrap gap-6 mt-10">
   <!-- Playlists Shared With You -->
-  <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-    <div class="flex items-center mb-6">
-      <!-- Icon container with background and rounded corners -->
-      <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-        <!-- SVG for the document/file icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z" />
-        </svg>
-      </div>
-      <!-- Section heading -->
-      <h2 class="text-xl font-semibold text-gray-800">
-        Playlists Shared With You
-      </h2>
-    </div>
-
+  <div id="shared-playlists" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex-1 min-w-[300px] max-h-[360px] overflow-y-auto">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">📁 Playlists Shared With You</h2>
     {% set grouped_received = received_shares|groupby('playlist.id') %}
     {% if grouped_received %}
       <div class="space-y-4">
@@ -221,14 +237,12 @@
           {% set share = shares[0] %}
           <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
             <div class="flex items-center">
-              <!-- Owner’s avatar -->
               {% if share.owner.profile_pic %}
                 <img src="{{ url_for('static', filename='uploads/' ~ share.owner.profile_pic) }}"
                      alt="{{ share.owner.username }}"
                      class="w-10 h-10 rounded-full object-cover mr-3">
               {% else %}
-                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
-                            text-white font-bold text-lg mr-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
                   {{ share.owner.username[0] | upper }}
                 </div>
               {% endif %}
@@ -248,16 +262,8 @@
   </div>
 
   <!-- Your Sharing History -->
-  <div id="sharing-history" class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-    <div class="flex items-center mb-6">
-      <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <h2 class="text-xl font-semibold text-gray-800">Your Sharing History</h2>
-    </div>
-
+  <div id="sharing-history" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex-1 min-w-[300px] max-h-[360px] overflow-y-auto">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">📤 Your Sharing History</h2>
     {% set grouped_sent = sent_shares|groupby('playlist.id') %}
     {% if grouped_sent %}
       <div class="space-y-4">
@@ -265,14 +271,12 @@
           {% set share = shares[0] %}
           <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all">
             <div class="flex items-center">
-              <!-- Current user's avatar -->
               {% if current_user.profile_pic %}
                 <img src="{{ url_for('static', filename='uploads/' ~ current_user.profile_pic) }}"
                      alt="{{ current_user.username }}"
                      class="w-10 h-10 rounded-full object-cover mr-3">
               {% else %}
-                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center
-                            text-white font-bold text-lg mr-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
                   {{ current_user.username[0] | upper }}
                 </div>
               {% endif %}
@@ -289,8 +293,8 @@
         <p class="text-gray-500 text-lg">You haven’t shared any playlists yet.</p>
       </div>
     {% endif %}
-  </div>
-</div>
+  </div> <!-- End #sharing-history -->
+</div> <!-- End .shared-playlists-wrapper -->
 
 <!-- Flash Messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
