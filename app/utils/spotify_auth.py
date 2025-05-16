@@ -18,7 +18,7 @@ auth_manager = SpotifyClientCredentials(
 sp = spotipy.Spotify(auth_manager=auth_manager)
 
 # Load local CSV metadata
-df = pd.read_csv("data/spotify.csv")
+df = pd.read_csv("spotify.csv")
 df.columns = df.columns.str.strip()
 df["track_id"] = df["track_id"].astype(str)
 
