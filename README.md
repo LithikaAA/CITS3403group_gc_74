@@ -137,7 +137,7 @@ flask run
 ```
 
 
-##👤 Test Account (Marker)
+## 👤 Test Account (Marker)
 To assist with testing, use the following test account:
 
 ```makefile
@@ -160,9 +160,9 @@ Password: testmarker
 
 * Each friend has shared 2 playlists of 8 songs each with the marker
 
-##🧪 Testing Guide
+## 🧪 Testing Guide
 
-###✅ Unit Tests
+### ✅ Unit Tests
 Location: tests/test_app.py
 
 Covers:
@@ -177,7 +177,7 @@ Run with:
 python tests/test_app.py
 ```
 
-###🖱️ Selenium UI Tests (Basic)
+### 🖱️ Selenium UI Tests (Basic)
 Location: tests/test_selenium_ui.py
 
 Covers:
@@ -201,7 +201,7 @@ python tests/test_selenium_ui.py
 ```
 > Chrome must be installed. For headless mode, uncomment the --headless config in the test file.
 
-###🧪 Selenium Flow Tests (Advanced)
+### 🧪 Selenium Flow Tests (Advanced)
 Location: tests/selenium_tests/test_selenium_flows.py
 
 Covers:
@@ -236,7 +236,7 @@ python tests/selenium_tests/test_selenium_flows.py
 | Kylan Gillmore   | KylanGillmore   |
 | Adrian Gonsalves | Adundo123       |
 
-##📜 License
+## 📜 License
 This project is for educational purposes only. Developed for CITS3403 Web Application Development at the University of Western Australia.
 
 
