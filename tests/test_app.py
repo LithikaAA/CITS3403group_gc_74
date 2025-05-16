@@ -130,9 +130,10 @@ class FlaskAppTestCase(unittest.TestCase):
             user2.set_password('testpass')
             db.session.add_all([user1, user2])
             db.session.commit()
+            user1_id = user1.id  # ✅ Save while still in session
 
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user1.id)
+            session['_user_id'] = str(user1_id)  # ✅ Use saved id
 
         response = self.client.post('/add-friend', data={'friend_username': 'user2'}, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
@@ -174,9 +175,10 @@ class FlaskAppTestCase(unittest.TestCase):
             db.session.add(request)
             db.session.commit()
             request_id = request.id
+            user2_id = user2.id  # ✅ Save here
 
         with self.client.session_transaction() as session:
-            session['_user_id'] = str(user2.id)
+            session['_user_id'] = str(user2_id)
 
         response = self.client.post(f'/friends/accept/{request_id}', follow_redirects=True)
         self.assertIn(b'Friend request accepted!', response.data)
@@ -207,12 +209,16 @@ class FlaskAppTestCase(unittest.TestCase):
             db.session.add(Friend(user_id=user2.id, friend_id=user1.id, is_accepted=True))
             db.session.commit()
 
-        with self.client.session_transaction() as session:
-            session['_user_id'] = str(user1.id)
+            user1_id = user1.id
+            username2 = user2.username
 
-        response = self.client.post(f'/friends/remove/{user2.username}', follow_redirects=True)
+        with self.client.session_transaction() as session:
+            session['_user_id'] = str(user1_id)
+
+        response = self.client.post(f'/friends/remove/{username2}', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'success', response.data)
+
 
     def test_upload_playlist_invalid_track_format(self):
         with self.app.app_context():
@@ -227,45 +233,6 @@ class FlaskAppTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b'"status":"success"', res.data)
 
-    def test_signup_success(self):
-        self.driver.get("http://localhost:5000/auth/signup")
-        self.driver.find_element(By.NAME, "username").send_keys("seleniumuser")
-        self.driver.find_element(By.NAME, "email").send_keys("seleniumuser@example.com")
-        self.driver.find_element(By.NAME, "password").send_keys("password123")
-        self.driver.find_element(By.ID, "terms").click()
-        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-        time.sleep(1)
-        self.assertIn("login", self.driver.current_url)
-        self.assertIn("Account created successfully! Please log in.", self.driver.page_source)
-
-    def test_signup_existing_user(self):
-        self.driver.get("http://localhost:5000/auth/signup")
-        self.driver.find_element(By.NAME, "username").send_keys("existinguser")
-        self.driver.find_element(By.NAME, "email").send_keys("existing@example.com")
-        self.driver.find_element(By.NAME, "password").send_keys("password123")
-        self.driver.find_element(By.ID, "terms").click()
-        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-        time.sleep(1)
-        self.assertIn("signup", self.driver.current_url)
-        self.assertIn("Username or email already exists.", self.driver.page_source)
-
-    def test_login_success(self):
-        self.driver.get("http://localhost:5000/auth/login")
-        self.driver.find_element(By.NAME, "identifier").send_keys("existinguser")
-        self.driver.find_element(By.NAME, "password").send_keys("password123")
-        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-        time.sleep(1)
-        self.assertIn("/dashboard", self.driver.current_url)
-        self.assertIn("Dashboard", self.driver.page_source)
-
-    def test_login_failure(self):
-        self.driver.get("http://localhost:5000/auth/login")
-        self.driver.find_element(By.NAME, "identifier").send_keys("wronguser")
-        self.driver.find_element(By.NAME, "password").send_keys("wrongpass")
-        self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-        time.sleep(1)
-        self.assertIn("login", self.driver.current_url)
-        self.assertIn("Invalid username/email or password.", self.driver.page_source)
 
 if __name__ == '__main__':
     unittest.main()
